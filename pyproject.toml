@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hdlworkflow"
+version = "0.0.1"
+authors = [
+    {name="Scott Huynh", email="scott.s.huynh@gmail.com"},
+    ]
+
+description = "Streamlining HDL simulation workflows."
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3.8", 
+    "Operating System :: Unix",
+    "Topic :: Software Development :: Testing",
+    ]
+
+[project.scripts]
+hdlworkflow = "hdlworkflow.hdlworkflow:hdlworkflow"
+
