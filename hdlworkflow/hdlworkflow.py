@@ -1,4 +1,6 @@
 import argparse
+import os
+import sys
 from typing import List, Set
 
 from .nvc import Nvc
@@ -7,13 +9,13 @@ supported_simulators: Set[str] = set(["nvc"])
 supported_waveform_viewers: Set[str] = set(["gtkwave"])
 
 
-def check_supported_simulator(simulator: str) -> bool:
+def is_supported_simulator(simulator: str) -> bool:
     if simulator in supported_simulators:
         return True
     return False
 
 
-def check_supported_waveform_viewer(viewer: str) -> bool:
+def is_supported_waveform_viewer(viewer: str) -> bool:
     if viewer in supported_waveform_viewers:
         return True
     return False
@@ -62,23 +64,38 @@ def hdlworkflow():
         metavar="COCOTB_MODULE",
         help="Specified cocotb test module to run during simulation.",
     )
+    parser.add_argument(
+        "-p",
+        "--pythonpath",
+        action="append",
+        type=str,
+        metavar="PYTHONPATH",
+        help="Paths to add to PYTHONPATH",
+    )
     args = parser.parse_args()
 
-    if check_supported_simulator(args.simulator):
-        waveform_viewer: str = args.wave
+    pwd = os.getcwd()
+    os.makedirs("sim", exist_ok=True)
+    os.chdir("sim")
+
+    pythonpaths: List[str] = [pwd]
+    if args.pythonpath:
+        pythonpaths += args.pythonpath
+
+    if is_supported_simulator(args.simulator):
         if args.simulator == "nvc":
-            if args.wave:
-                if not check_supported_waveform_viewer(args.wave):
-                    print(
-                        f"Unsupported waveform viewer. Got: {args.wave}. Expecting: {" ".join(viewer for viewer in supported_waveform_viewers)}"
-                    )
-                    waveform_viewer = ""
-            nvc = Nvc(args.top, args.path_to_compile_order, args.generic, args.cocotb, waveform_viewer)
+            if args.wave and not is_supported_waveform_viewer(args.wave):
+                print(
+                    f"Unsupported waveform viewer. Got: {args.wave}. Expecting: {" ".join(viewer for viewer in supported_waveform_viewers)}"
+                )
+                sys.exit(1)
+            nvc = Nvc(args.top, args.path_to_compile_order, args.generic, args.cocotb, args.wave, pwd, pythonpaths)
             nvc.simulate()
     else:
         print(
             f"Unsupported simulator. Got: {args.simulator}. Expecting: {" ".join(simulator for simulator in supported_simulators)}"
         )
+        sys.exit(1)
 
 
 if __name__ == "__main__":
