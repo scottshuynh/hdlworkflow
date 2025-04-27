@@ -4,8 +4,9 @@ import sys
 from typing import List, Set
 
 from .nvc import Nvc
+from .vivado import Vivado
 
-supported_simulators: Set[str] = set(["nvc"])
+supported_simulators: Set[str] = set(["nvc", "vivado"])
 supported_waveform_viewers: Set[str] = set(["gtkwave"])
 
 
@@ -91,6 +92,14 @@ def hdlworkflow():
                 sys.exit(1)
             nvc = Nvc(args.top, args.path_to_compile_order, args.generic, args.cocotb, args.wave, pwd, pythonpaths)
             nvc.simulate()
+        elif args.simulator == "vivado":
+            if args.cocotb:
+                print("Vivado is not compatible with cocotb simulations.")
+                sys.exit(1)
+            if args.wave:
+                print("Vivado will use its native waveform viewer instead of third party waveform viewers. Ignoring.")
+            vivado = Vivado(args.top, args.path_to_compile_order, args.generic, pwd, True)
+            vivado.simulate()
     else:
         print(
             f"Unsupported simulator. Got: {args.simulator}. Expecting: {" ".join(simulator for simulator in supported_simulators)}"

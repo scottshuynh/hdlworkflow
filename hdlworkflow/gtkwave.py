@@ -10,7 +10,7 @@ class Gtkwave:
         self.__waveform_file = waveform_file
         self.__waveform_save = self.__get_waveform_save_file()
         if not self.__check_dependency():
-            print("Missing dependency: gtkwave")
+            print(f"{type(self).__name__}: Missing dependency: gtkwave")
             sys.exit(1)
 
     def __get_waveform_save_file(self):
@@ -24,5 +24,5 @@ class Gtkwave:
     def run(self):
         gtkwave = subprocess.run(["gtkwave", self.__waveform_file, "-a", self.__waveform_save])
         if gtkwave.returncode != 0:
-            print(f"Error when running {type(self).__name__} waveform viewer.")
+            print(f"{type(self).__name__}: Error during run.")
             sys.exit(1)

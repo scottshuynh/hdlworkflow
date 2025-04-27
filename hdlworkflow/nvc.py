@@ -26,12 +26,12 @@ class Nvc:
         path_to_compile_order = compile_order
         if os.path.isabs(path_to_compile_order):
             if not self.__is_file(path_to_compile_order):
-                print(f"{path_to_compile_order} does not exist.")
+                print(f"{type(self).__name__}: {path_to_compile_order} does not exist.")
                 sys.exit(1)
         else:
             path_to_compile_order = path_to_working_directory + f"/{compile_order}"
             if not self.__is_file(path_to_compile_order):
-                print(f"{path_to_compile_order} does not exist.")
+                print(f"{type(self).__name__}: {path_to_compile_order} does not exist.")
                 sys.exit(1)
 
         self.__compile_order: str = path_to_compile_order
@@ -45,7 +45,9 @@ class Nvc:
 
         dependencies_met, missing = self.__check_dependencies()
         if not dependencies_met:
-            print(f"Missing dependencies: {" ".join(str(dependency) for dependency in missing)}.")
+            print(
+                f"{type(self).__name__}: Missing dependencies: {" ".join(str(dependency) for dependency in missing)}."
+            )
             sys.exit(1)
 
         if self.__waveform_viewer == "gtkwave":
@@ -93,7 +95,7 @@ class Nvc:
             text=True,
         )
         if analyse.returncode != 0:
-            print("Error during analysis.")
+            print(f"{type(self).__name__}: Error during analysis.")
             sys.exit(1)
 
     def __elaborate(self) -> None:
@@ -101,7 +103,7 @@ class Nvc:
         command = ["nvc", "-e", "-j"] + generics + [self.__top]
         elaborate = subprocess.run(command)
         if elaborate.returncode != 0:
-            print("Error during elaboration.")
+            print(f"{type(self).__name__}: Error during elaboration.")
             sys.exit(1)
 
     def __run(self) -> None:
@@ -120,13 +122,13 @@ class Nvc:
             command += waveform_options
             nvc = subprocess.run(command)
         if nvc.returncode != 0:
-            print("Error during cocotb simulation.")
+            print(f"{type(self).__name__}: Error during cocotb simulation.")
             sys.exit(1)
 
     def __get_semantic_version(self, ver: str) -> Tuple[int, int, int]:
         v = ver.split(".")
         if len(v) < 3:
-            print(f"Expecting MAJOR.MINOR.PATCH. Got: {".".join(str(num) for num in v)}")
+            print(f"{type(self).__name__}: Expecting MAJOR.MINOR.PATCH. Got: {".".join(str(num) for num in v)}")
             sys.exit(2)
         return tuple([int(num) for num in v[0:3]])
 
@@ -153,5 +155,5 @@ class Nvc:
             command += waveform_options
         cocotb = subprocess.run(command, env=env)
         if cocotb.returncode != 0:
-            print("Error during cocotb simulation.")
+            print(f"{type(self).__name__}: Error during cocotb simulation.")
             sys.exit(1)
