@@ -41,7 +41,7 @@ class Nvc:
         self.__waveform_viewer: str = waveform_viewer
         self.__waveform_file: str = self.__top + "".join(generic for generic in self.__generics) + ".fst"
         self.__pwd: str = path_to_working_directory
-        self.__pythonpaths: List[str] = pythonpaths
+        self.__pythonpaths: List[str] = self.__prepend_pwd_if_relative(pythonpaths, path_to_working_directory)
 
         dependencies_met, missing = self.__check_dependencies()
         if not dependencies_met:
@@ -55,6 +55,15 @@ class Nvc:
 
         os.makedirs("nvc", exist_ok=True)
         os.chdir("nvc")
+
+    def __prepend_pwd_if_relative(self, paths: List[str], pwd: str) -> List[str]:
+        result: List[str] = []
+        for path in paths:
+            if os.path.isabs(path):
+                result.append(path)
+            else:
+                result.append(pwd + "/" + path)
+        return result
 
     def __is_file(self, file: str) -> bool:
         filepath = Path(file)

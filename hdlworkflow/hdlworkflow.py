@@ -76,8 +76,6 @@ def hdlworkflow():
     args = parser.parse_args()
 
     pwd = os.getcwd()
-    os.makedirs("sim", exist_ok=True)
-    os.chdir("sim")
 
     pythonpaths: List[str] = [pwd]
     if args.pythonpath:

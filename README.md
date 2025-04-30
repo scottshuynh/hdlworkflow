@@ -3,7 +3,7 @@ Streamlining HDL simulations.
 
 Runs the simulation workflow in one command: "analyse, elaborate, simulate".
 
-A `sim` folder will be created in the directory `hdlworkflow` is run. `sim` will contain all output artefacts produced by the simulator and waveform viewer.
+A directory with the name of the chosen simulator will be created in the directory `hdlworkflow` is run. This directory will contain all output artefacts produced by the simulator and waveform viewer.
 
 ## Supported simulators
 + nvc
