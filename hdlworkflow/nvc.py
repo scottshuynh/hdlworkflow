@@ -98,11 +98,8 @@ class Nvc:
             self.__waveform_viewer_obj.run()
 
     def __analyse(self) -> None:
-        analyse = subprocess.run(
-            ["nvc", "-a", "-f", f"{self.__compile_order}"],
-            capture_output=True,
-            text=True,
-        )
+        command = ["nvc", "-a", "-f", f"{self.__compile_order}"]
+        analyse = subprocess.run(command)
         if analyse.returncode != 0:
             print(f"{type(self).__name__}: Error during analysis.")
             sys.exit(1)
