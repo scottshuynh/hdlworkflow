@@ -51,8 +51,13 @@ class Vivado:
 
     def simulate(self) -> None:
         if self.__is_prj_mode:
+            self.__create_clock_constraint()
             self.__generate_setup_viv_prj()
             self.__start_vivado()
+
+    def __create_clock_constraint(self):
+        with open("clock_constraint.xdc", "w") as f:
+            f.write("create_clock -period 4.000 -name clk [get_ports clk_i]")
 
     def __generate_setup_viv_prj(self, target: str = "") -> None:
         if not target:
@@ -66,6 +71,7 @@ set fp [open {self.__compile_order}]
 set lines [split [read -nonewline $fp] "\\n"]
 close $fp
 add_files $lines
+add_files -fileset constrs_1 clock_constraint.xdc
 set_property top {self.__top} [current_fileset]
 set_property file_type {{VHDL 2008}} [get_files *.vhd]
 set_property -name {{steps.synth_design.args.more options}} -value {{-mode out_of_context {"-generic " + " -generic ".join(generic for generic in self.__generics)}}} -objects [get_runs synth_1]
