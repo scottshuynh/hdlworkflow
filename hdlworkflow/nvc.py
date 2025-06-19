@@ -151,6 +151,10 @@ class Nvc:
         env["PYTHONPATH"] = f"{":".join(str(path) for path in self.__pythonpaths)}:" + env.get("PYTHONPATH", "")
         env["LIBPYTHON_LOC"] = libpython_loc
         if major_ver >= 2:
+            pygpi_python_bin = subprocess.run(
+                ["cocotb-config", "--python-bin"], capture_output=True, text=True
+            ).stdout.strip()
+            env["PYGPI_PYTHON_BIN"] = pygpi_python_bin
             env["COCOTB_TEST_MODULES"] = self.__cocotb_module
         else:
             env["MODULE"] = self.__cocotb_module
