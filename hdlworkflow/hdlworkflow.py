@@ -5,9 +5,10 @@ from typing import List, Set
 
 from .nvc import Nvc
 from .vivado import Vivado
+from .riviera import Riviera
 
-supported_simulators: Set[str] = set(["nvc", "vivado"])
-supported_waveform_viewers: Set[str] = set(["gtkwave"])
+supported_simulators: Set[str] = set(["nvc", "vivado", "riviera"])
+supported_waveform_viewers: Set[str] = set(["gtkwave", "riviera"])
 
 
 def is_supported_simulator(simulator: str) -> bool:
@@ -101,6 +102,7 @@ def hdlworkflow():
                 sys.exit(1)
             nvc = Nvc(args.top, args.path_to_compile_order, args.generic, args.cocotb, args.wave, pwd, pythonpaths)
             nvc.simulate()
+
         elif args.simulator == "vivado":
             if args.cocotb:
                 print("Vivado is not compatible with cocotb simulations.")
@@ -109,6 +111,17 @@ def hdlworkflow():
                 print("Vivado will use its native waveform viewer instead of third party waveform viewers. Ignoring.")
             vivado = Vivado(args.top, args.path_to_compile_order, args.generic, pwd, args.part, args.board)
             vivado.simulate()
+
+        elif args.simulator == "riviera":
+            if args.wave and not is_supported_waveform_viewer(args.wave):
+                print(
+                    f"Unsupported waveform viewer. Got: {args.wave}. Expecting: {" ".join(viewer for viewer in supported_waveform_viewers)}"
+                )
+                sys.exit(1)
+            riviera = Riviera(
+                args.top, args.path_to_compile_order, args.generic, args.cocotb, args.wave, pwd, pythonpaths
+            )
+            riviera.simulate()
     else:
         print(
             f"Unsupported simulator. Got: {args.simulator}. Expecting: {" ".join(simulator for simulator in supported_simulators)}"

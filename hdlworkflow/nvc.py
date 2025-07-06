@@ -7,6 +7,7 @@ import sys
 from shutil import which
 from typing import List, Tuple
 
+from . import utils
 from .gtkwave import Gtkwave
 
 
@@ -25,12 +26,12 @@ class Nvc:
     ):
         path_to_compile_order = compile_order
         if os.path.isabs(path_to_compile_order):
-            if not self.__is_file(path_to_compile_order):
+            if not utils.is_file(path_to_compile_order):
                 print(f"{type(self).__name__}: {path_to_compile_order} does not exist.")
                 sys.exit(1)
         else:
             path_to_compile_order = path_to_working_directory + f"/{compile_order}"
-            if not self.__is_file(path_to_compile_order):
+            if not utils.is_file(path_to_compile_order):
                 print(f"{type(self).__name__}: {path_to_compile_order} does not exist.")
                 sys.exit(1)
 
@@ -41,7 +42,7 @@ class Nvc:
         self.__waveform_viewer: str = waveform_viewer
         self.__waveform_file: str = self.__top + "".join(generic for generic in self.__generics) + ".fst"
         self.__pwd: str = path_to_working_directory
-        self.__pythonpaths: List[str] = self.__prepend_pwd_if_relative(pythonpaths, path_to_working_directory)
+        self.__pythonpaths: List[str] = utils.prepend_pwd_if_relative(pythonpaths, path_to_working_directory)
 
         dependencies_met, missing = self.__check_dependencies()
         if not dependencies_met:
@@ -52,22 +53,12 @@ class Nvc:
 
         if self.__waveform_viewer == "gtkwave":
             self.__waveform_viewer_obj = Gtkwave(self.__waveform_file)
+        else:
+            print(f"{type(self).__name__}: {self.__waveform_viewer} not supported in nvc workflow")
+            sys.exit(1)
 
         os.makedirs("nvc", exist_ok=True)
         os.chdir("nvc")
-
-    def __prepend_pwd_if_relative(self, paths: List[str], pwd: str) -> List[str]:
-        result: List[str] = []
-        for path in paths:
-            if os.path.isabs(path):
-                result.append(path)
-            else:
-                result.append(pwd + "/" + path)
-        return result
-
-    def __is_file(self, file: str) -> bool:
-        filepath = Path(file)
-        return filepath.is_file()
 
     def __check_dependencies(self) -> Tuple[bool, List[str]]:
         missing: List[str] = []
@@ -89,7 +80,7 @@ class Nvc:
         self.__elaborate()
 
         if self.__cocotb_module:
-            major, minor, patch = self.__get_cocotb_version()
+            major, minor, patch = utils.get_cocotb_version()
             self.__run_cocotb(major)
         else:
             self.__run()
@@ -130,16 +121,6 @@ class Nvc:
         if nvc.returncode != 0:
             print(f"{type(self).__name__}: Error during cocotb simulation.")
             sys.exit(1)
-
-    def __get_semantic_version(self, ver: str) -> Tuple[int, int, int]:
-        v = ver.split(".")
-        if len(v) < 3:
-            print(f"{type(self).__name__}: Expecting MAJOR.MINOR.PATCH. Got: {".".join(str(num) for num in v)}")
-            sys.exit(2)
-        return tuple([int(num) for num in v[0:3]])
-
-    def __get_cocotb_version(self) -> Tuple[int, int, int]:
-        return self.__get_semantic_version(version("cocotb"))
 
     def __run_cocotb(self, major_ver: int) -> None:
         libpython_loc = subprocess.run(["cocotb-config", "--libpython"], capture_output=True, text=True).stdout.strip()
