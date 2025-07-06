@@ -43,7 +43,6 @@ def hdlworkflow():
         help="Specified path to a file containing a list of all files used to simulate the top design file.",
     )
     parser.add_argument(
-        "-w",
         "--wave",
         default="",
         type=str,
@@ -59,19 +58,31 @@ def hdlworkflow():
         help="Specified generics used to elaborate top design file. Must take the form: GENERIC=VALUE.",
     )
     parser.add_argument(
-        "-c",
         "--cocotb",
         type=str,
         metavar="COCOTB_MODULE",
         help="Specified cocotb test module to run during simulation.",
     )
     parser.add_argument(
-        "-p",
         "--pythonpath",
         action="append",
         type=str,
         metavar="PYTHONPATH",
         help="Paths to add to PYTHONPATH",
+    )
+    parser.add_argument(
+        "--part",
+        default="",
+        type=str,
+        metavar="PART_NUMBER",
+        help="Specified hardware part number for synthesis",
+    )
+    parser.add_argument(
+        "--board",
+        default="",
+        type=str,
+        metavar="BOARD",
+        help="Specified hardware board for synthesis",
     )
     args = parser.parse_args()
 
@@ -96,7 +107,7 @@ def hdlworkflow():
                 sys.exit(1)
             if args.wave:
                 print("Vivado will use its native waveform viewer instead of third party waveform viewers. Ignoring.")
-            vivado = Vivado(args.top, args.path_to_compile_order, args.generic, pwd, True)
+            vivado = Vivado(args.top, args.path_to_compile_order, args.generic, pwd, args.part, args.board)
             vivado.simulate()
     else:
         print(
