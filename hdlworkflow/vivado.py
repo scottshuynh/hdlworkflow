@@ -5,9 +5,11 @@ import sys
 from shutil import which
 from typing import List
 
+from . import utils
+
 
 class Vivado:
-    """Run simulations using Vivado."""
+    """Run simulations or OOC synthesis using Vivado."""
 
     def __init__(
         self,
@@ -20,12 +22,12 @@ class Vivado:
     ):
         path_to_compile_order = compile_order
         if os.path.isabs(path_to_compile_order):
-            if not self.__is_file(path_to_compile_order):
+            if not utils.is_file(path_to_compile_order):
                 print(f"{type(self).__name__}: {path_to_compile_order} does not exist.")
                 sys.exit(1)
         else:
             path_to_compile_order = path_to_working_directory + f"/{compile_order}"
-            if not self.__is_file(path_to_compile_order):
+            if not utils.is_file(path_to_compile_order):
                 print(f"{type(self).__name__}: {path_to_compile_order} does not exist.")
                 sys.exit(1)
 
@@ -41,10 +43,6 @@ class Vivado:
 
         os.makedirs("vivado", exist_ok=True)
         os.chdir("vivado")
-
-    def __is_file(self, file: str) -> bool:
-        filepath = Path(file)
-        return filepath.is_file()
 
     def __check_dependencies(self) -> bool:
         if not which("vivado"):

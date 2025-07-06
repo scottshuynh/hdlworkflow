@@ -7,16 +7,17 @@ A directory with the name of the chosen simulator will be created in the directo
 
 ## Supported tools
 + [nvc](https://github.com/nickg/nvc)
-+ [vivado](https://www.amd.com/en/products/software/adaptive-socs-and-fpgas/vivado.html)
++ [Riviera-PRO](https://www.aldec.com/en/products/functional_verification/riviera-pro)
++ [Vivado](https://www.amd.com/en/products/software/adaptive-socs-and-fpgas/vivado.html)
 
 ## Supported waveform viewers
 + [gtkwave](https://github.com/gtkwave/gtkwave)
 
 ## Compatibility table
-|           | nvc                   | Vivado                        |  
-| ---       | :---:                 | :---:                         |
-| cocotb    | :white_check_mark:    | :negative_squared_cross_mark: |
-| gtkwave   | :white_check_mark:    | :negative_squared_cross_mark: |
+|           | nvc                   | Riviera-PRO                   | Vivado                        |  
+| ---       | :---:                 | :---:                         | :---:                         |
+| cocotb    | :white_check_mark:    | :white_check_mark:            | :negative_squared_cross_mark: |
+| gtkwave   | :white_check_mark:    | :negative_squared_cross_mark: | :negative_squared_cross_mark: |
 
 ## Install
 `hdlworkflow` is a [Python](https://www.python.org/) package and can be installed by following the steps below:
@@ -46,18 +47,46 @@ hdlworkflow nvc design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4
 
 If a waveform viewer, gtkwave, is required:
 ```sh
-hdlworkflow nvc design_tb compile_order.txt -w gtkwave
+hdlworkflow nvc design_tb compile_order.txt --wave gtkwave
 ```
 
 If the testbench `design_tb` is a cocotb test module, and the top level design is called `design`:
 ```sh
-hdlworkflow nvc design compile_order_txt -c design_tb
+hdlworkflow nvc design compile_order_txt --cocotb design_tb
 ```
 
 Cocotb test modules will be discovered in the same directory that `hdlworkflow` is run.
 Alternatively, if adding to `PYTHONPATH` is required for cocotb:
 ```sh
-hdlworkflow nvc design compile_order_txt -c design_tb -p /abs/path/to/python/module -p relative/path/to/python/module
+hdlworkflow nvc design compile_order_txt --cocotb design_tb --pythonpath /abs/path/to/python/module --pythonpath relative/path/to/python/module
+```
+
+---
+### Riviera-PRO
+Simulate a top level design named `design_tb` using the `riviera` HDL simulator. All files required to simulate `design_tb` are listed as *absolute* paths line by line in `compile_order.txt`:
+```sh
+hdlworkflow riviera design_tb compile_order.txt
+```
+
+If `design_tb` needed requires `DATA_WIDTH` and `ADDR_WIDTH` generic declared:
+```sh
+hdlworkflow riviera design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4
+```
+
+If a GUI is required to view waveforms:
+```sh
+hdlworkflow riviera design_tb compile_order.txt --wave riviera
+```
+
+If the testbench `design_tb` is a cocotb test module, and the top level design is called `design`:
+```sh
+hdlworkflow riviera design compile_order_txt --cocotb design_tb
+```
+
+Cocotb test modules will be discovered in the same directory that `hdlworkflow` is run.
+Alternatively, if adding to `PYTHONPATH` is required for cocotb:
+```sh
+hdlworkflow riviera design compile_order_txt --cocotb design_tb --pythonpath /abs/path/to/python/module --pythonpath relative/path/to/python/module
 ```
 
 ---
@@ -70,6 +99,16 @@ hdlworkflow vivado design_tb compile_order.txt
 If `design_tb` needed requires `DATA_WIDTH` and `ADDR_WIDTH` generic declared:
 ```sh
 hdlworkflow vivado design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4
+```
+
+Additionally, if you wanted to set the part number `xczu7ev-ffvc1156-2-e` for your OOC synthesis:
+```sh
+hdlworkflow vivado design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --part xczu7ev-ffvc1156-2-e
+```
+
+Additionally, if you wanted to set the board part (`ZCU106`) for your OOC synthesis:
+```sh
+hdlworkflow vivado design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --part xczu7ev-ffvc1156-2-e --board xilinx.com:zcu106:part0:2.6  
 ```
 
 #### Notes
