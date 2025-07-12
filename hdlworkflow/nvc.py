@@ -39,10 +39,10 @@ class Nvc:
         self.__top: str = top
         self.__generics: List[str] = generics
         self.__cocotb_module: str = cocotb_module
-        self.__waveform_viewer: str = waveform_viewer
-        self.__waveform_file: str = self.__top + "".join(generic for generic in self.__generics) + ".fst"
         self.__pwd: str = path_to_working_directory
         self.__pythonpaths: List[str] = utils.prepend_pwd_if_relative(pythonpaths, path_to_working_directory)
+
+        self.__waveform_viewer: str = waveform_viewer
 
         dependencies_met, missing = self.__check_dependencies()
         if not dependencies_met:
@@ -51,11 +51,18 @@ class Nvc:
             )
             sys.exit(1)
 
-        if self.__waveform_viewer == "gtkwave":
-            self.__waveform_viewer_obj = Gtkwave(self.__waveform_file)
-        else:
-            print(f"{type(self).__name__}: {self.__waveform_viewer} not supported in nvc workflow")
-            sys.exit(1)
+        if self.__waveform_viewer:
+            if self.__waveform_viewer == "gtkwave":
+                self.__waveform_file: str = self.__top
+                if self.__generics:
+                    self.__waveform_file += "".join(generic for generic in self.__generics) + ".fst"
+                else:
+                    self.__waveform_file += ".fst"
+
+                self.__waveform_viewer_obj = Gtkwave(self.__waveform_file)
+            else:
+                print(f"{type(self).__name__}: {self.__waveform_viewer} not supported in nvc workflow")
+                sys.exit(1)
 
         os.makedirs("nvc", exist_ok=True)
         os.chdir("nvc")
@@ -96,7 +103,9 @@ class Nvc:
             sys.exit(1)
 
     def __elaborate(self) -> None:
-        generics = ["-g" + generic for generic in self.__generics]
+        generics = []
+        if self.__generics:
+            generics = ["-g" + generic for generic in self.__generics]
         command = ["nvc", "-e", "-j"] + generics + [self.__top]
         elaborate = subprocess.run(command)
         if elaborate.returncode != 0:
@@ -112,12 +121,10 @@ class Nvc:
             "--dump-arrays",
         ]
         if self.__waveform_viewer:
-            waveform_options = [
-                "--format=fst",
-                f"--wave={self.__top + "".join(generic for generic in self.__generics)}",
-            ]
+            waveform_options = ["--format", "fst", f"--wave={self.__waveform_file}"]
             command += waveform_options
-            nvc = subprocess.run(command)
+
+        nvc = subprocess.run(command)
         if nvc.returncode != 0:
             print(f"{type(self).__name__}: Error during cocotb simulation.")
             sys.exit(1)
