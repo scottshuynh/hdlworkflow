@@ -31,7 +31,7 @@ def hdlworkflow():
     parser.add_argument(
         "simulator",
         type=str,
-        help=f"Specified HDL simulator to run. Supported simulators: {" ".join(simulator for simulator in supported_simulators)}.",
+        help=f"Specified HDL simulator to run. Supported simulators: {' '.join(simulator for simulator in supported_simulators)}.",
     )
     parser.add_argument(
         "top",
@@ -48,7 +48,7 @@ def hdlworkflow():
         default="",
         type=str,
         metavar="WAVEFORM_VIEWER",
-        help=f"Specified waveform viewer to run at the end of the simulation. Supported waveform viewers: {" ".join(viewer for viewer in supported_waveform_viewers)}.",
+        help=f"Specified waveform viewer to run at the end of the simulation. Supported waveform viewers: {' '.join(viewer for viewer in supported_waveform_viewers)}.",
     )
     parser.add_argument(
         "-g",
@@ -97,7 +97,7 @@ def hdlworkflow():
         if args.simulator == "nvc":
             if args.wave and not is_supported_waveform_viewer(args.wave):
                 print(
-                    f"Unsupported waveform viewer. Got: {args.wave}. Expecting: {" ".join(viewer for viewer in supported_waveform_viewers)}"
+                    f"Unsupported waveform viewer. Got: {args.wave}. Expecting: {' '.join(viewer for viewer in supported_waveform_viewers)}"
                 )
                 sys.exit(1)
             nvc = Nvc(args.top, args.path_to_compile_order, args.generic, args.cocotb, args.wave, pwd, pythonpaths)
@@ -115,7 +115,7 @@ def hdlworkflow():
         elif args.simulator == "riviera":
             if args.wave and not is_supported_waveform_viewer(args.wave):
                 print(
-                    f"Unsupported waveform viewer. Got: {args.wave}. Expecting: {" ".join(viewer for viewer in supported_waveform_viewers)}"
+                    f"Unsupported waveform viewer. Got: {args.wave}. Expecting: {' '.join(viewer for viewer in supported_waveform_viewers)}"
                 )
                 sys.exit(1)
             riviera = Riviera(
@@ -124,7 +124,7 @@ def hdlworkflow():
             riviera.simulate()
     else:
         print(
-            f"Unsupported simulator. Got: {args.simulator}. Expecting: {" ".join(simulator for simulator in supported_simulators)}"
+            f"Unsupported simulator. Got: {args.simulator}. Expecting: {' '.join(simulator for simulator in supported_simulators)}"
         )
         sys.exit(1)
 

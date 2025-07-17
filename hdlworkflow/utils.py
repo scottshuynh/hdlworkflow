@@ -27,6 +27,8 @@ def get_cocotb_version() -> Tuple[int, int, int]:
 def __get_semantic_version(ver: str) -> Tuple[int, int, int]:
     v = ver.split(".")
     if len(v) < 3:
-        print(f"utils.__get_semantic_version(): Expecting MAJOR.MINOR.PATCH. Got: {".".join(str(num) for num in v)}")
+        print(
+            f"utils.__get_semantic_version(): Expecting MAJOR.MINOR.PATCH. Got: {'.'.join(str(num) for num in v)}"
+        )
         sys.exit(2)
     return tuple([int(num) for num in v[0:3]])

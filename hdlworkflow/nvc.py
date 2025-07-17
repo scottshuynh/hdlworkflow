@@ -47,7 +47,7 @@ class Nvc:
         dependencies_met, missing = self.__check_dependencies()
         if not dependencies_met:
             print(
-                f"{type(self).__name__}: Missing dependencies: {" ".join(str(dependency) for dependency in missing)}."
+                f"{type(self).__name__}: Missing dependencies: {' '.join(str(dependency) for dependency in missing)}."
             )
             sys.exit(1)
 
