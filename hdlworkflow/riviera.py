@@ -44,7 +44,7 @@ class Riviera:
         self.__waveform_viewer: str = waveform_viewer
         self.__waveform_file: str = self.__top
         if generics:
-            self.__waveform_file += "".join(generic for generic in self.__generics) + ".awc"
+            self.__waveform_file += ''.join(generic for generic in self.__generics) + ".awc"
         else:
             self.__waveform_file += ".awc"
 
@@ -195,7 +195,7 @@ class Riviera:
             )
 
         env = os.environ.copy()
-        env["PYTHONPATH"] = f"{":".join(str(path) for path in self.__pythonpaths)}:" + env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = f"{':'.join(str(path) for path in self.__pythonpaths)}:" + env.get("PYTHONPATH", "")
         env["LIBPYTHON_LOC"] = libpython_loc
         env["GPI_EXTRA"] = gpi_extra
         env["TOPLEVEL"] = self.__top
@@ -266,11 +266,11 @@ class Riviera:
     def __create_runsim(self) -> None:
         with open("runsim.tcl", "w") as f:
             if self.__all_vhdl:
-                f.write(f"eval acom -work work -2008 -incr {" ".join(self.__vhdl_files)}\n")
+                f.write(f"eval acom -work work -2008 -incr {' '.join(self.__vhdl_files)}\n")
             elif self.__all_verilog:
-                f.write(f"eval alog -work work -v2k5 -incr {" ".join(self.__verilog_files)}\n")
+                f.write(f"eval alog -work work -v2k5 -incr {' '.join(self.__verilog_files)}\n")
             elif self.__all_verilog:
-                f.write(f"eval alog -work work -sv2k17 -incr {" ".join(self.__sysverilog_files)}\n")
+                f.write(f"eval alog -work work -sv2k17 -incr {' '.join(self.__sysverilog_files)}\n")
             else:
                 for hdl_file in self.__hdl_files:
                     ext = Path(hdl_file).suffix
@@ -294,7 +294,7 @@ class Riviera:
 
             generics: str = ""
             if self.__generics:
-                generics = " ".join(f"-g{generic}" for generic in self.__generics) + " "
+                generics = ' '.join(f"-g{generic}" for generic in self.__generics) + " "
                 sim_cmd += generics
 
             sim_cmd += f"-ieee_nowarn work.{self.__top}"

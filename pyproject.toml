@@ -1,18 +1,18 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.0", "wheel>=0.36"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "hdlworkflow"
-version = "0.0.2"
+version = "0.0.3"
 authors = [
     {name="Scott Huynh", email="scott.s.huynh@gmail.com"},
     ]
-
+requires-python = ">=3.10"
 description = "Streamlining HDL simulation workflows."
 readme = "README.md"
 classifiers = [
-    "Programming Language :: Python :: 3.12", 
+    "Programming Language :: Python :: 3.10", 
     "Operating System :: Unix",
     "Topic :: Software Development :: Testing",
     ]

@@ -55,7 +55,7 @@ class Nvc:
             if self.__waveform_viewer == "gtkwave":
                 self.__waveform_file: str = self.__top
                 if self.__generics:
-                    self.__waveform_file += "".join(generic for generic in self.__generics) + ".fst"
+                    self.__waveform_file += ''.join(generic for generic in self.__generics) + ".fst"
                 else:
                     self.__waveform_file += ".fst"
 
@@ -136,7 +136,7 @@ class Nvc:
         ).stdout.strip()
 
         env = os.environ.copy()
-        env["PYTHONPATH"] = f"{":".join(str(path) for path in self.__pythonpaths)}:" + env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = f"{':'.join(str(path) for path in self.__pythonpaths)}:" + env.get("PYTHONPATH", "")
         env["LIBPYTHON_LOC"] = libpython_loc
         if major_ver >= 2:
             pygpi_python_bin = subprocess.run(
