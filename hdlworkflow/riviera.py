@@ -51,7 +51,7 @@ class Riviera:
         dependencies_met, missing = self.__check_dependencies()
         if not dependencies_met:
             print(
-                f"{type(self).__name__}: Missing dependencies: {" ".join(str(dependency) for dependency in missing)}."
+                f"{type(self).__name__}: Missing dependencies: {' '.join(str(dependency) for dependency in missing)}."
             )
             sys.exit(1)
 
@@ -238,13 +238,13 @@ class Riviera:
             command = (
                 ["vsim", "+access", "+w_nets", "-ieee_nowarn", "-load_vhpi", vpi] + generics + ["work." + self.__top]
             )
-            print(f"cmd: {" ".join(cmd for cmd in command)}")
+            print(f"cmd: {' '.join(cmd for cmd in command)}")
         else:
             print(f"No waveform viewer")
             command = (
                 ["vsimsa", "+access", "+w_nets", "-ieee_nowarn", "-load_vhpi", vpi] + generics + ["work." + self.__top]
             )
-            print(f"cmd: {" ".join(cmd for cmd in command)}")
+            print(f"cmd: {' '.join(cmd for cmd in command)}")
         cocotb = subprocess.run(command, env=env)
         if cocotb.returncode != 0:
             print(f"{type(self).__name__}: Error during cocotb simulation.")
