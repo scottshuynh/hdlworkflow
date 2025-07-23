@@ -265,6 +265,7 @@ class Riviera:
 
     def __create_runsim(self) -> None:
         with open("runsim.tcl", "w") as f:
+            f.write("alib work\n")
             if self.__all_vhdl:
                 f.write(f"eval acom -work work -2008 -incr {' '.join(self.__vhdl_files)}\n")
             elif self.__all_verilog:

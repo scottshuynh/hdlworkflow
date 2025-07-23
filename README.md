@@ -5,9 +5,11 @@ Runs the simulation workflow in one command: "analyse, elaborate, simulate".
 
 A directory with the name of the chosen simulator will be created in the directory `hdlworkflow` is run. This directory will contain all output artefacts produced by the simulator and waveform viewer.
 
+*Note*: All HDL will be compiled into the *work* library.
+
 ## Minimum Python versions
-Python 3.10.0
-pip 21.3
+- Python 3.10.0
+- pip 21.3
 
 ## Supported tools
 + [nvc](https://github.com/nickg/nvc)
