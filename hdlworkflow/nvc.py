@@ -2,13 +2,17 @@ import subprocess
 from pathlib import Path
 from importlib.metadata import version
 from importlib.util import find_spec
+import logging
 import os
 import sys
 from shutil import which
 from typing import List, Tuple
 
-from . import utils
-from .gtkwave import Gtkwave
+from hdlworkflow import utils
+from hdlworkflow.gtkwave import Gtkwave
+
+logger = logging.getLogger(__name__)
+supported_waveform_viewers = ["gtkwave"]
 
 
 class Nvc:
@@ -24,15 +28,16 @@ class Nvc:
         path_to_working_directory: str,
         pythonpaths: List[str],
     ):
+        logger.info(f"Initialising {type(self).__name__}...")
         path_to_compile_order = compile_order
         if os.path.isabs(path_to_compile_order):
             if not utils.is_file(path_to_compile_order):
-                print(f"{type(self).__name__}: {path_to_compile_order} does not exist.")
+                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
                 sys.exit(1)
         else:
             path_to_compile_order = path_to_working_directory + f"/{compile_order}"
             if not utils.is_file(path_to_compile_order):
-                print(f"{type(self).__name__}: {path_to_compile_order} does not exist.")
+                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
                 sys.exit(1)
 
         self.__compile_order: str = path_to_compile_order
@@ -42,13 +47,20 @@ class Nvc:
         self.__pwd: str = path_to_working_directory
         self.__pythonpaths: List[str] = utils.prepend_pwd_if_relative(pythonpaths, path_to_working_directory)
 
-        self.__waveform_viewer: str = waveform_viewer
+        self.__waveform_viewer: str = ""
+        if waveform_viewer:
+            if waveform_viewer in supported_waveform_viewers:
+                self.__waveform_viewer: str = waveform_viewer
+            else:
+                logger.error(
+                    f"Unsupported waveform viewer: {waveform_viewer}. Expecting: {' '.join(viewer for viewer in supported_waveform_viewers)}"
+                )
+                sys.exit(1)
 
         dependencies_met, missing = self.__check_dependencies()
         if not dependencies_met:
-            print(
-                f"{type(self).__name__}: Missing dependencies: {' '.join(str(dependency) for dependency in missing)}."
-            )
+            logger.error(f"Missing dependencies: {' '.join(str(dependency) for dependency in missing)}.")
+            logger.error(f"All dependencies must be found on PATH.")
             sys.exit(1)
 
         if self.__waveform_viewer:
@@ -60,14 +72,12 @@ class Nvc:
                     self.__waveform_file += ".fst"
 
                 self.__waveform_viewer_obj = Gtkwave(self.__waveform_file)
-            else:
-                print(f"{type(self).__name__}: {self.__waveform_viewer} not supported in nvc workflow")
-                sys.exit(1)
 
         os.makedirs("nvc", exist_ok=True)
         os.chdir("nvc")
 
     def __check_dependencies(self) -> Tuple[bool, List[str]]:
+        logger.info("Checking dependencies...")
         missing: List[str] = []
         if not which("nvc"):
             missing.append("nvc")
@@ -96,23 +106,26 @@ class Nvc:
             self.__waveform_viewer_obj.run()
 
     def __analyse(self) -> None:
+        logger.info("Analysing...")
         command = ["nvc", "-a", "-f", f"{self.__compile_order}"]
         analyse = subprocess.run(command)
         if analyse.returncode != 0:
-            print(f"{type(self).__name__}: Error during analysis.")
+            logger.error(f"Error during analysis.")
             sys.exit(1)
 
     def __elaborate(self) -> None:
+        logger.info("Elaborating...")
         generics = []
         if self.__generics:
             generics = ["-g" + generic for generic in self.__generics]
         command = ["nvc", "-e", "-j"] + generics + [self.__top]
         elaborate = subprocess.run(command)
         if elaborate.returncode != 0:
-            print(f"{type(self).__name__}: Error during elaboration.")
+            logger.error(f"Error during elaboration.")
             sys.exit(1)
 
     def __run(self) -> None:
+        logger.info("Running sim...")
         command = [
             "nvc",
             "-r",
@@ -126,10 +139,11 @@ class Nvc:
 
         nvc = subprocess.run(command)
         if nvc.returncode != 0:
-            print(f"{type(self).__name__}: Error during cocotb simulation.")
+            logger.error(f"Error during cocotb simulation.")
             sys.exit(1)
 
     def __run_cocotb(self, major_ver: int) -> None:
+        logger.info("Running cocotb sim...")
         libpython_loc = subprocess.run(["cocotb-config", "--libpython"], capture_output=True, text=True).stdout.strip()
         cocotb_vhpi = subprocess.run(
             ["cocotb-config", "--lib-name-path", "vhpi", "nvc"], capture_output=True, text=True
@@ -153,5 +167,5 @@ class Nvc:
             command += waveform_options
         cocotb = subprocess.run(command, env=env)
         if cocotb.returncode != 0:
-            print(f"{type(self).__name__}: Error during cocotb simulation.")
+            logger.error(f"Error during cocotb simulation.")
             sys.exit(1)

@@ -120,7 +120,7 @@ hdlworkflow vivado design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 -
 #### Notes
 + `hdlworkflow` will open `Vivado` GUI and run in [project mode](https://docs.amd.com/r/en-US/ug892-vivado-design-flows-overview/Project-Mode). GUI-less mode not yet implemented.
 + `hdlworkflow` will configure `Vivado` synthesis as [out-of-context](https://docs.amd.com/r/en-US/ug949-vivado-design-methodology/Out-of-Context-Synthesis).
-+ A clock constraint of 500MHz is set up by default to constrain a clock port `clk_i`.
++ A clock constraint of 500 MHz is set up by default to constrain the clock port `clk_i`.
 + `hdlworkflow` will configure `Vivado` with [Artix-7](https://www.amd.com/en/products/adaptive-socs-and-fpgas/fpga/artix-7.html) as the default part number. Use `--part` and/or `--board` positional arguments to specify target hardware.
 + `Vivado` will use its native waveform viewer instead of third party waveform viewers. 
 + `Vivado` is *not* compatible with `cocotb`. `hdlworkflow` will raise an error if attempting to use `cocotb` with `Vivado`.
@@ -142,6 +142,9 @@ Path to a file containing a list of all files used to simulate the top design fi
 
 #### `-g GENERIC=VALUE, --generic GENERIC=VALUE`
 (Optional) Generics used to elaborate top design file.
+
+#### `-v VERBOSE_LEVEL, --verbose VERBOSE_LEVEL`
+(Optional) Logging verbosity. Valid values for `VERBOSE_LEVEL` are 0, 1, 2.
 
 #### `--cocotb COCOTB_MODULE`
 (Optional) Cocotb test module to run during simulation.

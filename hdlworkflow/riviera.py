@@ -1,4 +1,5 @@
 import subprocess
+import logging
 from pathlib import Path
 from importlib.metadata import version
 from importlib.util import find_spec
@@ -7,7 +8,9 @@ import sys
 from shutil import which
 from typing import List, Tuple, Dict
 
-from . import utils
+from hdlworkflow import utils
+
+logger = logging.getLogger(__name__)
 
 
 class Riviera:
@@ -23,15 +26,16 @@ class Riviera:
         path_to_working_directory: str,
         pythonpaths: List[str],
     ):
+        logger.info(f"Initialising {type(self).__name__}...")
         path_to_compile_order = compile_order
         if os.path.isabs(path_to_compile_order):
             if not utils.is_file(path_to_compile_order):
-                print(f"{type(self).__name__}: {path_to_compile_order} does not exist.")
+                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
                 sys.exit(1)
         else:
             path_to_compile_order = path_to_working_directory + f"/{compile_order}"
             if not utils.is_file(path_to_compile_order):
-                print(f"{type(self).__name__}: {path_to_compile_order} does not exist.")
+                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
                 sys.exit(1)
 
         self.__compile_order: str = path_to_compile_order
@@ -50,15 +54,15 @@ class Riviera:
 
         dependencies_met, missing = self.__check_dependencies()
         if not dependencies_met:
-            print(
-                f"{type(self).__name__}: Missing dependencies: {' '.join(str(dependency) for dependency in missing)}."
-            )
+            logger.error(f"Missing dependencies: {' '.join(str(dependency) for dependency in missing)}.")
+            logger.error(f"All dependencies must be found on PATH.")
             sys.exit(1)
 
         os.makedirs("riviera", exist_ok=True)
         os.chdir("riviera")
 
     def __check_dependencies(self) -> Tuple[bool, List[str]]:
+        logger.info("Checking dependencies...")
         dependencies = ["vsim", "vsimsa"]
         missing: List[str] = []
         for dependency in dependencies:
@@ -125,13 +129,15 @@ class Riviera:
             self.__all_sysverilog = True
 
     def __initialise_work_lib(self) -> None:
+        """Deprecated."""
         command = ["vlib", "work"]
         vlib = subprocess.run(command)
         if vlib.returncode != 0:
-            print(f"{type(self).__name__}: Error during vlib setup.")
+            logger.error("Error during vlib setup.")
             sys.exit(1)
 
     def __compile(self) -> None:
+        """Deprecated."""
         compiled = False
         if self.__all_vhdl:
             command = ["vcom", "-work", "work", "-2008", "-incr"]
@@ -159,13 +165,13 @@ class Riviera:
 
                 compile = subprocess.run(command)
                 if compile.returncode != 0:
-                    print(f"{type(self).__name__}: Error during analysis.")
+                    logger.error("Error during analysis.")
                     sys.exit(1)
 
         if not compiled:
             compile = subprocess.run(command)
             if compile.returncode != 0:
-                print(f"{type(self).__name__}: Error during analysis.")
+                logger.error("Error during analysis.")
                 sys.exit(1)
 
     def __setup_cocotb_env(self, major_ver: int) -> Dict[str, str]:
@@ -199,7 +205,8 @@ class Riviera:
         env["LIBPYTHON_LOC"] = libpython_loc
         env["GPI_EXTRA"] = gpi_extra
         env["TOPLEVEL"] = self.__top
-        env["COCOTB_ANSI_OUTPUT"] = "1"
+        if not self.__waveform_viewer:
+            env["COCOTB_ANSI_OUTPUT"] = "1"
         if major_ver >= 2:
             pygpi_python_bin = subprocess.run(
                 ["cocotb-config", "--python-bin"], capture_output=True, text=True
@@ -228,29 +235,27 @@ class Riviera:
         return result
 
     def __run_cocotb(self, major_ver: int) -> None:
+        """Deprecated."""
         env = self.__setup_cocotb_env(major_ver)
         vpi = self.__setup_procedural_interface()
         generics: List[str] = []
         if self.__generics:
             generics = ["-g" + generic for generic in self.__generics]
         if self.__waveform_viewer:
-            print(f"Found waveform viewer")
             command = (
                 ["vsim", "+access", "+w_nets", "-ieee_nowarn", "-load_vhpi", vpi] + generics + ["work." + self.__top]
             )
-            print(f"cmd: {' '.join(cmd for cmd in command)}")
         else:
-            print(f"No waveform viewer")
             command = (
                 ["vsimsa", "+access", "+w_nets", "-ieee_nowarn", "-load_vhpi", vpi] + generics + ["work." + self.__top]
             )
-            print(f"cmd: {' '.join(cmd for cmd in command)}")
         cocotb = subprocess.run(command, env=env)
         if cocotb.returncode != 0:
-            print(f"{type(self).__name__}: Error during cocotb simulation.")
+            logger.error("Error during cocotb simulation.")
             sys.exit(1)
 
     def __run(self) -> None:
+        """Deprecated."""
         generics: List[str] = []
         if self.__generics:
             generics = ["-g" + generic for generic in self.__generics]
@@ -260,11 +265,13 @@ class Riviera:
             command = ["vsim", "-batch", "-ieee_nowarn"] + generics + [self.__top]
         cocotb = subprocess.run(command)
         if cocotb.returncode != 0:
-            print(f"{type(self).__name__}: Error during cocotb simulation.")
+            logger.error("Error during cocotb simulation.")
             sys.exit(1)
 
     def __create_runsim(self) -> None:
+        logger.info("Creating simulation script...")
         with open("runsim.tcl", "w") as f:
+            f.write("framework.documents.closeall\n")
             f.write("alib work\n")
             if self.__all_vhdl:
                 f.write(f"eval acom -work work -2008 -incr {' '.join(self.__vhdl_files)}\n")
@@ -290,7 +297,7 @@ class Riviera:
                 vpi = self.__setup_procedural_interface()
                 sim_cmd += f"+access +w_nets -loadvhpi {vpi} "
 
-                if not self.__waveform_viewer:
+                if self.__waveform_viewer:
                     sim_cmd += "-interceptcoutput "
 
             generics: str = ""
@@ -318,10 +325,12 @@ class Riviera:
     def __batch_mode_run(self, major_ver: int) -> None:
         self.__create_runsim()
         if self.__cocotb_module:
+            logger.info("Setting up cocotb environment variables...")
             env = self.__setup_cocotb_env(major_ver)
         else:
             env = env = os.environ.copy()
 
+        logger.info("Starting Riviera-PRO...")
         if self.__waveform_viewer:
             command = ["vsim", "-do", "runsim.tcl"]
         else:
@@ -329,5 +338,5 @@ class Riviera:
 
         sim_batch_mode = subprocess.run(command, env=env)
         if sim_batch_mode.returncode != 0:
-            print(f"{type(self).__name__}: Error during batch mode simulation.")
+            logger.error("Error during Riviera-PRO batch mode simulation.")
             sys.exit(1)
