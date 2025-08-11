@@ -1,3 +1,6 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
+
 # hdlworkflow
 Streamlining HDL simulations.
 
@@ -6,10 +9,6 @@ Runs the simulation workflow in one command: "analyse, elaborate, simulate".
 A directory with the name of the chosen simulator will be created in the directory `hdlworkflow` is run. This directory will contain all output artefacts produced by the simulator and waveform viewer.
 
 *Note*: All HDL will be compiled into the *work* library.
-
-## Minimum Python versions
-- Python 3.10.0
-- pip 21.3
 
 ## Supported tools
 + [nvc](https://github.com/nickg/nvc)
@@ -20,6 +19,8 @@ A directory with the name of the chosen simulator will be created in the directo
 + [gtkwave](https://github.com/gtkwave/gtkwave)
 
 ## Compatibility table
+Each column shows support simulators and their compatibility with tools listed in the left-most column.
+
 |           | nvc                   | Riviera-PRO                   | Vivado                        |  
 | ---       | :---:                 | :---:                         | :---:                         |
 | cocotb    | :white_check_mark:    | :white_check_mark:            | :negative_squared_cross_mark: |

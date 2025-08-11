@@ -93,6 +93,10 @@ class Vivado:
                 f.write(
                     f"set_property -name {{xsim.elaborate.xelab.more_options}} -value {{{'-generic_top ' + ' -generic_top '.join(generic for generic in self.__generics)}}} -objects [get_filesets sim_1]\n"
                 )
+            else:
+                f.write(
+                    f"set_property -name {{steps.synth_design.args.more options}} -value {{-mode out_of_context}} -objects [get_runs synth_1]\n"
+                )
 
             f.write("start_gui")
 

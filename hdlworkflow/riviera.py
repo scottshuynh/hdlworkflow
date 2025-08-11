@@ -311,10 +311,10 @@ class Riviera:
             f.write("log -rec *\n")
             f.write(f'set waveformfile "{self.__waveform_file}"\n')
             f.write("if {[file exists $waveformfile]} {\n")
-            f.write(f"    system.open -wave {self.__waveform_file}\n")
+            f.write("    system.open -wave $waveformfile\n")
             f.write("} else {\n")
             f.write("    add wave *\n")
-            f.write(f"    write awc {self.__waveform_file}\n")
+            f.write("    write awc $waveformfile\n")
             f.write("}\n")
             f.write("run -all\n")
 
