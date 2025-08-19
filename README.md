@@ -1,14 +1,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
-
+[![Regression Tests](https://github.com/scottshuynh/hdlworkflow/actions/workflows/regression-tests.yml/badge.svg)](https://github.com/scottshuynh/hdlworkflow/actions/workflows/regression-tests.yml)
 # hdlworkflow
-Streamlining HDL simulations.
-
-Runs the simulation workflow in one command: "analyse, elaborate, simulate".
-
-A directory with the name of the chosen simulator will be created in the directory `hdlworkflow` is run. This directory will contain all output artefacts produced by the simulator and waveform viewer.
-
-*Note*: All HDL will be compiled into the *work* library.
+All HDL simulators follow the same process (analyse, elaborate and simulate) though each uses its own variation of these commands. `hdlworkflow` abstracts away the simulator-specific commands to simplify simulation project creation.
 
 ## Supported tools
 + [nvc](https://github.com/nickg/nvc)
@@ -27,7 +21,7 @@ Each column shows support simulators and their compatibility with tools listed i
 | gtkwave   | :white_check_mark:    | :negative_squared_cross_mark: | :negative_squared_cross_mark: |
 
 ## Install
-`hdlworkflow` is a [Python](https://www.python.org/) package and can be installed by following the steps below:
+`hdlworkflow` is a Python package and can be installed by following the steps below:
 ```sh
 git clone https://github.com/scottshuynh/hdlworkflow.git
 cd hdlworkflow
@@ -35,10 +29,14 @@ pip install .
 ```
 
 ## How to run
-`hdlworkflow` requires the following arguments:
+`hdlworkflow` can be run in command line and requires the following arguments:
 + Simulator of choice.
 + Entity name of top level design.
 + Path to a file containing a list of all files used to simulate the top design file.
+
+A directory with the name of the chosen simulator will be created in the directory `hdlworkflow` is run. This directory will contain all output artefacts produced by the simulator and waveform viewer.
+
+*Note*: All HDL will be compiled into the *work* library.
 
 ---
 ### nvc
@@ -47,7 +45,7 @@ Simulate a top level design named `design_tb` using the `nvc` HDL simulator. All
 hdlworkflow nvc design_tb compile_order.txt
 ```
 
-If `design_tb` needed requires `DATA_WIDTH` and `ADDR_WIDTH` generic declared:
+If `design_tb` requires `DATA_WIDTH` and `ADDR_WIDTH` generic declared:
 ```sh
 hdlworkflow nvc design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4
 ```
@@ -63,7 +61,7 @@ hdlworkflow nvc design compile_order_txt --cocotb design_tb
 ```
 
 Cocotb test modules will be discovered in the same directory that `hdlworkflow` is run.
-Alternatively, if adding to `PYTHONPATH` is required for cocotb:
+Adding to `PYTHONPATH` is also supported:
 ```sh
 hdlworkflow nvc design compile_order_txt --cocotb design_tb --pythonpath /abs/path/to/python/module --pythonpath relative/path/to/python/module
 ```
@@ -75,7 +73,7 @@ Simulate a top level design named `design_tb` using the `riviera` HDL simulator.
 hdlworkflow riviera design_tb compile_order.txt
 ```
 
-If `design_tb` needed requires `DATA_WIDTH` and `ADDR_WIDTH` generic declared:
+If `design_tb` requires `DATA_WIDTH` and `ADDR_WIDTH` generic declared:
 ```sh
 hdlworkflow riviera design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4
 ```
@@ -91,7 +89,7 @@ hdlworkflow riviera design compile_order_txt --cocotb design_tb
 ```
 
 Cocotb test modules will be discovered in the same directory that `hdlworkflow` is run.
-Alternatively, if adding to `PYTHONPATH` is required for cocotb:
+Adding to `PYTHONPATH` is also supported:
 ```sh
 hdlworkflow riviera design compile_order_txt --cocotb design_tb --pythonpath /abs/path/to/python/module --pythonpath relative/path/to/python/module
 ```
@@ -103,7 +101,7 @@ Create a project with a top level design named `design_tb` using `Vivado`. All f
 hdlworkflow vivado design_tb compile_order.txt
 ```
 
-If `design_tb` needed requires `DATA_WIDTH` and `ADDR_WIDTH` generic declared:
+If `design_tb` requires `DATA_WIDTH` and `ADDR_WIDTH` generic declared:
 ```sh
 hdlworkflow vivado design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4
 ```

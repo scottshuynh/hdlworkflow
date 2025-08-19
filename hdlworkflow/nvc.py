@@ -1,6 +1,4 @@
 import subprocess
-from pathlib import Path
-from importlib.metadata import version
 from importlib.util import find_spec
 import logging
 import os
@@ -60,7 +58,7 @@ class Nvc:
         dependencies_met, missing = self.__check_dependencies()
         if not dependencies_met:
             logger.error(f"Missing dependencies: {' '.join(str(dependency) for dependency in missing)}.")
-            logger.error(f"All dependencies must be found on PATH.")
+            logger.error("All dependencies must be found on PATH.")
             sys.exit(1)
 
         if self.__waveform_viewer:
@@ -110,7 +108,7 @@ class Nvc:
         command = ["nvc", "-a", "-f", f"{self.__compile_order}"]
         analyse = subprocess.run(command)
         if analyse.returncode != 0:
-            logger.error(f"Error during analysis.")
+            logger.error("Error during analysis.")
             sys.exit(1)
 
     def __elaborate(self) -> None:
@@ -121,7 +119,7 @@ class Nvc:
         command = ["nvc", "-e", "-j"] + generics + [self.__top]
         elaborate = subprocess.run(command)
         if elaborate.returncode != 0:
-            logger.error(f"Error during elaboration.")
+            logger.error("Error during elaboration.")
             sys.exit(1)
 
     def __run(self) -> None:
@@ -139,7 +137,7 @@ class Nvc:
 
         nvc = subprocess.run(command)
         if nvc.returncode != 0:
-            logger.error(f"Error during cocotb simulation.")
+            logger.error("Error during cocotb simulation.")
             sys.exit(1)
 
     def __run_cocotb(self, major_ver: int) -> None:
@@ -167,5 +165,8 @@ class Nvc:
             command += waveform_options
         cocotb = subprocess.run(command, env=env)
         if cocotb.returncode != 0:
-            logger.error(f"Error during cocotb simulation.")
+            logger.error("Error during cocotb simulation.")
+            sys.exit(1)
+        if not utils.is_cocotb_test_pass("results.xml"):
+            logger.error("Test failure during cocotb simulation.")
             sys.exit(1)
