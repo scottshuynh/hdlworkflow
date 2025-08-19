@@ -1,7 +1,6 @@
 import subprocess
 import logging
 from pathlib import Path
-from importlib.metadata import version
 from importlib.util import find_spec
 import os
 import sys
@@ -55,7 +54,7 @@ class Riviera:
         dependencies_met, missing = self.__check_dependencies()
         if not dependencies_met:
             logger.error(f"Missing dependencies: {' '.join(str(dependency) for dependency in missing)}.")
-            logger.error(f"All dependencies must be found on PATH.")
+            logger.error("All dependencies must be found on PATH.")
             sys.exit(1)
 
         os.makedirs("riviera", exist_ok=True)
@@ -177,12 +176,6 @@ class Riviera:
     def __setup_cocotb_env(self, major_ver: int) -> Dict[str, str]:
         libpython_loc = subprocess.run(["cocotb-config", "--libpython"], capture_output=True, text=True).stdout.strip()
         if self.__top_type == "vhdl":
-            cocotb_vhpi = (
-                subprocess.run(
-                    ["cocotb-config", "--lib-name-path", "vhpi", "riviera"], capture_output=True, text=True
-                ).stdout.strip()
-                + ":vhpi_startup_routines_bootstrap"
-            )
             gpi_extra = (
                 subprocess.run(
                     ["cocotb-config", "--lib-name-path", "vpi", "riviera"], capture_output=True, text=True
@@ -190,9 +183,6 @@ class Riviera:
                 + ":cocotbvpi_entry_point"
             )
         elif self.__top_type == "verilog":
-            cocotb_vhpi = subprocess.run(
-                ["cocotb-config", "--lib-name-path", "vpi", "riviera"], capture_output=True, text=True
-            ).stdout.strip()
             gpi_extra = (
                 subprocess.run(
                     ["cocotb-config", "--lib-name-path", "vhpi", "riviera"], capture_output=True, text=True

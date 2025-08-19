@@ -41,8 +41,8 @@ class Vivado:
         self.__board_part: str = board_part
 
         if not self.__check_dependencies():
-            logger.error(f"Missing dependencies: vivado")
-            logger.error(f"All dependencies must be found on PATH.")
+            logger.error("Missing dependencies: vivado")
+            logger.error("All dependencies must be found on PATH.")
             sys.exit(1)
 
         os.makedirs("vivado", exist_ok=True)
@@ -95,7 +95,7 @@ class Vivado:
                 )
             else:
                 f.write(
-                    f"set_property -name {{steps.synth_design.args.more options}} -value {{-mode out_of_context}} -objects [get_runs synth_1]\n"
+                    "set_property -name {{steps.synth_design.args.more options}} -value {{-mode out_of_context}} -objects [get_runs synth_1]\n"
                 )
 
             f.write("start_gui")
@@ -106,5 +106,5 @@ class Vivado:
             ["vivado", "-mode", "batch", "-nolog", "-nojournal", "-notrace", "-quiet", "-source", "setup_viv_prj.tcl"]
         )
         if vivado.returncode != 0:
-            logger.error(f"Error during project initialisation.")
+            logger.error("Error during project initialisation.")
             sys.exit(1)

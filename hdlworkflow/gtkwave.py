@@ -15,20 +15,20 @@ class Gtkwave:
         self.__waveform_save = self.__get_waveform_save_file()
         if not self.__check_dependency():
             logger.error("Missing dependency: gtkwave")
-            logger.error(f"All dependencies must be found on PATH.")
+            logger.error("All dependencies must be found on PATH.")
             sys.exit(1)
 
     def __get_waveform_save_file(self):
         return self.__waveform_file.split(".")[0] + ".gtkw"
 
     def __check_dependency(self) -> bool:
-        logger.info(f"Checking dependencies...")
+        logger.info("Checking dependencies...")
         if not which("gtkwave"):
             return False
         return True
 
     def run(self):
-        logger.info(f"Running gtkwave...")
+        logger.info("Running gtkwave...")
         gtkwave = subprocess.run(["gtkwave", self.__waveform_file, "-a", self.__waveform_save])
         if gtkwave.returncode != 0:
             logger.error("Error while running gtkwave.")

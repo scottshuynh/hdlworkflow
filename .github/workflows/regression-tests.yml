@@ -1,0 +1,51 @@
+# Setup environments then run regression tests
+
+name: Regression Tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test_nvc:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+        nvc-version: ["r1.17.1"]
+        cocotb-refs: [v1.9.2, master]
+        hdldepends-ref: [ee62974]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v3
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install .
+        python -m pip install pytest
+        python -m pip install git+https://github.com/cocotb/cocotb.git@${{ matrix.cocotb-refs }}
+        python -m pip install git+https://github.com/pevhall/hdldepends.git@${{ matrix.hdldepends-ref }}
+    - name: Setup NVC
+      uses: nickg/setup-nvc@v1
+      with:
+        version: ${{ matrix.nvc-version }}
+    - name: Test hdlworkflow with NVC
+      id: nvc
+      run: |
+        git clone https://github.com/scottshuynh/hdl-examples.git
+        cd hdl-examples/tb/fifo_sync_tb/
+        hdldepends $(git rev-parse --show-toplevel)/hdldepends_config.toml --top-entity fifo_sync_tb --compile-order-vhdl-lib work:compile_order.txt
+        hdlworkflow nvc fifo_sync_tb compile_order.txt
+        hdlworkflow nvc fifo_sync_tb compile_order.txt -g DATA_W=48
+        hdlworkflow nvc fifo_sync compile_order.txt --cocotb fifo_sync_tb -g DATA_W=48 -g DEPTH=32
+        mkdir test
+        cd test
+        hdlworkflow nvc fifo_sync ../compile_order.txt --cocotb fifo_sync_tb --pythonpath ../ -g DATA_W=48 -g DEPTH=32
+        hdlworkflow nvc fifo_sync $(git rev-parse --show-toplevel)/tb/fifo_sync_tb/compile_order.txt --cocotb fifo_sync_tb --pythonpath $(git rev-parse --show-toplevel)/tb/fifo_sync_tb -g DATA_W=48 -g DEPTH=32
