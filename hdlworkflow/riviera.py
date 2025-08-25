@@ -330,3 +330,6 @@ class Riviera:
         if sim_batch_mode.returncode != 0:
             logger.error("Error during Riviera-PRO batch mode simulation.")
             sys.exit(1)
+        if not utils.is_cocotb_test_pass("results.xml"):
+            logger.error("Test failure during cocotb simulation.")
+            sys.exit(1)
