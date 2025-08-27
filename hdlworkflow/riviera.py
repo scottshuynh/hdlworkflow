@@ -84,12 +84,6 @@ class Riviera:
             major, minor, patch = utils.get_cocotb_version()
 
         self.__batch_mode_run(major)
-        # TODO: CLI mode.
-        # self.__initialise_work_lib()
-        # self.__compile()
-        # self.__run_cocotb(major)
-        # else:
-        # self.__run()
 
     def __flatten_compile_order(self) -> None:
         self.__vhdl_files: List[str] = []
@@ -126,52 +120,6 @@ class Riviera:
             self.__all_verilog = True
         elif self.__sysverilog_files and not self.__vhdl_files and not self.__verilog_files:
             self.__all_sysverilog = True
-
-    def __initialise_work_lib(self) -> None:
-        """Deprecated."""
-        command = ["vlib", "work"]
-        vlib = subprocess.run(command)
-        if vlib.returncode != 0:
-            logger.error("Error during vlib setup.")
-            sys.exit(1)
-
-    def __compile(self) -> None:
-        """Deprecated."""
-        compiled = False
-        if self.__all_vhdl:
-            command = ["vcom", "-work", "work", "-2008", "-incr"]
-            for vhdl_file in self.__vhdl_files:
-                command.append(vhdl_file)
-        elif self.__all_verilog:
-            command = ["vlog", "-work", "work", "-v2k5", "incr"]
-            for verilog_file in self.__verilog_files:
-                command.append(verilog_file)
-        elif self.__all_sysverilog:
-            command = ["vlog", "-work", "work", "-sv2k17", "incr"]
-            for sysverilog_file in self.__sysverilog_files:
-                command.append(sysverilog_file)
-        else:
-            compiled = True
-            for hdl_file in self.__hdl_files:
-                ext = Path(hdl_file).suffix
-                if ext:
-                    if ext == ".vhd" or ext == ".vhdl":
-                        command = ["vcom", "-work", "work", "-2008", "-incr", hdl_file]
-                    elif ext == ".v":
-                        command = ["vlog", "-work", "work", "-v2k5", "-incr", hdl_file]
-                    elif ext == ".sv":
-                        command = ["vlog", "-work", "work", "-sv2k17", "-incr", hdl_file]
-
-                compile = subprocess.run(command)
-                if compile.returncode != 0:
-                    logger.error("Error during analysis.")
-                    sys.exit(1)
-
-        if not compiled:
-            compile = subprocess.run(command)
-            if compile.returncode != 0:
-                logger.error("Error during analysis.")
-                sys.exit(1)
 
     def __setup_cocotb_env(self, major_ver: int) -> Dict[str, str]:
         libpython_loc = subprocess.run(["cocotb-config", "--libpython"], capture_output=True, text=True).stdout.strip()
@@ -223,40 +171,6 @@ class Riviera:
             ).stdout.strip()
 
         return result
-
-    def __run_cocotb(self, major_ver: int) -> None:
-        """Deprecated."""
-        env = self.__setup_cocotb_env(major_ver)
-        vpi = self.__setup_procedural_interface()
-        generics: List[str] = []
-        if self.__generics:
-            generics = ["-g" + generic for generic in self.__generics]
-        if self.__waveform_viewer:
-            command = (
-                ["vsim", "+access", "+w_nets", "-ieee_nowarn", "-load_vhpi", vpi] + generics + ["work." + self.__top]
-            )
-        else:
-            command = (
-                ["vsimsa", "+access", "+w_nets", "-ieee_nowarn", "-load_vhpi", vpi] + generics + ["work." + self.__top]
-            )
-        cocotb = subprocess.run(command, env=env)
-        if cocotb.returncode != 0:
-            logger.error("Error during cocotb simulation.")
-            sys.exit(1)
-
-    def __run(self) -> None:
-        """Deprecated."""
-        generics: List[str] = []
-        if self.__generics:
-            generics = ["-g" + generic for generic in self.__generics]
-        if self.__waveform_viewer:
-            command = ["vsim", "-ieee_nowarn"] + generics + [self.__top]
-        else:
-            command = ["vsim", "-batch", "-ieee_nowarn"] + generics + [self.__top]
-        cocotb = subprocess.run(command)
-        if cocotb.returncode != 0:
-            logger.error("Error during cocotb simulation.")
-            sys.exit(1)
 
     def __create_runsim(self) -> None:
         logger.info("Creating simulation script...")
@@ -320,12 +234,15 @@ class Riviera:
         else:
             env = env = os.environ.copy()
 
+        logger.info("    " + " ".join(f"{key}={val}" for key, val in env.items()))
+
         logger.info("Starting Riviera-PRO...")
         if self.__waveform_viewer:
             command = ["vsim", "-do", "runsim.tcl"]
         else:
             command = ["vsimsa", "-do", "runsim.tcl"]
 
+        logger.info("    " + " ".join(cmd for cmd in command))
         sim_batch_mode = subprocess.run(command, env=env)
         if sim_batch_mode.returncode != 0:
             logger.error("Error during Riviera-PRO batch mode simulation.")

@@ -106,6 +106,7 @@ class Nvc:
     def __analyse(self) -> None:
         logger.info("Analysing...")
         command = ["nvc", "-a", "-f", f"{self.__compile_order}"]
+        logger.info("    " + " ".join(cmd for cmd in command))
         analyse = subprocess.run(command)
         if analyse.returncode != 0:
             logger.error("Error during analysis.")
@@ -117,6 +118,7 @@ class Nvc:
         if self.__generics:
             generics = ["-g" + generic for generic in self.__generics]
         command = ["nvc", "-e", "-j"] + generics + [self.__top]
+        logger.info("    " + " ".join(cmd for cmd in command))
         elaborate = subprocess.run(command)
         if elaborate.returncode != 0:
             logger.error("Error during elaboration.")
@@ -135,6 +137,7 @@ class Nvc:
             waveform_options = ["--format", "fst", f"--wave={self.__waveform_file}"]
             command += waveform_options
 
+        logger.info("    " + " ".join(cmd for cmd in command))
         nvc = subprocess.run(command)
         if nvc.returncode != 0:
             logger.error("Error during cocotb simulation.")
@@ -163,6 +166,7 @@ class Nvc:
         if self.__waveform_viewer:
             waveform_options = ["--format", "fst", f"--wave={self.__waveform_file}"]
             command += waveform_options
+        logger.info("    " + " ".join(cmd for cmd in command))
         cocotb = subprocess.run(command, env=env)
         if cocotb.returncode != 0:
             logger.error("Error during cocotb simulation.")
