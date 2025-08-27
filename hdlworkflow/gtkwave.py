@@ -29,7 +29,9 @@ class Gtkwave:
 
     def run(self):
         logger.info("Running gtkwave...")
-        gtkwave = subprocess.run(["gtkwave", self.__waveform_file, "-a", self.__waveform_save])
+        command = ["gtkwave", self.__waveform_file, "-a", self.__waveform_save]
+        logger.info("    " + " ".join(cmd for cmd in command))
+        gtkwave = subprocess.run(command)
         if gtkwave.returncode != 0:
             logger.error("Error while running gtkwave.")
             sys.exit(1)

@@ -102,9 +102,19 @@ class Vivado:
 
     def __start_vivado(self) -> None:
         logger.info("Starting Vivado...")
-        vivado = subprocess.run(
-            ["vivado", "-mode", "batch", "-nolog", "-nojournal", "-notrace", "-quiet", "-source", "setup_viv_prj.tcl"]
-        )
+        command = [
+            "vivado",
+            "-mode",
+            "batch",
+            "-nolog",
+            "-nojournal",
+            "-notrace",
+            "-quiet",
+            "-source",
+            "setup_viv_prj.tcl",
+        ]
+        logger.info("    " + " ".join(cmd for cmd in command))
+        vivado = subprocess.run(command)
         if vivado.returncode != 0:
             logger.error("Error during project initialisation.")
             sys.exit(1)
