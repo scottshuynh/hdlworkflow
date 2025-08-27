@@ -3,7 +3,6 @@ import logging
 import os
 import sys
 from shutil import which
-from typing import List
 
 from hdlworkflow import utils
 
@@ -17,7 +16,7 @@ class Vivado:
         self,
         top: str,
         compile_order: str,
-        generics: List[str],
+        generics: list[str],
         path_to_working_directory: str,
         part_number: str,
         board_part: str,
@@ -26,17 +25,21 @@ class Vivado:
         path_to_compile_order = compile_order
         if os.path.isabs(path_to_compile_order):
             if not utils.is_file(path_to_compile_order):
-                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
+                logger.error(
+                    f"Path to compile order ({path_to_compile_order}) does not exist."
+                )
                 sys.exit(1)
         else:
             path_to_compile_order = path_to_working_directory + f"/{compile_order}"
             if not utils.is_file(path_to_compile_order):
-                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
+                logger.error(
+                    f"Path to compile order ({path_to_compile_order}) does not exist."
+                )
                 sys.exit(1)
 
         self.__top: str = top
         self.__compile_order: str = path_to_compile_order
-        self.__generics: List[str] = generics
+        self.__generics: list[str] = generics
         self.__part_number: str = part_number
         self.__board_part: str = board_part
 
@@ -76,7 +79,9 @@ class Vivado:
             f.write("set obj [current_project]\n")
 
             if self.__board_part:
-                f.write(f'set_property -name "board_part" -value "{self.__board_part}" -objects $obj\n')
+                f.write(
+                    f'set_property -name "board_part" -value "{self.__board_part}" -objects $obj\n'
+                )
 
             f.write(f"set fp [open {self.__compile_order}]\n")
             f.write('set lines [split [read -nonewline $fp] "\\n"]\n')

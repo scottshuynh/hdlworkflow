@@ -5,7 +5,6 @@ from importlib.util import find_spec
 import os
 import sys
 from shutil import which
-from typing import List, Tuple, Dict
 
 from hdlworkflow import utils
 
@@ -19,51 +18,61 @@ class Riviera:
         self,
         top: str,
         compile_order: str,
-        generics: List[str],
+        generics: list[str],
         cocotb_module: str,
         waveform_viewer: str,
         path_to_working_directory: str,
-        pythonpaths: List[str],
+        pythonpaths: list[str],
     ):
         logger.info(f"Initialising {type(self).__name__}...")
         path_to_compile_order = compile_order
         if os.path.isabs(path_to_compile_order):
             if not utils.is_file(path_to_compile_order):
-                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
+                logger.error(
+                    f"Path to compile order ({path_to_compile_order}) does not exist."
+                )
                 sys.exit(1)
         else:
             path_to_compile_order = path_to_working_directory + f"/{compile_order}"
             if not utils.is_file(path_to_compile_order):
-                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
+                logger.error(
+                    f"Path to compile order ({path_to_compile_order}) does not exist."
+                )
                 sys.exit(1)
 
         self.__compile_order: str = path_to_compile_order
         self.__top: str = top
-        self.__generics: List[str] = generics
+        self.__generics: list[str] = generics
         self.__cocotb_module: str = cocotb_module
         self.__pwd: str = path_to_working_directory
-        self.__pythonpaths: List[str] = utils.prepend_pwd_if_relative(pythonpaths, path_to_working_directory)
+        self.__pythonpaths: list[str] = utils.prepend_pwd_if_relative(
+            pythonpaths, path_to_working_directory
+        )
 
         self.__waveform_viewer: str = waveform_viewer
         self.__waveform_file: str = self.__top
         if generics:
-            self.__waveform_file += ''.join(generic for generic in self.__generics) + ".awc"
+            self.__waveform_file += (
+                "".join(generic for generic in self.__generics) + ".awc"
+            )
         else:
             self.__waveform_file += ".awc"
 
         dependencies_met, missing = self.__check_dependencies()
         if not dependencies_met:
-            logger.error(f"Missing dependencies: {' '.join(str(dependency) for dependency in missing)}.")
+            logger.error(
+                f"Missing dependencies: {' '.join(str(dependency) for dependency in missing)}."
+            )
             logger.error("All dependencies must be found on PATH.")
             sys.exit(1)
 
         os.makedirs("riviera", exist_ok=True)
         os.chdir("riviera")
 
-    def __check_dependencies(self) -> Tuple[bool, List[str]]:
+    def __check_dependencies(self) -> tuple[bool, list[str]]:
         logger.info("Checking dependencies...")
         dependencies = ["vsim", "vsimsa"]
-        missing: List[str] = []
+        missing: list[str] = []
         for dependency in dependencies:
             if not which(dependency):
                 missing.append(dependency)
@@ -86,10 +95,10 @@ class Riviera:
         self.__batch_mode_run(major)
 
     def __flatten_compile_order(self) -> None:
-        self.__vhdl_files: List[str] = []
-        self.__verilog_files: List[str] = []
-        self.__sysverilog_files: List[str] = []
-        self.__hdl_files: List[str] = []
+        self.__vhdl_files: list[str] = []
+        self.__verilog_files: list[str] = []
+        self.__sysverilog_files: list[str] = []
+        self.__hdl_files: list[str] = []
 
         with open(self.__compile_order) as f:
             for line in f:
@@ -114,32 +123,53 @@ class Riviera:
         self.__all_vhdl: bool = False
         self.__all_verilog: bool = False
         self.__all_sysverilog: bool = False
-        if self.__vhdl_files and not self.__verilog_files and not self.__sysverilog_files:
+        if (
+            self.__vhdl_files
+            and not self.__verilog_files
+            and not self.__sysverilog_files
+        ):
             self.__all_vhdl = True
-        elif self.__verilog_files and not self.__vhdl_files and not self.__sysverilog_files:
+        elif (
+            self.__verilog_files
+            and not self.__vhdl_files
+            and not self.__sysverilog_files
+        ):
             self.__all_verilog = True
-        elif self.__sysverilog_files and not self.__vhdl_files and not self.__verilog_files:
+        elif (
+            self.__sysverilog_files
+            and not self.__vhdl_files
+            and not self.__verilog_files
+        ):
             self.__all_sysverilog = True
 
-    def __setup_cocotb_env(self, major_ver: int) -> Dict[str, str]:
-        libpython_loc = subprocess.run(["cocotb-config", "--libpython"], capture_output=True, text=True).stdout.strip()
+    def __setup_cocotb_env(self, major_ver: int) -> dict[str, str]:
+        libpython_loc = subprocess.run(
+            ["cocotb-config", "--libpython"], capture_output=True, text=True
+        ).stdout.strip()
         if self.__top_type == "vhdl":
             gpi_extra = (
                 subprocess.run(
-                    ["cocotb-config", "--lib-name-path", "vpi", "riviera"], capture_output=True, text=True
+                    ["cocotb-config", "--lib-name-path", "vpi", "riviera"],
+                    capture_output=True,
+                    text=True,
                 ).stdout.strip()
                 + ":cocotbvpi_entry_point"
             )
         elif self.__top_type == "verilog":
             gpi_extra = (
                 subprocess.run(
-                    ["cocotb-config", "--lib-name-path", "vhpi", "riviera"], capture_output=True, text=True
+                    ["cocotb-config", "--lib-name-path", "vhpi", "riviera"],
+                    capture_output=True,
+                    text=True,
                 ).stdout.strip()
                 + ":cocotbvhpi_entry_point"
             )
 
         env = os.environ.copy()
-        env["PYTHONPATH"] = f"{':'.join(str(path) for path in self.__pythonpaths)}:" + env.get("PYTHONPATH", "")
+        env["PYTHONPATH"] = (
+            f"{':'.join(str(path) for path in self.__pythonpaths)}:"
+            + env.get("PYTHONPATH", "")
+        )
         env["LIBPYTHON_LOC"] = libpython_loc
         env["GPI_EXTRA"] = gpi_extra
         env["TOPLEVEL"] = self.__top
@@ -161,13 +191,17 @@ class Riviera:
         if self.__top_type == "vhdl":
             result = (
                 subprocess.run(
-                    ["cocotb-config", "--lib-name-path", "vhpi", "riviera"], capture_output=True, text=True
+                    ["cocotb-config", "--lib-name-path", "vhpi", "riviera"],
+                    capture_output=True,
+                    text=True,
                 ).stdout.strip()
                 + ":vhpi_startup_routines_bootstrap"
             )
         elif self.__top_type == "verilog":
             result = subprocess.run(
-                ["cocotb-config", "--lib-name-path", "vpi", "riviera"], capture_output=True, text=True
+                ["cocotb-config", "--lib-name-path", "vpi", "riviera"],
+                capture_output=True,
+                text=True,
             ).stdout.strip()
 
         return result
@@ -178,11 +212,17 @@ class Riviera:
             f.write("framework.documents.closeall\n")
             f.write("alib work\n")
             if self.__all_vhdl:
-                f.write(f"eval acom -work work -2008 -incr {' '.join(self.__vhdl_files)}\n")
+                f.write(
+                    f"eval acom -work work -2008 -incr {' '.join(self.__vhdl_files)}\n"
+                )
             elif self.__all_verilog:
-                f.write(f"eval alog -work work -v2k5 -incr {' '.join(self.__verilog_files)}\n")
+                f.write(
+                    f"eval alog -work work -v2k5 -incr {' '.join(self.__verilog_files)}\n"
+                )
             elif self.__all_verilog:
-                f.write(f"eval alog -work work -sv2k17 -incr {' '.join(self.__sysverilog_files)}\n")
+                f.write(
+                    f"eval alog -work work -sv2k17 -incr {' '.join(self.__sysverilog_files)}\n"
+                )
             else:
                 for hdl_file in self.__hdl_files:
                     ext = Path(hdl_file).suffix
@@ -206,7 +246,7 @@ class Riviera:
 
             generics: str = ""
             if self.__generics:
-                generics = ' '.join(f"-g{generic}" for generic in self.__generics) + " "
+                generics = " ".join(f"-g{generic}" for generic in self.__generics) + " "
                 sim_cmd += generics
 
             sim_cmd += f"-ieee_nowarn work.{self.__top}"
