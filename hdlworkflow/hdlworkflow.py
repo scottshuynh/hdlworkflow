@@ -2,7 +2,6 @@ import argparse
 import logging
 import os
 import sys
-from typing import List, Set
 
 from hdlworkflow.nvc import Nvc
 from hdlworkflow.vivado import Vivado
@@ -11,8 +10,8 @@ from hdlworkflow.logging import set_log_level, LoggingLevel
 
 
 logger = logging.getLogger(__name__)
-supported_simulators: Set[str] = set(["nvc", "vivado", "riviera"])
-supported_waveform_viewers: Set[str] = set(["gtkwave", "riviera"])
+supported_simulators: set[str] = set(["nvc", "vivado", "riviera"])
+supported_waveform_viewers: set[str] = set(["gtkwave", "riviera"])
 
 
 class HdlWorkflow:
@@ -21,7 +20,7 @@ class HdlWorkflow:
         simulator: str,
         top: str,
         path_to_compile_order: str,
-        generic: List[str],
+        generic: list[str],
         cocotb: str,
         pwd: str,
         pythonpaths: str,
@@ -78,7 +77,14 @@ class HdlWorkflow:
                     logger.warning(
                         "Vivado will use its native waveform viewer instead of third party waveform viewers. Ignoring."
                     )
-                vivado = Vivado(self.top, self.path_to_compile_order, self.generic, self.pwd, self.part, self.board)
+                vivado = Vivado(
+                    self.top,
+                    self.path_to_compile_order,
+                    self.generic,
+                    self.pwd,
+                    self.part,
+                    self.board,
+                )
                 vivado.start()
 
             elif self.simulator == "riviera":
@@ -176,7 +182,7 @@ def hdlworkflow():
     args = parser.parse_args()
     pwd = os.getcwd()
 
-    pythonpaths: List[str] = [pwd]
+    pythonpaths: list[str] = [pwd]
     if args.pythonpath:
         pythonpaths += args.pythonpath
 
@@ -184,7 +190,9 @@ def hdlworkflow():
         if args.verbose >= 0 and args.verbose <= 2:
             set_log_level(LoggingLevel(args.verbose))
         else:
-            logger.error(f'Invalid verbose level. Got: {args.verbose}. Expecting: 0, 1, 2')
+            logger.error(
+                f"Invalid verbose level. Got: {args.verbose}. Expecting: 0, 1, 2"
+            )
             sys.exit(1)
 
     workflow = HdlWorkflow(

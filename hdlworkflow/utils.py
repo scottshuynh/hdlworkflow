@@ -3,7 +3,6 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import List, Tuple
 import xml.etree.ElementTree as ElementTree
 
 logger = logging.getLogger(__name__)
@@ -14,8 +13,8 @@ def is_file(file: str) -> bool:
     return filepath.is_file()
 
 
-def prepend_pwd_if_relative(paths: List[str], pwd: str) -> List[str]:
-    result: List[str] = []
+def prepend_pwd_if_relative(paths: list[str], pwd: str) -> list[str]:
+    result: list[str] = []
     for path in paths:
         if os.path.isabs(path):
             result.append(path)
@@ -24,11 +23,11 @@ def prepend_pwd_if_relative(paths: List[str], pwd: str) -> List[str]:
     return result
 
 
-def get_cocotb_version() -> Tuple[int, int, int]:
+def get_cocotb_version() -> tuple[int, int, int]:
     return __get_semantic_version(version("cocotb"))
 
 
-def __get_semantic_version(ver: str) -> Tuple[int, int, int]:
+def __get_semantic_version(ver: str) -> tuple[int, int, int]:
     v = ver.split(".")
     if len(v) < 3:
         logger.error(f"Expecting MAJOR.MINOR.PATCH. Got: {'.'.join(str(num) for num in v)}")

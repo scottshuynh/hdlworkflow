@@ -20,3 +20,8 @@ classifiers = [
 [project.scripts]
 hdlworkflow = "hdlworkflow.hdlworkflow:hdlworkflow"
 
+[tool.ruff.lint]
+select = [
+    # pyupgrade
+    "UP"
+]
