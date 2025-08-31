@@ -109,9 +109,6 @@ class Nvc:
         else:
             self.__run()
 
-        if self.__waveform_viewer:
-            self.__waveform_viewer_obj.run()
-
     def __analyse(self) -> None:
         logger.info("Analysing...")
         command = ["nvc", "-a", "-f", f"{self.__compile_order}"]
@@ -147,9 +144,13 @@ class Nvc:
             command += waveform_options
 
         logger.info("    " + " ".join(cmd for cmd in command))
+
+        if self.__waveform_viewer:
+            self.__waveform_viewer_obj.run()
+
         nvc = subprocess.run(command)
         if nvc.returncode != 0:
-            logger.error("Error during cocotb simulation.")
+            logger.error("Error during simulation.")
             sys.exit(1)
 
     def __run_cocotb(self, major_ver: int) -> None:
@@ -193,6 +194,10 @@ class Nvc:
             command += waveform_options
         logger.info("    " + " ".join(cmd for cmd in command))
         cocotb = subprocess.run(command, env=env)
+
+        if self.__waveform_viewer:
+            self.__waveform_viewer_obj.run()
+
         if cocotb.returncode != 0:
             logger.error("Error during cocotb simulation.")
             sys.exit(1)
