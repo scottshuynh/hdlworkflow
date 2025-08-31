@@ -4,7 +4,7 @@ name: Regression Tests
 
 on:
   push:
-    branches: [ "main" ]
+    branches: "**"
   pull_request:
     branches: [ "main" ]
 
@@ -49,6 +49,7 @@ jobs:
         hdlworkflow nvc fifo_sync_tb compile_order.txt
         hdlworkflow nvc fifo_sync_tb compile_order.txt -g DATA_W=48
         hdlworkflow nvc fifo_sync compile_order.txt --cocotb fifo_sync_tb -g DATA_W=48 -g DEPTH=32
+        pytest
         mkdir test
         cd test
         hdlworkflow nvc fifo_sync ../compile_order.txt --cocotb fifo_sync_tb --pythonpath ../ -g DATA_W=48 -g DEPTH=32

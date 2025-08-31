@@ -20,20 +20,34 @@ class HdlWorkflow:
         simulator: str,
         top: str,
         path_to_compile_order: str,
-        generic: list[str],
-        cocotb: str,
-        pwd: str,
-        pythonpaths: str,
-        wave: str,
-        part: str,
-        board: str,
+        path_to_working_directory: str,
+        generic: list[str] = [],
+        cocotb: str = "",
+        pythonpaths: str = "",
+        wave: str = "",
+        part: str = "",
+        board: str = "",
     ):
+        """Runs analyse, elaborate, simulate using the specified simulator.
+
+        Args:
+            simulator (str): Simulator of choice
+            top (str): Name of top design
+            path_to_compile_order (str): Path to a file listing HDL source files in compilation order for simulation
+            path_to_working_directory (str): Path to directory for hdlworkflow to output artefacts
+            generic (List[str], optional): Top will elaborate with specified generics. Must be in form: GENERIC=VALUE. Defaults to [].
+            cocotb (str, optional): Name of cocotb test module. Defaults to "".
+            pythonpaths (str, optional): PYTHONPATH environment variable. Defaults to "".
+            wave (str, optional): Waveform viewer of choice. Defaults to "".
+            part (str, optional): Vivado part number to set up Vivado project. Defaults to "".
+            board (str, optional): Vivado board part to set up Vivado project. Defaults to "".
+        """
         self.simulator = simulator
         self.top = top
         self.path_to_compile_order = path_to_compile_order
         self.generic = generic
         self.cocotb = cocotb
-        self.pwd = pwd
+        self.path_to_working_directory = path_to_working_directory
         self.pythonpaths = pythonpaths
         self.wave = wave
         self.part = part
@@ -64,7 +78,7 @@ class HdlWorkflow:
                     self.generic,
                     self.cocotb,
                     self.wave,
-                    self.pwd,
+                    self.path_to_working_directory,
                     self.pythonpaths,
                 )
                 nvc.simulate()
@@ -81,7 +95,7 @@ class HdlWorkflow:
                     self.top,
                     self.path_to_compile_order,
                     self.generic,
-                    self.pwd,
+                    self.path_to_working_directory,
                     self.part,
                     self.board,
                 )
@@ -99,7 +113,7 @@ class HdlWorkflow:
                     self.generic,
                     self.cocotb,
                     self.wave,
-                    self.pwd,
+                    self.path_to_working_directory,
                     self.pythonpaths,
                 )
                 riviera.simulate()
@@ -180,9 +194,9 @@ def hdlworkflow():
         help="Specified hardware board for synthesis",
     )
     args = parser.parse_args()
-    pwd = os.getcwd()
+    path_to_working_directory = os.getcwd()
 
-    pythonpaths: list[str] = [pwd]
+    pythonpaths: list[str] = [path_to_working_directory]
     if args.pythonpath:
         pythonpaths += args.pythonpath
 
@@ -199,9 +213,9 @@ def hdlworkflow():
         args.simulator,
         args.top,
         args.path_to_compile_order,
+        path_to_working_directory,
         args.generic,
         args.cocotb,
-        pwd,
         pythonpaths,
         args.wave,
         args.part,
