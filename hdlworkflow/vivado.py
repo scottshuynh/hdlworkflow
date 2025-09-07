@@ -100,7 +100,7 @@ class Vivado:
                 )
             else:
                 f.write(
-                    "set_property -name {{steps.synth_design.args.more options}} -value {{-mode out_of_context}} -objects [get_runs synth_1]\n"
+                    "set_property -name {steps.synth_design.args.more options} -value {-mode out_of_context} -objects [get_runs synth_1]\n"
                 )
 
             f.write("start_gui")
