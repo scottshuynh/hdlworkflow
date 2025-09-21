@@ -20,6 +20,8 @@ class Vivado:
         path_to_working_directory: str,
         part_number: str,
         board_part: str,
+        start_gui: bool,
+        synth: bool,
     ):
         logger.info(f"Initialising {type(self).__name__}...")
         path_to_compile_order = compile_order
@@ -42,6 +44,8 @@ class Vivado:
         self.__generics: list[str] = generics
         self.__part_number: str = part_number
         self.__board_part: str = board_part
+        self.__start_gui: bool = start_gui
+        self.__synth:bool = synth
 
         if not self.__check_dependencies():
             logger.error("Missing dependencies: vivado")
@@ -59,7 +63,7 @@ class Vivado:
 
     def start(self) -> None:
         self.__create_clock_constraint()
-        self.__generate_setup_viv_prj(self.__part_number)
+        self.__generate_setup_viv_prj()
         self.__start_vivado()
 
     def __create_clock_constraint(self):
@@ -69,10 +73,10 @@ class Vivado:
 
     def __generate_setup_viv_prj(self, target: str = "") -> None:
         logger.info("Generating setup script...")
-        if not target:
+        if not self.__part_number:
             part = "xc7a35ticsg324-1L"
         else:
-            part = target
+            part = self.__part_number
 
         with open("setup_viv_prj.tcl", "w") as f:
             f.write(f"create_project -part {part} {self.__top} -force\n")
@@ -89,6 +93,7 @@ class Vivado:
             f.write("add_files $lines\n")
             f.write("add_files -fileset constrs_1 clock_constraint.xdc\n")
             f.write(f"set_property top {self.__top} [current_fileset]\n")
+            f.write(f"set_property top {self.__top} [get_filesets sim_1]\n")
             f.write("set_property file_type {VHDL 2008} [get_files *.vhd]\n")
 
             if self.__generics:
@@ -103,7 +108,30 @@ class Vivado:
                     "set_property -name {steps.synth_design.args.more options} -value {-mode out_of_context} -objects [get_runs synth_1]\n"
                 )
 
-            f.write("start_gui")
+            if self.__start_gui:
+                f.write("start_gui\n")
+            if self.__synth:
+                f.write("reset_run synth_1\n")
+                if not self.__start_gui:
+                    f.write(f"launch_runs synth_1 -jobs {min(os.cpu_count()//2, 8)}\n")
+                    f.write("wait_on_run synth_1\n")
+                    f.write('if {[get_property PROGRESS [get_runs synth_1]] != "100%"} {\n')
+                    f.write('    error "ERROR: Synthesis failed."\n')
+                    f.write('}\n')
+
+                    f.write(f"launch_runs impl_1 -jobs {min(os.cpu_count()//2, 8)}\n")
+                    f.write("wait_on_run impl_1\n")
+                    f.write('if {[get_property PROGRESS [get_runs impl_1]] != "100%"} {\n')
+                    f.write('    error "ERROR: Implementation failed."\n')
+                    f.write('}\n')
+
+                    f.write('if {[get_property STATS.WNS [get_runs impl_1]] < 0} {\n')
+                    f.write('    error "ERROR: Timing failed."\n')
+                    f.write('}\n')
+                else:
+                    f.write(f"launch_runs impl_1 -jobs {min(os.cpu_count()//2, 8)}\n")
+            else:
+                f.write("launch_simulation")
 
     def __start_vivado(self) -> None:
         logger.info("Starting Vivado...")
@@ -121,5 +149,5 @@ class Vivado:
         logger.info("    " + " ".join(cmd for cmd in command))
         vivado = subprocess.run(command)
         if vivado.returncode != 0:
-            logger.error("Error during project initialisation.")
+            logger.error("Error when running Vivado.")
             sys.exit(1)

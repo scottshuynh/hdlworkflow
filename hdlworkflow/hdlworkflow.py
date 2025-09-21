@@ -11,7 +11,7 @@ from hdlworkflow.logging import set_log_level, LoggingLevel
 
 logger = logging.getLogger(__name__)
 supported_simulators: set[str] = set(["nvc", "vivado", "riviera"])
-supported_waveform_viewers: set[str] = set(["gtkwave", "riviera"])
+supported_waveform_viewers: set[str] = set(["gtkwave", "vivado", "riviera"])
 
 
 class HdlWorkflow:
@@ -27,6 +27,7 @@ class HdlWorkflow:
         wave: str = "",
         part: str = "",
         board: str = "",
+        synth: bool = False,
     ):
         """Runs analyse, elaborate, simulate using the specified simulator.
 
@@ -42,16 +43,17 @@ class HdlWorkflow:
             part (str, optional): Vivado part number to set up Vivado project. Defaults to "".
             board (str, optional): Vivado board part to set up Vivado project. Defaults to "".
         """
-        self.simulator = simulator
+        self.simulator = simulator.lower()
         self.top = top
         self.path_to_compile_order = path_to_compile_order
         self.generic = generic
         self.cocotb = cocotb
         self.path_to_working_directory = path_to_working_directory
         self.pythonpaths = pythonpaths
-        self.wave = wave
-        self.part = part
-        self.board = board
+        self.wave = wave.lower()
+        self.part = part.lower()
+        self.board = board.lower()
+        self.synth = synth
 
     def is_supported_simulator(self, simulator: str) -> bool:
         if simulator in supported_simulators:
@@ -87,10 +89,15 @@ class HdlWorkflow:
                 if self.cocotb:
                     logger.error("Vivado is not compatible with cocotb simulations.")
                     sys.exit(1)
+
                 if self.wave:
-                    logger.warning(
-                        "Vivado will use its native waveform viewer instead of third party waveform viewers. Ignoring."
-                    )
+                    if self.wave != "vivado":
+                        logger.warning(
+                            f"Vivado will open it's GUI. Ignoring waveform viewer argument: {self.wave}."
+                        )
+                    else:
+                        logger.info("Vivado will open it's GUI.")
+
                 vivado = Vivado(
                     self.top,
                     self.path_to_compile_order,
@@ -98,13 +105,15 @@ class HdlWorkflow:
                     self.path_to_working_directory,
                     self.part,
                     self.board,
+                    bool(self.wave),
+                    self.synth,
                 )
                 vivado.start()
 
             elif self.simulator == "riviera":
                 if self.wave and not self.is_supported_waveform_viewer(self.wave):
                     logger.error(
-                        f"Unsupported waveform viewer: {self.wave}. Expecting: {' '.join(viewer for viewer in supported_waveform_viewers)}"
+                        f"Unsupported waveform viewer: {self.wave}. Expecting: {' '.join(viewer for viewer in supported_waveform_viewers)}."
                     )
                     sys.exit(1)
                 riviera = Riviera(
@@ -184,14 +193,19 @@ def hdlworkflow():
         default="",
         type=str,
         metavar="PART_NUMBER",
-        help="Specified hardware part number for synthesis",
+        help="Specified hardware part number for synthesis. Only for synthesis tools.",
     )
     parser.add_argument(
         "--board",
         default="",
         type=str,
         metavar="BOARD",
-        help="Specified hardware board for synthesis",
+        help="Specified hardware board for synthesis. Only for synthesis tools.",
+    )
+    parser.add_argument(
+        "--synth",
+        action="store_true",
+        help="Specifies tool to run synthesis instead of simulation. Only for synthesis tools."
     )
     args = parser.parse_args()
     path_to_working_directory = os.getcwd()
@@ -220,6 +234,7 @@ def hdlworkflow():
         args.wave,
         args.part,
         args.board,
+        args.synth,
     )
     workflow.run()
 

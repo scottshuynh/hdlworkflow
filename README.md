@@ -96,7 +96,7 @@ hdlworkflow riviera design compile_order_txt --cocotb design_tb --pythonpath /ab
 
 ---
 ### Vivado
-Create a project with a top level design named `design_tb` using `Vivado`. All files required to synthesise/simulate `design_tb` are listed as *absolute* paths line by line in `compile_order.txt`:
+Simulate a top design named `design_tb` using `Vivado`. All files required to simulate `design_tb` are listed as *absolute* paths line by line in `compile_order.txt`:
 ```sh
 hdlworkflow vivado design_tb compile_order.txt
 ```
@@ -106,21 +106,26 @@ If `design_tb` requires `DATA_WIDTH` and `ADDR_WIDTH` generic declared:
 hdlworkflow vivado design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4
 ```
 
+If you want to run an out-of-context (OOC) synthesis on `design` instead of simulating:
+```sh
+hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --synth
+```
+
 Additionally, if you wanted to set the part number `xczu7ev-ffvc1156-2-e` for your OOC synthesis:
 ```sh
-hdlworkflow vivado design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --part xczu7ev-ffvc1156-2-e
+hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --synth --part xczu7ev-ffvc1156-2-e
 ```
 
 Additionally, if you wanted to set the board part (`ZCU106`) for your OOC synthesis:
 ```sh
-hdlworkflow vivado design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --part xczu7ev-ffvc1156-2-e --board xilinx.com:zcu106:part0:2.6  
+hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --synth --part xczu7ev-ffvc1156-2-e --board xilinx.com:zcu106:part0:2.6  
 ```
 
 #### Notes
-+ `hdlworkflow` will open `Vivado` GUI and run in [project mode](https://docs.amd.com/r/en-US/ug892-vivado-design-flows-overview/Project-Mode). GUI-less mode not yet implemented.
 + `hdlworkflow` will configure `Vivado` synthesis as [out-of-context](https://docs.amd.com/r/en-US/ug949-vivado-design-methodology/Out-of-Context-Synthesis).
 + A clock constraint of 500 MHz is set up by default to constrain the clock port `clk_i`.
 + `hdlworkflow` will configure `Vivado` with [Artix-7](https://www.amd.com/en/products/adaptive-socs-and-fpgas/fpga/artix-7.html) as the default part number. Use `--part` and/or `--board` positional arguments to specify target hardware.
++ When running synthesis, `Vivado` will default to use eight logical cores or half of the number of available logical cores, whichever is smaller.
 + `Vivado` will use its native waveform viewer instead of third party waveform viewers. 
 + `Vivado` is *not* compatible with `cocotb`. `hdlworkflow` will raise an error if attempting to use `cocotb` with `Vivado`.
 
@@ -156,3 +161,6 @@ Path to a file containing a list of all files used to simulate the top design fi
 
 #### `--board BOARD`
 (Optional) Board part used to set up `Vivado` project. Only used in `Vivado` workflow.
+
+#### `--synth`
+(Optional) `Vivado` will run synthesis instead of simulation. Only used in `Vivado` workflow.
