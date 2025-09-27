@@ -16,7 +16,7 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12"]
         nvc-version: ["r1.17.1"]
-        cocotb-refs: [v1.9.2, master]
+        cocotb-refs: [v1.9.2, v2.0.0]
         hdldepends-ref: [ee62974]
 
     steps:

@@ -146,25 +146,7 @@ class Riviera:
         libpython_loc = subprocess.run(
             ["cocotb-config", "--libpython"], capture_output=True, text=True
         ).stdout.strip()
-        if self.__top_type == "vhdl":
-            gpi_extra = (
-                subprocess.run(
-                    ["cocotb-config", "--lib-name-path", "vpi", "riviera"],
-                    capture_output=True,
-                    text=True,
-                ).stdout.strip()
-                + ":cocotbvpi_entry_point"
-            )
-        elif self.__top_type == "verilog":
-            gpi_extra = (
-                subprocess.run(
-                    ["cocotb-config", "--lib-name-path", "vhpi", "riviera"],
-                    capture_output=True,
-                    text=True,
-                ).stdout.strip()
-                + ":cocotbvhpi_entry_point"
-            )
-
+        gpi_extra = self.__setup_procedural_interface(True)
         env = os.environ.copy()
         env["PYTHONPATH"] = (
             f"{':'.join(str(path) for path in self.__pythonpaths)}:"
@@ -172,7 +154,7 @@ class Riviera:
         )
         env["LIBPYTHON_LOC"] = libpython_loc
         env["GPI_EXTRA"] = gpi_extra
-        env["TOPLEVEL"] = self.__top
+        
         if not self.__waveform_viewer:
             env["COCOTB_ANSI_OUTPUT"] = "1"
         if major_ver >= 2:
@@ -181,28 +163,50 @@ class Riviera:
             ).stdout.strip()
             env["PYGPI_PYTHON_BIN"] = pygpi_python_bin
             env["COCOTB_TEST_MODULES"] = self.__cocotb_module
+            env["COCOTB_TOPLEVEL"] = self.__top
         else:
             env["MODULE"] = self.__cocotb_module
+            env["TOPLEVEL"] = self.__top
 
         return env
 
-    def __setup_procedural_interface(self) -> str:
+    def __setup_procedural_interface(self, is_gpi_extra:bool=False) -> str:
         result: str = ""
-        if self.__top_type == "vhdl":
-            result = (
-                subprocess.run(
-                    ["cocotb-config", "--lib-name-path", "vhpi", "riviera"],
+        if is_gpi_extra:
+            if self.__top_type == "vhdl":
+                result = (
+                    subprocess.run(
+                        ["cocotb-config", "--lib-name-path", "vpi", "riviera"],
+                        capture_output=True,
+                        text=True,
+                    ).stdout.strip()
+                    + ":cocotbvpi_entry_point"
+                )
+            elif self.__top_type == "verilog":
+                result = (
+                    subprocess.run(
+                        ["cocotb-config", "--lib-name-path", "vhpi", "riviera"],
+                        capture_output=True,
+                        text=True,
+                    ).stdout.strip()
+                    + ":cocotbvhpi_entry_point"
+                )
+        else:
+            if self.__top_type == "vhdl":
+                result = (
+                    subprocess.run(
+                        ["cocotb-config", "--lib-name-path", "vhpi", "riviera"],
+                        capture_output=True,
+                        text=True,
+                    ).stdout.strip()
+                    + ":vhpi_startup_routines_bootstrap"
+                )
+            elif self.__top_type == "verilog":
+                result = subprocess.run(
+                    ["cocotb-config", "--lib-name-path", "vpi", "riviera"],
                     capture_output=True,
                     text=True,
                 ).stdout.strip()
-                + ":vhpi_startup_routines_bootstrap"
-            )
-        elif self.__top_type == "verilog":
-            result = subprocess.run(
-                ["cocotb-config", "--lib-name-path", "vpi", "riviera"],
-                capture_output=True,
-                text=True,
-            ).stdout.strip()
 
         return result
 
@@ -239,7 +243,11 @@ class Riviera:
             vpi: str = ""
             if self.__cocotb_module:
                 vpi = self.__setup_procedural_interface()
-                sim_cmd += f"+access +w_nets -loadvhpi {vpi} "
+                sim_cmd += f"+access +w_nets "
+                if self.__top_type == "vhdl":
+                    sim_cmd += f"-loadvhpi {vpi} "
+                elif self.__top_type == "verilog":
+                    sim_cmd += f"-pli {vpi} "
 
                 if self.__waveform_viewer:
                     sim_cmd += "-interceptcoutput "
@@ -273,8 +281,6 @@ class Riviera:
             env = self.__setup_cocotb_env(major_ver)
         else:
             env = env = os.environ.copy()
-
-        logger.info("    " + " ".join(f"{key}={val}" for key, val in env.items()))
 
         logger.info("Starting Riviera-PRO...")
         if self.__waveform_viewer:
