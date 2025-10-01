@@ -22,6 +22,7 @@ class Vivado:
         board_part: str,
         start_gui: bool,
         synth: bool,
+        clk_constraints: list[str],
     ):
         logger.info(f"Initialising {type(self).__name__}...")
         path_to_compile_order = compile_order
@@ -46,6 +47,7 @@ class Vivado:
         self.__board_part: str = board_part
         self.__start_gui: bool = start_gui
         self.__synth:bool = synth
+        self.__clk_constraints: list[str] = clk_constraints
 
         if not self.__check_dependencies():
             logger.error("Missing dependencies: vivado")
@@ -67,9 +69,21 @@ class Vivado:
         self.__start_vivado()
 
     def __create_clock_constraint(self):
-        logger.info("Constraining clock port (clk_i) to 500 MHz...")
         with open("clock_constraint.xdc", "w") as f:
-            f.write("create_clock -period 2.000 -name clk [get_ports clk_i]")
+            if self.__clk_constraints:
+                for clk_constraint in self.__clk_constraints:
+                    clk_port = clk_constraint.split("=")[0]
+                    clk_period = clk_constraint.split("=")[1]
+                    try:
+                        float(clk_period)
+                    except ValueError:
+                        logger.error(f"Expecting float or integer for clock period constraint value. Got: {clk_period}")
+                        sys.exit(1)
+
+                    f.write(f"create_clock -period {clk_period} -name {clk_port} [get_ports {clk_port}]\n")
+            else:
+                logger.info("Constraining clock port (clk_i) to 500 MHz...")
+                f.write("create_clock -period 2.000 -name clk [get_ports clk_i]\n")
 
     def __generate_setup_viv_prj(self, target: str = "") -> None:
         logger.info("Generating setup script...")

@@ -28,6 +28,7 @@ class HdlWorkflow:
         part: str = "",
         board: str = "",
         synth: bool = False,
+        clk_constraint: list[str] = []
     ):
         """Runs analyse, elaborate, simulate using the specified simulator.
 
@@ -36,12 +37,14 @@ class HdlWorkflow:
             top (str): Name of top design
             path_to_compile_order (str): Path to a file listing HDL source files in compilation order for simulation
             path_to_working_directory (str): Path to directory for hdlworkflow to output artefacts
-            generic (List[str], optional): Top will elaborate with specified generics. Must be in form: GENERIC=VALUE. Defaults to [].
+            generic (list[str], optional): Top will elaborate with specified generics. Must be in form: GENERIC=VALUE. Defaults to [].
             cocotb (str, optional): Name of cocotb test module. Defaults to "".
             pythonpaths (str, optional): PYTHONPATH environment variable. Defaults to "".
             wave (str, optional): Waveform viewer of choice. Defaults to "".
             part (str, optional): Vivado part number to set up Vivado project. Defaults to "".
             board (str, optional): Vivado board part to set up Vivado project. Defaults to "".
+            synth (bool, optional): Vivado starts synthesis instead of simulation. Defaults to False.
+            clk_constraint (list[str], optional): Vivado clock constraints. Must be in form: CLK_PORT=PERIOD_NS. Defaults to [].
         """
         self.simulator = simulator.lower()
         self.top = top
@@ -54,6 +57,7 @@ class HdlWorkflow:
         self.part = part.lower()
         self.board = board.lower()
         self.synth = synth
+        self.clk_constraint = clk_constraint
 
     def is_supported_simulator(self, simulator: str) -> bool:
         if simulator in supported_simulators:
@@ -107,6 +111,7 @@ class HdlWorkflow:
                     self.board,
                     bool(self.wave),
                     self.synth,
+                    self.clk_constraint,
                 )
                 vivado.start()
 
@@ -207,6 +212,13 @@ def hdlworkflow():
         action="store_true",
         help="Specifies tool to run synthesis instead of simulation. Only for synthesis tools."
     )
+    parser.add_argument(
+        "--clk-constraint",
+        action="append",
+        type=str,
+        metavar="CLK_PORT=PERIOD_NS",
+        help="Specified clock constraint for synthesis. Only for synthesis tools. Must take the form: CLK_PORT=PERIOD_NS.",
+    )
     args = parser.parse_args()
     path_to_working_directory = os.getcwd()
 
@@ -235,6 +247,7 @@ def hdlworkflow():
         args.part,
         args.board,
         args.synth,
+        args.clk_constraint
     )
     workflow.run()
 

@@ -121,6 +121,11 @@ Additionally, if you wanted to set the board part (`ZCU106`) for your OOC synthe
 hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --synth --part xczu7ev-ffvc1156-2-e --board xilinx.com:zcu106:part0:2.6  
 ```
 
+Additionally, if you wanted to set up some clock constraints for your OOC synthesis:
+```sh
+hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --synth --part xczu7ev-ffvc1156-2-e --board xilinx.com:zcu106:part0:2.6  --clk-constraint clk_a=10 --clk_constraint clk_b=2.000
+```
+
 #### Notes
 + `hdlworkflow` will configure `Vivado` synthesis as [out-of-context](https://docs.amd.com/r/en-US/ug949-vivado-design-methodology/Out-of-Context-Synthesis).
 + A clock constraint of 500 MHz is set up by default to constrain the clock port `clk_i`.
@@ -164,3 +169,6 @@ Path to a file containing a list of all files used to simulate the top design fi
 
 #### `--synth`
 (Optional) `Vivado` will run synthesis instead of simulation. Only used in `Vivado` workflow.
+
+#### `--clk-constraint CLK_PORT=PERIOD_NS`
+(Optional) Clock constraint for `Vivado` project. Only used in `Vivado` workflow. Defaults to `clk_i=2.000` if unspecified.
