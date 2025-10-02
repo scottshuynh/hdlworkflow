@@ -22,7 +22,8 @@ class Vivado:
         board_part: str,
         start_gui: bool,
         synth: bool,
-        clk_constraints: list[str],
+        ooc:bool,
+        clk_period_constraints: list[str],
     ):
         logger.info(f"Initialising {type(self).__name__}...")
         path_to_compile_order = compile_order
@@ -47,7 +48,8 @@ class Vivado:
         self.__board_part: str = board_part
         self.__start_gui: bool = start_gui
         self.__synth:bool = synth
-        self.__clk_constraints: list[str] = clk_constraints
+        self.__ooc:bool = ooc
+        self.__clk_period_constraints: list[str] = clk_period_constraints
 
         if not self.__check_dependencies():
             logger.error("Missing dependencies: vivado")
@@ -69,11 +71,11 @@ class Vivado:
         self.__start_vivado()
 
     def __create_clock_constraint(self):
-        with open("clock_constraint.xdc", "w") as f:
-            if self.__clk_constraints:
-                for clk_constraint in self.__clk_constraints:
-                    clk_port = clk_constraint.split("=")[0]
-                    clk_period = clk_constraint.split("=")[1]
+        if self.__clk_period_constraints:
+            with open("clock_constraint.xdc", "w") as f:
+                for clk_period_constraint in self.__clk_period_constraints:
+                    clk_port = clk_period_constraint.split("=")[0]
+                    clk_period = clk_period_constraint.split("=")[1]
                     try:
                         float(clk_period)
                     except ValueError:
@@ -81,9 +83,6 @@ class Vivado:
                         sys.exit(1)
 
                     f.write(f"create_clock -period {clk_period} -name {clk_port} [get_ports {clk_port}]\n")
-            else:
-                logger.info("Constraining clock port (clk_i) to 500 MHz...")
-                f.write("create_clock -period 2.000 -name clk [get_ports clk_i]\n")
 
     def __generate_setup_viv_prj(self, target: str = "") -> None:
         logger.info("Generating setup script...")
@@ -105,22 +104,29 @@ class Vivado:
             f.write('set lines [split [read -nonewline $fp] "\\n"]\n')
             f.write("close $fp\n")
             f.write("add_files $lines\n")
-            f.write("add_files -fileset constrs_1 clock_constraint.xdc\n")
+
+            if self.__clk_period_constraints:
+                f.write("add_files clock_constraint.xdc\n")
+
             f.write(f"set_property top {self.__top} [current_fileset]\n")
             f.write(f"set_property top {self.__top} [get_filesets sim_1]\n")
             f.write("set_property file_type {VHDL 2008} [get_files *.vhd]\n")
 
             if self.__generics:
+                f.write("set_property -name {steps.synth_design.args.more options} -value {")
+                if self.__ooc:
+                    f.write('-mode out_of_context ')
                 f.write(
-                    f"set_property -name {{steps.synth_design.args.more options}} -value {{-mode out_of_context {'-generic ' + ' -generic '.join(generic for generic in self.__generics)}}} -objects [get_runs synth_1]\n"
+                    f"{'-generic ' + ' -generic '.join(generic for generic in self.__generics)}}} -objects [get_runs synth_1]\n"
                 )
                 f.write(
                     f"set_property -name {{xsim.elaborate.xelab.more_options}} -value {{{'-generic_top ' + ' -generic_top '.join(generic for generic in self.__generics)}}} -objects [get_filesets sim_1]\n"
                 )
             else:
-                f.write(
-                    "set_property -name {steps.synth_design.args.more options} -value {-mode out_of_context} -objects [get_runs synth_1]\n"
-                )
+                if self.__ooc:
+                    f.write(
+                        "set_property -append -name {steps.synth_design.args.more options} -value {-mode out_of_context} -objects [get_runs synth_1]\n"
+                    )
 
             if self.__start_gui:
                 f.write("start_gui\n")
