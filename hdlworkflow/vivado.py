@@ -22,33 +22,30 @@ class Vivado:
         board_part: str,
         start_gui: bool,
         synth: bool,
-        ooc:bool,
+        ooc: bool,
         clk_period_constraints: list[str],
     ):
         logger.info(f"Initialising {type(self).__name__}...")
         path_to_compile_order = compile_order
         if os.path.isabs(path_to_compile_order):
             if not utils.is_file(path_to_compile_order):
-                logger.error(
-                    f"Path to compile order ({path_to_compile_order}) does not exist."
-                )
+                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
                 sys.exit(1)
         else:
             path_to_compile_order = path_to_working_directory + f"/{compile_order}"
             if not utils.is_file(path_to_compile_order):
-                logger.error(
-                    f"Path to compile order ({path_to_compile_order}) does not exist."
-                )
+                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
                 sys.exit(1)
 
         self.__top: str = top
         self.__compile_order: str = path_to_compile_order
+        self.__pwd: str = path_to_working_directory
         self.__generics: list[str] = generics
         self.__part_number: str = part_number
         self.__board_part: str = board_part
         self.__start_gui: bool = start_gui
-        self.__synth:bool = synth
-        self.__ooc:bool = ooc
+        self.__synth: bool = synth
+        self.__ooc: bool = ooc
         self.__clk_period_constraints: list[str] = clk_period_constraints
 
         if not self.__check_dependencies():
@@ -56,8 +53,8 @@ class Vivado:
             logger.error("All dependencies must be found on PATH.")
             sys.exit(1)
 
-        os.makedirs("vivado", exist_ok=True)
-        os.chdir("vivado")
+        os.makedirs(f"{self.__pwd}/vivado", exist_ok=True)
+        os.chdir(f"{self.__pwd}/vivado")
 
     def __check_dependencies(self) -> bool:
         logger.info("Checking dependencies...")
@@ -96,9 +93,7 @@ class Vivado:
             f.write("set obj [current_project]\n")
 
             if self.__board_part:
-                f.write(
-                    f'set_property -name "board_part" -value "{self.__board_part}" -objects $obj\n'
-                )
+                f.write(f'set_property -name "board_part" -value "{self.__board_part}" -objects $obj\n')
 
             f.write(f"set fp [open {self.__compile_order}]\n")
             f.write('set lines [split [read -nonewline $fp] "\\n"]\n')
@@ -115,7 +110,7 @@ class Vivado:
             if self.__generics:
                 f.write("set_property -name {steps.synth_design.args.more options} -value {")
                 if self.__ooc:
-                    f.write('-mode out_of_context ')
+                    f.write("-mode out_of_context ")
                 f.write(
                     f"{'-generic ' + ' -generic '.join(generic for generic in self.__generics)}}} -objects [get_runs synth_1]\n"
                 )
@@ -133,23 +128,23 @@ class Vivado:
             if self.__synth:
                 f.write("reset_run synth_1\n")
                 if not self.__start_gui:
-                    f.write(f"launch_runs synth_1 -jobs {min(os.cpu_count()//2, 8)}\n")
+                    f.write(f"launch_runs synth_1 -jobs {min(os.cpu_count() // 2, 8)}\n")
                     f.write("wait_on_run synth_1\n")
                     f.write('if {[get_property PROGRESS [get_runs synth_1]] != "100%"} {\n')
                     f.write('    error "ERROR: Synthesis failed."\n')
-                    f.write('}\n')
+                    f.write("}\n")
 
-                    f.write(f"launch_runs impl_1 -jobs {min(os.cpu_count()//2, 8)}\n")
+                    f.write(f"launch_runs impl_1 -jobs {min(os.cpu_count() // 2, 8)}\n")
                     f.write("wait_on_run impl_1\n")
                     f.write('if {[get_property PROGRESS [get_runs impl_1]] != "100%"} {\n')
                     f.write('    error "ERROR: Implementation failed."\n')
-                    f.write('}\n')
+                    f.write("}\n")
 
-                    f.write('if {[get_property STATS.WNS [get_runs impl_1]] < 0} {\n')
+                    f.write("if {[get_property STATS.WNS [get_runs impl_1]] < 0} {\n")
                     f.write('    error "ERROR: Timing failed."\n')
-                    f.write('}\n')
+                    f.write("}\n")
                 else:
-                    f.write(f"launch_runs impl_1 -jobs {min(os.cpu_count()//2, 8)}\n")
+                    f.write(f"launch_runs impl_1 -jobs {min(os.cpu_count() // 2, 8)}\n")
             else:
                 f.write("launch_simulation")
 

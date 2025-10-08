@@ -29,16 +29,12 @@ class Nvc:
         path_to_compile_order = compile_order
         if os.path.isabs(path_to_compile_order):
             if not utils.is_file(path_to_compile_order):
-                logger.error(
-                    f"Path to compile order ({path_to_compile_order}) does not exist."
-                )
+                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
                 sys.exit(1)
         else:
             path_to_compile_order = path_to_working_directory + f"/{compile_order}"
             if not utils.is_file(path_to_compile_order):
-                logger.error(
-                    f"Path to compile order ({path_to_compile_order}) does not exist."
-                )
+                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
                 sys.exit(1)
 
         self.__compile_order: str = path_to_compile_order
@@ -46,9 +42,7 @@ class Nvc:
         self.__generics: list[str] = generics
         self.__cocotb_module: str = cocotb_module
         self.__pwd: str = path_to_working_directory
-        self.__pythonpaths: list[str] = utils.prepend_pwd_if_relative(
-            pythonpaths, path_to_working_directory
-        )
+        self.__pythonpaths: list[str] = utils.prepend_pwd_if_relative(pythonpaths, path_to_working_directory)
 
         self.__waveform_viewer: str = ""
         if waveform_viewer:
@@ -62,9 +56,7 @@ class Nvc:
 
         dependencies_met, missing = self.__check_dependencies()
         if not dependencies_met:
-            logger.error(
-                f"Missing dependencies: {' '.join(str(dependency) for dependency in missing)}."
-            )
+            logger.error(f"Missing dependencies: {' '.join(str(dependency) for dependency in missing)}.")
             logger.error("All dependencies must be found on PATH.")
             sys.exit(1)
 
@@ -72,16 +64,14 @@ class Nvc:
             if self.__waveform_viewer == "gtkwave":
                 self.__waveform_file: str = self.__top
                 if self.__generics:
-                    self.__waveform_file += (
-                        "".join(generic for generic in self.__generics) + ".fst"
-                    )
+                    self.__waveform_file += "".join(generic for generic in self.__generics) + ".fst"
                 else:
                     self.__waveform_file += ".fst"
 
                 self.__waveform_viewer_obj = Gtkwave(self.__waveform_file)
 
-        os.makedirs("nvc", exist_ok=True)
-        os.chdir("nvc")
+        os.makedirs(f"{self.__pwd}/nvc", exist_ok=True)
+        os.chdir(f"{self.__pwd}/nvc")
 
     def __check_dependencies(self) -> tuple[bool, list[str]]:
         logger.info("Checking dependencies...")
@@ -155,9 +145,7 @@ class Nvc:
 
     def __run_cocotb(self, major_ver: int) -> None:
         logger.info("Running cocotb sim...")
-        libpython_loc = subprocess.run(
-            ["cocotb-config", "--libpython"], capture_output=True, text=True
-        ).stdout.strip()
+        libpython_loc = subprocess.run(["cocotb-config", "--libpython"], capture_output=True, text=True).stdout.strip()
         cocotb_vhpi = subprocess.run(
             ["cocotb-config", "--lib-name-path", "vhpi", "nvc"],
             capture_output=True,
@@ -165,10 +153,7 @@ class Nvc:
         ).stdout.strip()
 
         env = os.environ.copy()
-        env["PYTHONPATH"] = (
-            f"{':'.join(str(path) for path in self.__pythonpaths)}:"
-            + env.get("PYTHONPATH", "")
-        )
+        env["PYTHONPATH"] = f"{':'.join(str(path) for path in self.__pythonpaths)}:" + env.get("PYTHONPATH", "")
         env["LIBPYTHON_LOC"] = libpython_loc
         if major_ver >= 2:
             pygpi_python_bin = subprocess.run(

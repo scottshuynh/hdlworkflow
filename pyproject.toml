@@ -17,11 +17,8 @@ classifiers = [
     "Topic :: Software Development :: Testing",
     ]
 
-[project.scripts]
-hdlworkflow = "hdlworkflow.hdlworkflow:hdlworkflow"
+scripts.hdlworkflow = "hdlworkflow.hdlworkflow:hdlworkflow"
 
-[tool.ruff.lint]
-select = [
-    # pyupgrade
-    "UP"
-]
+[tool.ruff]
+line-length = 120
+lint.select = ["UP"]
