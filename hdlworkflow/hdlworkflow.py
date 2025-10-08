@@ -38,8 +38,9 @@ class HdlWorkflow:
         Args:
             simulator (str): Simulator of choice
             top (str): Name of top design
-            path_to_compile_order (str): Path to a file listing HDL source files in compilation order for simulation
-            path_to_working_directory (str): Path to directory for hdlworkflow to output artefacts
+            path_to_compile_order (str): Path to a file listing HDL source files in compilation order for simulation.
+            path_to_working_directory (str): Path to hdlworkflow working directory. Any relative paths specified for
+                any hdlworkflow argument will be relative to this directory.
             generic (list[str], optional): Top will elaborate with specified generics. Must be in form: GENERIC=VALUE. Defaults to [].
             cocotb (str, optional): Name of cocotb test module. Defaults to "".
             pythonpaths (str, optional): PYTHONPATH environment variable. Defaults to "".
