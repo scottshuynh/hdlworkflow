@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 class Vivado:
-    """Run simulations or OOC synthesis using Vivado."""
+    """Run simulations or synthesis using Vivado."""
 
     def __init__(
         self,

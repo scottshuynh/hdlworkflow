@@ -128,27 +128,27 @@ hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --sy
 
 If you want to run an OOC synthesis + implementation on `design` instead of simulating:
 ```sh
-hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --synth --ooc
+hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --impl --ooc
 ```
 
-Additionally, if you wanted to set up some clock period constraints for your OOC synthesis:
+Additionally, if you wanted to set up some clock period constraints for your OOC synthesis + implementation:
 ```sh
-hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --synth --ooc --clk-period-constraint clk_a=10 --clk-period-constraint clk_b=2.000
+hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --impl --ooc --clk-period-constraint clk_a=10 --clk-period-constraint clk_b=2.000
 ```
 
-Additionally, if you wanted to set the part number `xczu7ev-ffvc1156-2-e` for your OOC synthesis:
+Additionally, if you wanted to set the part number `xczu7ev-ffvc1156-2-e` for your OOC synthesis + implementation:
 ```sh
-hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --synth --ooc --clk-period-constraint clk_a=10 --clk-period-constraint clk_b=2.000 --part xczu7ev-ffvc1156-2-e
+hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --impl --ooc --clk-period-constraint clk_a=10 --clk-period-constraint clk_b=2.000 --part xczu7ev-ffvc1156-2-e
 ```
 
-Additionally, if you wanted to set the board part (`ZCU106`) for your OOC synthesis:
+Additionally, if you wanted to set the board part (`ZCU106`) for your OOC synthesis + implementation:
 ```sh
-hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --synth --ooc --clk-period-constraint clk_a=10 --clk-period-constraint clk_b=2.000 --part xczu7ev-ffvc1156-2-e --board xilinx.com:zcu106:part0:2.6  
+hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --impl --ooc --clk-period-constraint clk_a=10 --clk-period-constraint clk_b=2.000 --part xczu7ev-ffvc1156-2-e --board xilinx.com:zcu106:part0:2.6  
 ```
 
 #### Notes
 + `hdlworkflow` will configure `Vivado` with [Artix-7](https://www.amd.com/en/products/adaptive-socs-and-fpgas/fpga/artix-7.html) as the default part number. Use `--part` and/or `--board` positional arguments to specify target hardware.
-+ When running synthesis, the compile order file should contain a list of ordered source and constraint files.
++ When running synthesis, the compile order file should contain all requisite files used to synthesise the design: a list of ordered source, vendor-specific files and constraint files.
 + When running synthesis, `Vivado` will default to use eight logical cores or half of the number of available logical cores, whichever is smaller.
 + `Vivado` will use its native waveform viewer instead of third party waveform viewers. 
 

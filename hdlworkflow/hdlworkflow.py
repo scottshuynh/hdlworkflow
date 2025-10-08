@@ -10,14 +10,14 @@ from hdlworkflow.logging import set_log_level, LoggingLevel
 
 
 logger = logging.getLogger(__name__)
-supported_simulators: set[str] = set(["nvc", "vivado", "riviera"])
+supported_eda_tools: set[str] = set(["nvc", "vivado", "riviera"])
 supported_waveform_viewers: set[str] = set(["gtkwave", "vivado", "riviera"])
 
 
 class HdlWorkflow:
     def __init__(
         self,
-        simulator: str,
+        eda_tool: str,
         top: str,
         path_to_compile_order: str,
         path_to_working_directory: str,
@@ -33,10 +33,15 @@ class HdlWorkflow:
         ooc: bool = False,
         clk_period_constraint: list[str] = [],
     ):
-        """Runs analyse, elaborate, simulate using the specified simulator.
+        """
+        Runs a workflow for the specified EDA tool.
+            Simulation tools run: analyse, elaborate, simulate.
+            Synthesis tools run: symthesis, place and route, generate bitstream.
+
+                Default behaviour is simulation. Running synthesis will require use of arguments - see below.
 
         Args:
-            simulator (str): Simulator of choice
+            eda_tool (str): EDA tool of choice
             top (str): Name of top design
             path_to_compile_order (str): Path to a file listing HDL source files in compilation order for simulation.
             path_to_working_directory (str): Path to hdlworkflow working directory. Any relative paths specified for
@@ -53,7 +58,7 @@ class HdlWorkflow:
             ooc (bool, optional): Vivado synthesis mode set to out-of-context. Defaults to False.
             clk_period_constraint (list[str], optional): Vivado clock period constraints. Must be in form: CLK_PORT=PERIOD_NS. Defaults to [].
         """
-        self.simulator = simulator.lower()
+        self.eda_tool = eda_tool.lower()
         self.top = top
         self.path_to_compile_order = path_to_compile_order
         self.generic = generic
@@ -69,8 +74,8 @@ class HdlWorkflow:
         self.ooc = ooc
         self.clk_period_constraint = clk_period_constraint
 
-    def is_supported_simulator(self, simulator: str) -> bool:
-        if simulator in supported_simulators:
+    def is_supported_eda_tool(self, eda_tool: str) -> bool:
+        if eda_tool in supported_eda_tools:
             return True
         return False
 
@@ -81,8 +86,8 @@ class HdlWorkflow:
 
     def run(self):
         logger.info("Starting hdlworkflow...")
-        if self.is_supported_simulator(self.simulator):
-            if self.simulator == "nvc":
+        if self.is_supported_eda_tool(self.eda_tool):
+            if self.eda_tool == "nvc":
                 if self.wave and not self.is_supported_waveform_viewer(self.wave):
                     logger.error(
                         f"Unsupported waveform viewer: {self.wave}. Expecting: {' '.join(viewer for viewer in supported_waveform_viewers)}"
@@ -99,7 +104,7 @@ class HdlWorkflow:
                 )
                 nvc.simulate()
 
-            elif self.simulator == "vivado":
+            elif self.eda_tool == "vivado":
                 if self.cocotb:
                     logger.error("Vivado is not compatible with cocotb simulations.")
                     sys.exit(1)
@@ -126,7 +131,7 @@ class HdlWorkflow:
                 )
                 vivado.start()
 
-            elif self.simulator == "riviera":
+            elif self.eda_tool == "riviera":
                 if self.wave and not self.is_supported_waveform_viewer(self.wave):
                     logger.error(
                         f"Unsupported waveform viewer: {self.wave}. Expecting: {' '.join(viewer for viewer in supported_waveform_viewers)}."
@@ -144,7 +149,7 @@ class HdlWorkflow:
                 riviera.simulate()
         else:
             logger.error(
-                f"Unsupported simulator. Got: {self.simulator}. Expecting: {' '.join(simulator for simulator in supported_simulators)}"
+                f"Unsupported eda_tool. Got: {self.eda_tool}. Expecting: {' '.join(eda_tool for eda_tool in supported_eda_tools)}"
             )
             sys.exit(1)
 
@@ -152,22 +157,22 @@ class HdlWorkflow:
 def hdlworkflow():
     parser = argparse.ArgumentParser(
         "hdlworkflow",
-        description="Streamline HDL simulations.",
+        description="Streamlining FPGA EDA tool workflows.",
     )
     parser.add_argument(
-        "simulator",
+        "eda_tool",
         type=str,
-        help=f"Specified HDL simulator to run. Supported simulators: {' '.join(simulator for simulator in supported_simulators)}.",
+        help=f"Specified EDA tool to run. Supported EDA tools: {' '.join(eda_tool for eda_tool in supported_eda_tools)}.",
     )
     parser.add_argument(
         "top",
         type=str,
-        help="Specified top design file to simulate.",
+        help="Specified top design file.",
     )
     parser.add_argument(
         "path_to_compile_order",
         type=str,
-        help="Specified path to a file containing a list of all files used to simulate the top design file.",
+        help="Specified path to a file containing a list of all requisite files for the top design.",
     )
     parser.add_argument(
         "--wave",
@@ -260,7 +265,7 @@ def hdlworkflow():
             sys.exit(1)
 
     workflow = HdlWorkflow(
-        args.simulator,
+        args.eda_tool,
         args.top,
         args.path_to_compile_order,
         path_to_working_directory,
