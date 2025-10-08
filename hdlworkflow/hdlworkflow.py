@@ -28,8 +28,10 @@ class HdlWorkflow:
         part: str = "",
         board: str = "",
         synth: bool = False,
+        impl: bool = False,
+        bitstream: bool = False,
         ooc: bool = False,
-        clk_period_constraint: list[str] = []
+        clk_period_constraint: list[str] = [],
     ):
         """Runs analyse, elaborate, simulate using the specified simulator.
 
@@ -45,6 +47,8 @@ class HdlWorkflow:
             part (str, optional): Vivado part number to set up Vivado project. Defaults to "".
             board (str, optional): Vivado board part to set up Vivado project. Defaults to "".
             synth (bool, optional): Vivado starts synthesis instead of simulation. Defaults to False.
+            impl (bool, optional): Vivado starts synthesis + implementation instead of simulation. Defaults to False.
+            bitstream (bool, optional): Vivado starts synthesis + implementation + generate bitstream instead of simulation. Defaults to False.
             ooc (bool, optional): Vivado synthesis mode set to out-of-context. Defaults to False.
             clk_period_constraint (list[str], optional): Vivado clock period constraints. Must be in form: CLK_PORT=PERIOD_NS. Defaults to [].
         """
@@ -59,6 +63,8 @@ class HdlWorkflow:
         self.part = part.lower()
         self.board = board.lower()
         self.synth = synth
+        self.impl = impl
+        self.bitstream = bitstream
         self.ooc = ooc
         self.clk_period_constraint = clk_period_constraint
 
@@ -99,9 +105,7 @@ class HdlWorkflow:
 
                 if self.wave:
                     if self.wave != "vivado":
-                        logger.warning(
-                            f"Vivado will open it's GUI. Ignoring waveform viewer argument: {self.wave}."
-                        )
+                        logger.warning(f"Vivado will open it's GUI. Ignoring waveform viewer argument: {self.wave}.")
                     else:
                         logger.info("Vivado will open it's GUI.")
 
@@ -114,6 +118,8 @@ class HdlWorkflow:
                     self.board,
                     bool(self.wave),
                     self.synth,
+                    self.impl,
+                    self.bitstream,
                     self.ooc,
                     self.clk_period_constraint,
                 )
@@ -214,12 +220,22 @@ def hdlworkflow():
     parser.add_argument(
         "--synth",
         action="store_true",
-        help="Specifies tool to run synthesis instead of simulation. Only for synthesis tools."
+        help="Specifies tool to run synthesis instead of simulation. Only for synthesis tools.",
+    )
+    parser.add_argument(
+        "--impl",
+        action="store_true",
+        help="Specifies tool to run implementation instead of simulation. Only for synthesis tools.",
+    )
+    parser.add_argument(
+        "--bitstream",
+        action="store_true",
+        help="Specifies tool to generate a bitfile instead of simulation. Only for synthesis tools.",
     )
     parser.add_argument(
         "--ooc",
         action="store_true",
-        help="Specifies tool to set synthesis mode to out-of-context. Only for synthesis tools."
+        help="Specifies tool to set synthesis mode to out-of-context. Only for synthesis tools.",
     )
     parser.add_argument(
         "--clk-period-constraint",
@@ -239,9 +255,7 @@ def hdlworkflow():
         if args.verbose >= 0 and args.verbose <= 2:
             set_log_level(LoggingLevel(args.verbose))
         else:
-            logger.error(
-                f"Invalid verbose level. Got: {args.verbose}. Expecting: 0, 1, 2"
-            )
+            logger.error(f"Invalid verbose level. Got: {args.verbose}. Expecting: 0, 1, 2")
             sys.exit(1)
 
     workflow = HdlWorkflow(
@@ -256,8 +270,10 @@ def hdlworkflow():
         args.part,
         args.board,
         args.synth,
+        args.impl,
+        args.bitstream,
         args.ooc,
-        args.clk_period_constraint
+        args.clk_period_constraint,
     )
     workflow.run()
 

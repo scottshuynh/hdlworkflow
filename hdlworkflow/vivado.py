@@ -22,6 +22,8 @@ class Vivado:
         board_part: str,
         start_gui: bool,
         synth: bool,
+        impl: bool,
+        bitstream: bool,
         ooc: bool,
         clk_period_constraints: list[str],
     ):
@@ -45,6 +47,8 @@ class Vivado:
         self.__board_part: str = board_part
         self.__start_gui: bool = start_gui
         self.__synth: bool = synth
+        self.__impl: bool = impl
+        self.__bitstream: bool = bitstream
         self.__ooc: bool = ooc
         self.__clk_period_constraints: list[str] = clk_period_constraints
 
@@ -125,7 +129,7 @@ class Vivado:
 
             if self.__start_gui:
                 f.write("start_gui\n")
-            if self.__synth:
+            if self.__synth | self.__impl | self.__bitstream:
                 f.write("reset_run synth_1\n")
                 if not self.__start_gui:
                     f.write(f"launch_runs synth_1 -jobs {min(os.cpu_count() // 2, 8)}\n")
@@ -134,17 +138,26 @@ class Vivado:
                     f.write('    error "ERROR: Synthesis failed."\n')
                     f.write("}\n")
 
-                    f.write(f"launch_runs impl_1 -jobs {min(os.cpu_count() // 2, 8)}\n")
-                    f.write("wait_on_run impl_1\n")
-                    f.write('if {[get_property PROGRESS [get_runs impl_1]] != "100%"} {\n')
-                    f.write('    error "ERROR: Implementation failed."\n')
-                    f.write("}\n")
+                    if self.__impl | self.__bitstream:
+                        f.write(f"launch_runs impl_1 -jobs {min(os.cpu_count() // 2, 8)}\n")
+                        f.write("wait_on_run impl_1\n")
+                        f.write('if {[get_property PROGRESS [get_runs impl_1]] != "100%"} {\n')
+                        f.write('    error "ERROR: Implementation failed."\n')
+                        f.write("}\n")
 
-                    f.write("if {[get_property STATS.WNS [get_runs impl_1]] < 0} {\n")
-                    f.write('    error "ERROR: Timing failed."\n')
-                    f.write("}\n")
+                        f.write("if {[get_property STATS.WNS [get_runs impl_1]] < 0} {\n")
+                        f.write('    error "ERROR: Timing failed."\n')
+                        f.write("}\n")
+                    if self.__bitstream:
+                        f.write("open_run impl_1\n")
+                        f.write(f"write_bitstream -force {self.__pwd}/{self.__top}.bit")
                 else:
-                    f.write(f"launch_runs impl_1 -jobs {min(os.cpu_count() // 2, 8)}\n")
+                    if self.__bitstream:
+                        f.write(f"launch_runs impl_1 -to_step write_bitstream -jobs {min(os.cpu_count() // 2, 8)}\n")
+                    elif self.__impl:
+                        f.write(f"launch_runs impl_1 -jobs {min(os.cpu_count() // 2, 8)}\n")
+                    elif self.__synth:
+                        f.write(f"launch_runs synth_1 -jobs {min(os.cpu_count() // 2, 8)}\n")
             else:
                 f.write("launch_simulation")
 
