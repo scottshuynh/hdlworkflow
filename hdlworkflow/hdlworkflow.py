@@ -46,7 +46,8 @@ class HdlWorkflow:
             path_to_compile_order (str): Path to a file listing HDL source files in compilation order for simulation.
             path_to_working_directory (str): Path to hdlworkflow working directory. Any relative paths specified for
                 any hdlworkflow argument will be relative to this directory.
-            generic (list[str], optional): Top will elaborate with specified generics. Must be in form: GENERIC=VALUE. Defaults to [].
+            generic (list[str], optional): Top will elaborate with specified generics. Must be in form: GENERIC=VALUE.
+                Defaults to [].
             cocotb (str, optional): Name of cocotb test module. Defaults to "".
             pythonpaths (str, optional): PYTHONPATH environment variable. Defaults to "".
             wave (str, optional): Waveform viewer of choice. Defaults to "".
@@ -54,9 +55,11 @@ class HdlWorkflow:
             board (str, optional): Vivado board part to set up Vivado project. Defaults to "".
             synth (bool, optional): Vivado starts synthesis instead of simulation. Defaults to False.
             impl (bool, optional): Vivado starts synthesis + implementation instead of simulation. Defaults to False.
-            bitstream (bool, optional): Vivado starts synthesis + implementation + generate bitstream instead of simulation. Defaults to False.
+            bitstream (bool, optional): Vivado starts synthesis + implementation + generate bitstream instead of
+                simulation. Defaults to False.
             ooc (bool, optional): Vivado synthesis mode set to out-of-context. Defaults to False.
-            clk_period_constraint (list[str], optional): Vivado clock period constraints. Must be in form: CLK_PORT=PERIOD_NS. Defaults to [].
+            clk_period_constraint (list[str], optional): Vivado clock period constraints.
+                Must be in form: CLK_PORT=PERIOD_NS. Defaults to [].
         """
         self.eda_tool = eda_tool.lower()
         self.top = top
@@ -90,7 +93,8 @@ class HdlWorkflow:
             if self.eda_tool == "nvc":
                 if self.wave and not self.is_supported_waveform_viewer(self.wave):
                     logger.error(
-                        f"Unsupported waveform viewer: {self.wave}. Expecting: {' '.join(viewer for viewer in supported_waveform_viewers)}"
+                        f"Unsupported waveform viewer: {self.wave}. Expecting: "
+                        + " ".join(viewer for viewer in supported_waveform_viewers)
                     )
                     sys.exit(1)
                 nvc = Nvc(
@@ -134,7 +138,8 @@ class HdlWorkflow:
             elif self.eda_tool == "riviera":
                 if self.wave and not self.is_supported_waveform_viewer(self.wave):
                     logger.error(
-                        f"Unsupported waveform viewer: {self.wave}. Expecting: {' '.join(viewer for viewer in supported_waveform_viewers)}."
+                        f"Unsupported waveform viewer: {self.wave}. Expecting: "
+                        + " ".join(viewer for viewer in supported_waveform_viewers)
                     )
                     sys.exit(1)
                 riviera = Riviera(
@@ -149,7 +154,8 @@ class HdlWorkflow:
                 riviera.simulate()
         else:
             logger.error(
-                f"Unsupported eda_tool. Got: {self.eda_tool}. Expecting: {' '.join(eda_tool for eda_tool in supported_eda_tools)}"
+                f"Unsupported eda_tool. Got: {self.eda_tool}. Expecting: "
+                + " ".join(eda_tool for eda_tool in supported_eda_tools)
             )
             sys.exit(1)
 
@@ -162,7 +168,8 @@ def hdlworkflow():
     parser.add_argument(
         "eda_tool",
         type=str,
-        help=f"Specified EDA tool to run. Supported EDA tools: {' '.join(eda_tool for eda_tool in supported_eda_tools)}.",
+        help="Specified EDA tool to run. Supported EDA tools: "
+        + " ".join(eda_tool for eda_tool in supported_eda_tools),
     )
     parser.add_argument(
         "top",
@@ -179,7 +186,8 @@ def hdlworkflow():
         default="",
         type=str,
         metavar="WAVEFORM_VIEWER",
-        help=f"Specified waveform viewer to run at the end of the simulation. Supported waveform viewers: {' '.join(viewer for viewer in supported_waveform_viewers)}.",
+        help=f"Specified waveform viewer to run at the end of the simulation. Supported waveform viewers: "
+        + " ".join(viewer for viewer in supported_waveform_viewers),
     )
     parser.add_argument(
         "-g",
@@ -248,7 +256,8 @@ def hdlworkflow():
         action="append",
         type=str,
         metavar="CLK_PORT=PERIOD_NS",
-        help="Specified clock period constraint for synthesis. Only for synthesis tools. Must take the form: CLK_PORT=PERIOD_NS.",
+        help="Specified clock period constraint for synthesis. Only for synthesis tools. Must take the form: "
+        + "CLK_PORT=PERIOD_NS.",
     )
     args = parser.parse_args()
     path_to_working_directory = os.getcwd()

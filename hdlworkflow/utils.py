@@ -36,11 +36,15 @@ def __get_semantic_version(ver: str) -> tuple[int, int, int]:
 
 
 def is_cocotb_test_pass(xml_file: str) -> bool:
-    logger.info("Checking cocotb pass or fail...")
-    tree = ElementTree.parse(xml_file)
-    root = tree.getroot()
-    num_failures = 0
-    for failure in root.iter("failure"):
-        num_failures += 1
+    if os.path.isfile(xml_file):
+        logger.info("Checking cocotb pass or fail...")
+        tree = ElementTree.parse(xml_file)
+        root = tree.getroot()
+        num_failures = 0
+        for _ in root.iter("failure"):
+            num_failures += 1
 
-    return num_failures == 0
+        return num_failures == 0
+    else:
+        logger.error(f"Unable to find {xml_file}. Cocotb test incomplete.")
+        return False
