@@ -20,7 +20,7 @@ class Riviera:
         compile_order: str,
         generics: list[str],
         cocotb_module: str,
-        waveform_viewer: str,
+        gui: bool,
         path_to_working_directory: str,
         pythonpaths: list[str],
     ):
@@ -43,7 +43,7 @@ class Riviera:
         self.__pwd: str = path_to_working_directory
         self.__pythonpaths: list[str] = utils.prepend_pwd_if_relative(pythonpaths, path_to_working_directory)
 
-        self.__waveform_viewer: str = waveform_viewer
+        self.__gui: bool = gui
         self.__waveform_file: str = self.__top
         if generics:
             self.__waveform_file += "".join(generic for generic in self.__generics) + ".awc"
@@ -128,7 +128,7 @@ class Riviera:
         env["LIBPYTHON_LOC"] = libpython_loc
         env["GPI_EXTRA"] = gpi_extra
 
-        if not self.__waveform_viewer:
+        if not self.__gui:
             env["COCOTB_ANSI_OUTPUT"] = "1"
         if major_ver >= 2:
             pygpi_python_bin = subprocess.run(
@@ -216,7 +216,7 @@ class Riviera:
                 elif self.__top_type == "verilog":
                     sim_cmd += f"-pli {vpi} "
 
-                if self.__waveform_viewer:
+                if self.__gui:
                     sim_cmd += "-interceptcoutput "
 
             generics: str = ""
@@ -237,7 +237,7 @@ class Riviera:
             f.write("}\n")
             f.write("run -all\n")
 
-            if not self.__waveform_viewer:
+            if not self.__gui:
                 f.write("endsim\n")
                 f.write("exit\n")
 
@@ -250,7 +250,7 @@ class Riviera:
             env = env = os.environ.copy()
 
         logger.info("Starting Riviera-PRO...")
-        if self.__waveform_viewer:
+        if self.__gui:
             command = ["vsim", "-do", "runsim.tcl"]
         else:
             command = ["vsimsa", "-do", "runsim.tcl"]

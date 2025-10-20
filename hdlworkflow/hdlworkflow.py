@@ -11,7 +11,7 @@ from hdlworkflow.logging import set_log_level, LoggingLevel
 
 logger = logging.getLogger(__name__)
 supported_eda_tools: set[str] = set(["nvc", "vivado", "riviera"])
-supported_waveform_viewers: set[str] = set(["gtkwave", "vivado", "riviera"])
+supported_waveform_viewers: set[str] = set(["gtkwave"])
 
 
 class HdlWorkflow:
@@ -24,7 +24,8 @@ class HdlWorkflow:
         generic: list[str] = [],
         cocotb: str = "",
         pythonpaths: str = "",
-        wave: str = "",
+        gui: bool = False,
+        wave: str = "gtkwave",
         part: str = "",
         board: str = "",
         synth: bool = False,
@@ -36,7 +37,7 @@ class HdlWorkflow:
         """
         Runs a workflow for the specified EDA tool.
             Simulation tools run: analyse, elaborate, simulate.
-            Synthesis tools run: symthesis, place and route, generate bitstream.
+            Synthesis tools run: synthesis, place and route, generate bitstream.
 
                 Default behaviour is simulation. Running synthesis will require use of arguments - see below.
 
@@ -50,7 +51,8 @@ class HdlWorkflow:
                 Defaults to [].
             cocotb (str, optional): Name of cocotb test module. Defaults to "".
             pythonpaths (str, optional): PYTHONPATH environment variable. Defaults to "".
-            wave (str, optional): Waveform viewer of choice. Defaults to "".
+            gui (bool, optional): Opens the EDA tool GUI, if supported. Defaults to False.
+            wave (str, optional): Waveform viewer of choice. Defaults to "gtkwave".
             part (str, optional): Vivado part number to set up Vivado project. Defaults to "".
             board (str, optional): Vivado board part to set up Vivado project. Defaults to "".
             synth (bool, optional): Vivado starts synthesis instead of simulation. Defaults to False.
@@ -68,6 +70,7 @@ class HdlWorkflow:
         self.cocotb = cocotb
         self.path_to_working_directory = path_to_working_directory
         self.pythonpaths = pythonpaths
+        self.gui = gui
         self.wave = wave.lower()
         self.part = part.lower()
         self.board = board.lower()
@@ -90,21 +93,25 @@ class HdlWorkflow:
     def run(self):
         logger.info("Starting hdlworkflow...")
         if self.is_supported_eda_tool(self.eda_tool):
+            wave = ""
             if self.eda_tool == "nvc":
-                if self.wave and not self.is_supported_waveform_viewer(self.wave):
+                if self.gui and not self.is_supported_waveform_viewer(self.wave):
                     logger.error(
                         f"Unsupported waveform viewer: {self.wave}. Expecting: "
                         + " ".join(viewer for viewer in supported_waveform_viewers)
                     )
                     sys.exit(1)
+                elif self.gui:
+                    wave = self.wave
+
                 nvc = Nvc(
-                    self.top,
-                    self.path_to_compile_order,
-                    self.generic,
-                    self.cocotb,
-                    self.wave,
-                    self.path_to_working_directory,
-                    self.pythonpaths,
+                    top=self.top,
+                    compile_order=self.path_to_compile_order,
+                    generics=self.generic,
+                    cocotb_module=self.cocotb,
+                    waveform_viewer=wave,
+                    path_to_working_directory=self.path_to_working_directory,
+                    pythonpaths=self.pythonpaths,
                 )
                 nvc.simulate()
 
@@ -113,43 +120,37 @@ class HdlWorkflow:
                     logger.error("Vivado is not compatible with cocotb simulations.")
                     sys.exit(1)
 
-                if self.wave:
-                    if self.wave != "vivado":
-                        logger.warning(f"Vivado will open it's GUI. Ignoring waveform viewer argument: {self.wave}.")
-                    else:
-                        logger.info("Vivado will open it's GUI.")
+                if self.gui:
+                    logger.info("Vivado will open the GUI.")
 
                 vivado = Vivado(
-                    self.top,
-                    self.path_to_compile_order,
-                    self.generic,
-                    self.path_to_working_directory,
-                    self.part,
-                    self.board,
-                    bool(self.wave),
-                    self.synth,
-                    self.impl,
-                    self.bitstream,
-                    self.ooc,
-                    self.clk_period_constraint,
+                    top=self.top,
+                    compile_order=self.path_to_compile_order,
+                    generics=self.generic,
+                    path_to_working_directory=self.path_to_working_directory,
+                    part_number=self.part,
+                    board_part=self.board,
+                    start_gui=self.gui,
+                    synth=self.synth,
+                    impl=self.impl,
+                    bitstream=self.bitstream,
+                    ooc=self.ooc,
+                    clk_period_constraints=self.clk_period_constraint,
                 )
                 vivado.start()
 
             elif self.eda_tool == "riviera":
-                if self.wave and not self.is_supported_waveform_viewer(self.wave):
-                    logger.error(
-                        f"Unsupported waveform viewer: {self.wave}. Expecting: "
-                        + " ".join(viewer for viewer in supported_waveform_viewers)
-                    )
-                    sys.exit(1)
+                if self.gui:
+                    logger.info("Riviera-PRO will open the GUI.")
+
                 riviera = Riviera(
-                    self.top,
-                    self.path_to_compile_order,
-                    self.generic,
-                    self.cocotb,
-                    self.wave,
-                    self.path_to_working_directory,
-                    self.pythonpaths,
+                    top=self.top,
+                    compile_order=self.path_to_compile_order,
+                    generics=self.generic,
+                    cocotb_module=self.cocotb,
+                    gui=self.gui,
+                    path_to_working_directory=self.path_to_working_directory,
+                    pythonpaths=self.pythonpaths,
                 )
                 riviera.simulate()
         else:
@@ -168,25 +169,29 @@ def hdlworkflow():
     parser.add_argument(
         "eda_tool",
         type=str,
-        help="Specified EDA tool to run. Supported EDA tools: "
-        + " ".join(eda_tool for eda_tool in supported_eda_tools),
+        help="EDA tool to run. Supported EDA tools: " + " ".join(eda_tool for eda_tool in supported_eda_tools),
     )
     parser.add_argument(
         "top",
         type=str,
-        help="Specified top design file.",
+        help="Top design file.",
     )
     parser.add_argument(
         "path_to_compile_order",
         type=str,
-        help="Specified path to a file containing a list of all requisite files for the top design.",
+        help="Path to a file containing a list of all requisite files for the top design.",
+    )
+    parser.add_argument(
+        "--gui",
+        action="store_true",
+        help="Opens the EDA tool GUI.",
     )
     parser.add_argument(
         "--wave",
-        default="",
+        default="gtkwave",
         type=str,
         metavar="WAVEFORM_VIEWER",
-        help=f"Specified waveform viewer to run at the end of the simulation. Supported waveform viewers: "
+        help=f"Waveform viewer for tools that do not have a native waveform viewer. Supported waveform viewers: "
         + " ".join(viewer for viewer in supported_waveform_viewers),
     )
     parser.add_argument(
@@ -195,7 +200,7 @@ def hdlworkflow():
         action="append",
         type=str,
         metavar="GENERIC=VALUE",
-        help="Specified generics used to elaborate top design file. Must take the form: GENERIC=VALUE.",
+        help="Generics used to elaborate top design file. Must take the form: GENERIC=VALUE.",
     )
     parser.add_argument(
         "-v",
@@ -208,7 +213,7 @@ def hdlworkflow():
         "--cocotb",
         type=str,
         metavar="COCOTB_MODULE",
-        help="Specified cocotb test module to run during simulation.",
+        help="Cocotb test module to run during simulation.",
     )
     parser.add_argument(
         "--pythonpath",
@@ -222,41 +227,41 @@ def hdlworkflow():
         default="",
         type=str,
         metavar="PART_NUMBER",
-        help="Specified hardware part number for synthesis. Only for synthesis tools.",
+        help="Hardware part number for synthesis. Only for synthesis tools.",
     )
     parser.add_argument(
         "--board",
         default="",
         type=str,
         metavar="BOARD",
-        help="Specified hardware board for synthesis. Only for synthesis tools.",
+        help="Hardware board for synthesis. Only for synthesis tools.",
     )
     parser.add_argument(
         "--synth",
         action="store_true",
-        help="Specifies tool to run synthesis instead of simulation. Only for synthesis tools.",
+        help="Specifies EDA tool to run synthesis instead of simulation. Only for synthesis tools.",
     )
     parser.add_argument(
         "--impl",
         action="store_true",
-        help="Specifies tool to run implementation instead of simulation. Only for synthesis tools.",
+        help="Specifies EDA tool to run implementation instead of simulation. Only for synthesis tools.",
     )
     parser.add_argument(
         "--bitstream",
         action="store_true",
-        help="Specifies tool to generate a bitfile instead of simulation. Only for synthesis tools.",
+        help="Specifies EDA tool to generate a bitfile instead of simulation. Only for synthesis tools.",
     )
     parser.add_argument(
         "--ooc",
         action="store_true",
-        help="Specifies tool to set synthesis mode to out-of-context. Only for synthesis tools.",
+        help="Specifies EDA tool to set synthesis mode to out-of-context. Only for synthesis tools.",
     )
     parser.add_argument(
         "--clk-period-constraint",
         action="append",
         type=str,
         metavar="CLK_PORT=PERIOD_NS",
-        help="Specified clock period constraint for synthesis. Only for synthesis tools. Must take the form: "
+        help="Clock period constraint for synthesis. Only for synthesis tools. Must take the form: "
         + "CLK_PORT=PERIOD_NS.",
     )
     args = parser.parse_args()
@@ -274,21 +279,22 @@ def hdlworkflow():
             sys.exit(1)
 
     workflow = HdlWorkflow(
-        args.eda_tool,
-        args.top,
-        args.path_to_compile_order,
-        path_to_working_directory,
-        args.generic,
-        args.cocotb,
-        pythonpaths,
-        args.wave,
-        args.part,
-        args.board,
-        args.synth,
-        args.impl,
-        args.bitstream,
-        args.ooc,
-        args.clk_period_constraint,
+        eda_tool=args.eda_tool,
+        top=args.top,
+        path_to_compile_order=args.path_to_compile_order,
+        path_to_working_directory=path_to_working_directory,
+        generic=args.generic,
+        cocotb=args.cocotb,
+        pythonpaths=pythonpaths,
+        gui=args.gui,
+        wave=args.wave,
+        part=args.part,
+        board=args.board,
+        synth=args.synth,
+        impl=args.impl,
+        bitstream=args.bitstream,
+        ooc=args.ooc,
+        clk_period_constraint=args.clk_period_constraint,
     )
     workflow.run()
 

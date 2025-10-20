@@ -52,7 +52,7 @@ hdlworkflow nvc design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4
 
 If a waveform viewer, gtkwave, is required:
 ```sh
-hdlworkflow nvc design_tb compile_order.txt --wave gtkwave
+hdlworkflow nvc design_tb compile_order.txt --gui --wave gtkwave
 ```
 
 If the testbench `design_tb` is a cocotb test module, and the top level design is called `design`:
@@ -80,7 +80,7 @@ hdlworkflow riviera design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4
 
 If a GUI is required to view waveforms:
 ```sh
-hdlworkflow riviera design_tb compile_order.txt --wave riviera
+hdlworkflow riviera design_tb compile_order.txt --gui
 ```
 
 If the testbench `design_tb` is a cocotb test module, and the top level design is called `design`:
@@ -104,6 +104,11 @@ hdlworkflow vivado design_tb compile_order.txt
 If `design_tb` requires `DATA_WIDTH` and `ADDR_WIDTH` generic declared:
 ```sh
 hdlworkflow vivado design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4
+```
+
+If a GUI is required to view waveforms:
+```sh
+hdlworkflow vivado design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --gui
 ```
 
 If you want to run synthesis on `design` instead of simulating:
@@ -164,8 +169,11 @@ Entity name of top design file to simulate.
 Path to a file containing a list of all files used to simulate the top design file.
 
 ### Options
+#### `--gui`
+(Optional) Opens the EDA tool GUI, if supported.
+
 #### `--wave WAVEFORM_VIEWER`
-(Optional) Waveform viewer to run at the end of the simulation.
+(Optional) Waveform viewer to run for simulators that do not have native waveform viewers. Defaults to "gtkwave".
 
 #### `-g GENERIC=VALUE, --generic GENERIC=VALUE`
 (Optional) Generics used to elaborate top design file.
