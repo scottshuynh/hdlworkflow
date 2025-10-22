@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
-        nvc-version: ["r1.17.1"]
+        nvc-version: ["r1.17.1", "r1.18.1"]
         cocotb-refs: [v1.9.2, v2.0.0]
         hdldepends-ref: [ee62974]
 
@@ -48,6 +48,7 @@ jobs:
         hdldepends $(git rev-parse --show-toplevel)/hdldepends_config.toml --top-entity fifo_sync_tb --compile-order-vhdl-lib work:compile_order.txt
         hdlworkflow nvc fifo_sync_tb compile_order.txt
         hdlworkflow nvc fifo_sync_tb compile_order.txt -g DATA_W=48
+        hdlworkflow nvc fifo_sync_tb compile_order.txt -g DATA_W=48 --stop-time 10 ns
         hdlworkflow nvc fifo_sync compile_order.txt --cocotb fifo_sync_tb -g DATA_W=48 -g DEPTH=32
         pytest
         mkdir test
