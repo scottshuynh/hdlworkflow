@@ -12,6 +12,7 @@ from hdlworkflow.logging import set_log_level, LoggingLevel
 logger = logging.getLogger(__name__)
 supported_eda_tools: set[str] = set(["nvc", "vivado", "riviera"])
 supported_waveform_viewers: set[str] = set(["gtkwave"])
+supported_time_units: set[str] = set(["fs", "ps", "ns", "us", "ms", "s"])
 
 
 class HdlWorkflow:
@@ -22,6 +23,7 @@ class HdlWorkflow:
         path_to_compile_order: str,
         path_to_working_directory: str,
         generic: list[str] = [],
+        stop_time: tuple[int, str] = (),
         cocotb: str = "",
         pythonpaths: str = "",
         gui: bool = False,
@@ -49,6 +51,7 @@ class HdlWorkflow:
                 any hdlworkflow argument will be relative to this directory.
             generic (list[str], optional): Top will elaborate with specified generics. Must be in form: GENERIC=VALUE.
                 Defaults to [].
+            stop_time (tuple[int, str]): Simulation stops after the specified period.
             cocotb (str, optional): Name of cocotb test module. Defaults to "".
             pythonpaths (str, optional): PYTHONPATH environment variable. Defaults to "".
             gui (bool, optional): Opens the EDA tool GUI, if supported. Defaults to False.
@@ -80,6 +83,22 @@ class HdlWorkflow:
         self.ooc = ooc
         self.clk_period_constraint = clk_period_constraint
 
+        self.stop_time = ""
+        if stop_time:
+            if isinstance(stop_time[0], int):
+                if stop_time[1] in supported_time_units:
+                    self.stop_time = " ".join(str(elem) for elem in stop_time)
+                else:
+                    logger.error(
+                        f"Unsupported time units for stop time. Expecting"
+                        + " ".join(time_unit for time_unit in supported_time_units)
+                        + f", got: {stop_time[1]}"
+                    )
+                    sys.exit(1)
+            else:
+                logger.error(f"--stop-time must be an integer. Got {stop_time[0]}")
+                sys.exit(1)
+
     def is_supported_eda_tool(self, eda_tool: str) -> bool:
         if eda_tool in supported_eda_tools:
             return True
@@ -108,6 +127,7 @@ class HdlWorkflow:
                     top=self.top,
                     compile_order=self.path_to_compile_order,
                     generics=self.generic,
+                    stop_time="".join(self.stop_time.split()),
                     cocotb_module=self.cocotb,
                     waveform_viewer=wave,
                     path_to_working_directory=self.path_to_working_directory,
@@ -127,6 +147,7 @@ class HdlWorkflow:
                     top=self.top,
                     compile_order=self.path_to_compile_order,
                     generics=self.generic,
+                    stop_time="".join(self.stop_time.split()),
                     path_to_working_directory=self.path_to_working_directory,
                     part_number=self.part,
                     board_part=self.board,
@@ -147,6 +168,7 @@ class HdlWorkflow:
                     top=self.top,
                     compile_order=self.path_to_compile_order,
                     generics=self.generic,
+                    stop_time=self.stop_time,
                     cocotb_module=self.cocotb,
                     gui=self.gui,
                     path_to_working_directory=self.path_to_working_directory,
@@ -201,6 +223,13 @@ def hdlworkflow():
         type=str,
         metavar="GENERIC=VALUE",
         help="Generics used to elaborate top design file. Must take the form: GENERIC=VALUE.",
+    )
+    parser.add_argument(
+        "--stop-time",
+        nargs=2,
+        metavar=("INTEGER_PERIOD", "TIME_UNITS"),
+        type=str,
+        help="Stop simulation after the specified period. Must take the form: INTEGER_PERIOD TIME_UNITS.",
     )
     parser.add_argument(
         "-v",
@@ -278,12 +307,21 @@ def hdlworkflow():
             logger.error(f"Invalid verbose level. Got: {args.verbose}. Expecting: 0, 1, 2")
             sys.exit(1)
 
+    stop_time: tuple[int, str] = ()
+    if args.stop_time:
+        if args.stop_time[0].isdigit():
+            stop_time = (int(args.stop_time[0]), args.stop_time[1])
+        else:
+            logger.error(f"--stop-time must be an integer. Got: {args.stop_time[0]}")
+            sys.exit(1)
+
     workflow = HdlWorkflow(
         eda_tool=args.eda_tool,
         top=args.top,
         path_to_compile_order=args.path_to_compile_order,
         path_to_working_directory=path_to_working_directory,
         generic=args.generic,
+        stop_time=stop_time,
         cocotb=args.cocotb,
         pythonpaths=pythonpaths,
         gui=args.gui,

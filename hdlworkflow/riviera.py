@@ -19,6 +19,7 @@ class Riviera:
         top: str,
         compile_order: str,
         generics: list[str],
+        stop_time: str,
         cocotb_module: str,
         gui: bool,
         path_to_working_directory: str,
@@ -39,6 +40,7 @@ class Riviera:
         self.__compile_order: str = path_to_compile_order
         self.__top: str = top
         self.__generics: list[str] = generics
+        self.__stop_time: str = stop_time
         self.__cocotb_module: str = cocotb_module
         self.__pwd: str = path_to_working_directory
         self.__pythonpaths: list[str] = utils.prepend_pwd_if_relative(pythonpaths, path_to_working_directory)
@@ -225,6 +227,7 @@ class Riviera:
                 sim_cmd += generics
 
             sim_cmd += f"-ieee_nowarn work.{self.__top}"
+
             f.write(sim_cmd + "\n")
 
             f.write("log -rec *\n")
@@ -235,7 +238,11 @@ class Riviera:
             f.write("    add wave *\n")
             f.write("    write awc $waveformfile\n")
             f.write("}\n")
-            f.write("run -all\n")
+
+            if self.__stop_time:
+                f.write(f"run {self.__stop_time}")
+            else:
+                f.write("run -all\n")
 
             if not self.__gui:
                 f.write("endsim\n")

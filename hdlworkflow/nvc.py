@@ -20,6 +20,7 @@ class Nvc:
         top: str,
         compile_order: str,
         generics: list[str],
+        stop_time: str,
         cocotb_module: str,
         waveform_viewer: str,
         path_to_working_directory: str,
@@ -40,6 +41,7 @@ class Nvc:
         self.__compile_order: str = path_to_compile_order
         self.__top: str = top
         self.__generics: list[str] = generics
+        self.__stop_time: str = stop_time
         self.__cocotb_module: str = cocotb_module
         self.__pwd: str = path_to_working_directory
         self.__pythonpaths: list[str] = utils.prepend_pwd_if_relative(pythonpaths, path_to_working_directory)
@@ -129,16 +131,20 @@ class Nvc:
             "--ieee-warnings=off",
             "--dump-arrays",
         ]
+
+        if self.__stop_time:
+            command.append(f"--stop-time={self.__stop_time}")
+
         if self.__waveform_viewer:
             waveform_options = ["--format", "fst", f"--wave={self.__waveform_file}"]
             command += waveform_options
 
         logger.info("    " + " ".join(cmd for cmd in command))
+        nvc = subprocess.run(command)
 
         if self.__waveform_viewer:
             self.__waveform_viewer_obj.run()
 
-        nvc = subprocess.run(command)
         if nvc.returncode != 0:
             logger.error("Error during simulation.")
             sys.exit(1)
@@ -174,6 +180,10 @@ class Nvc:
             "--load",
             f"{cocotb_vhpi}",
         ]
+
+        if self.__stop_time:
+            command.append(f"--stop-time={self.__stop_time}")
+
         if self.__waveform_viewer:
             waveform_options = ["--format", "fst", f"--wave={self.__waveform_file}"]
             command += waveform_options

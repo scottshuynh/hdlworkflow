@@ -17,6 +17,7 @@ class Vivado:
         top: str,
         compile_order: str,
         generics: list[str],
+        stop_time: str,
         path_to_working_directory: str,
         part_number: str,
         board_part: str,
@@ -43,6 +44,7 @@ class Vivado:
         self.__compile_order: str = path_to_compile_order
         self.__pwd: str = path_to_working_directory
         self.__generics: list[str] = generics
+        self.__stop_time: str = stop_time
         self.__part_number: str = part_number
         self.__board_part: str = board_part
         self.__start_gui: bool = start_gui
@@ -126,6 +128,11 @@ class Vivado:
                     f.write(
                         "set_property -append -name {steps.synth_design.args.more options} -value {-mode out_of_context} -objects [get_runs synth_1]\n"
                     )
+
+            if self.__stop_time:
+                f.write(
+                    f"set_property -name {{xsim.simulate.runtime}} -value {self.__stop_time} -objects [get_filesets sim_1]\n"
+                )
 
             if self.__start_gui:
                 f.write("start_gui\n")

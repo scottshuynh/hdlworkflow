@@ -50,6 +50,11 @@ If `design_tb` requires `DATA_WIDTH` and `ADDR_WIDTH` generic declared:
 hdlworkflow nvc design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4
 ```
 
+If you want to stop the simulation after 42 us:
+```sh
+hdlworkflow nvc design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --stop-time 42 us
+```
+
 If a waveform viewer, gtkwave, is required:
 ```sh
 hdlworkflow nvc design_tb compile_order.txt --gui --wave gtkwave
@@ -78,6 +83,11 @@ If `design_tb` requires `DATA_WIDTH` and `ADDR_WIDTH` generic declared:
 hdlworkflow riviera design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4
 ```
 
+If you want to stop the simulation after 42 us:
+```sh
+hdlworkflow riviera design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --stop-time 42 us
+```
+
 If a GUI is required to view waveforms:
 ```sh
 hdlworkflow riviera design_tb compile_order.txt --gui
@@ -104,6 +114,11 @@ hdlworkflow vivado design_tb compile_order.txt
 If `design_tb` requires `DATA_WIDTH` and `ADDR_WIDTH` generic declared:
 ```sh
 hdlworkflow vivado design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4
+```
+
+If you want to stop the simulation after 42 us:
+```sh
+hdlworkflow vivado design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --stop-time 42 us
 ```
 
 If a GUI is required to view waveforms:
@@ -177,6 +192,9 @@ Path to a file containing a list of all files used to simulate the top design fi
 
 #### `-g GENERIC=VALUE, --generic GENERIC=VALUE`
 (Optional) Generics used to elaborate top design file.
+
+#### `--stop-time INTEGER_PERIOD TIME_UNITS`
+(Optional) Simulation stops after the specified period.
 
 #### `-v VERBOSE_LEVEL, --verbose VERBOSE_LEVEL`
 (Optional) Logging verbosity. Valid values for `VERBOSE_LEVEL` are 0, 1, 2.
