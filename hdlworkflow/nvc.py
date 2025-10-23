@@ -94,12 +94,7 @@ class Nvc:
     def simulate(self) -> None:
         self.__analyse()
         self.__elaborate()
-
-        if self.__cocotb_module:
-            major, minor, patch = utils.get_cocotb_version()
-            self.__run_cocotb(major)
-        else:
-            self.__run()
+        self.__run()
 
     def __analyse(self) -> None:
         logger.info("Analysing...")
@@ -124,6 +119,32 @@ class Nvc:
 
     def __run(self) -> None:
         logger.info("Running sim...")
+        env: dict[str, str] = dict()
+        if self.__cocotb_module:
+            major, minor, patch = utils.get_cocotb_version()
+            libpython_loc = subprocess.run(
+                ["cocotb-config", "--libpython"], capture_output=True, text=True
+            ).stdout.strip()
+            cocotb_vhpi = subprocess.run(
+                ["cocotb-config", "--lib-name-path", "vhpi", "nvc"],
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+
+            env["PYTHONPATH"] = f"{':'.join(str(path) for path in self.__pythonpaths)}"
+            env["LIBPYTHON_LOC"] = libpython_loc
+            if major >= 2:
+                pygpi_python_bin = subprocess.run(
+                    ["cocotb-config", "--python-bin"], capture_output=True, text=True
+                ).stdout.strip()
+                env["PYGPI_PYTHON_BIN"] = pygpi_python_bin
+                env["COCOTB_TEST_MODULES"] = self.__cocotb_module
+            else:
+                env["MODULE"] = self.__cocotb_module
+
+        logger.info(f"Cocotb environment variables: {' '.join(f'{key}={val}' for key, val in env.items())}")
+        env = os.environ.copy() | env
+
         command = [
             "nvc",
             "-r",
@@ -131,6 +152,8 @@ class Nvc:
             "--ieee-warnings=off",
             "--dump-arrays",
         ]
+        if self.__cocotb_module:
+            command += ["--load", cocotb_vhpi]
 
         if self.__stop_time:
             command.append(f"--stop-time={self.__stop_time}")
@@ -140,7 +163,7 @@ class Nvc:
             command += waveform_options
 
         logger.info("    " + " ".join(cmd for cmd in command))
-        nvc = subprocess.run(command)
+        nvc = subprocess.run(command, env=env)
 
         if self.__waveform_viewer:
             self.__waveform_viewer_obj.run()
@@ -148,54 +171,7 @@ class Nvc:
         if nvc.returncode != 0:
             logger.error("Error during simulation.")
             sys.exit(1)
-
-    def __run_cocotb(self, major_ver: int) -> None:
-        logger.info("Running cocotb sim...")
-        libpython_loc = subprocess.run(["cocotb-config", "--libpython"], capture_output=True, text=True).stdout.strip()
-        cocotb_vhpi = subprocess.run(
-            ["cocotb-config", "--lib-name-path", "vhpi", "nvc"],
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-
-        env = os.environ.copy()
-        env["PYTHONPATH"] = f"{':'.join(str(path) for path in self.__pythonpaths)}:" + env.get("PYTHONPATH", "")
-        env["LIBPYTHON_LOC"] = libpython_loc
-        if major_ver >= 2:
-            pygpi_python_bin = subprocess.run(
-                ["cocotb-config", "--python-bin"], capture_output=True, text=True
-            ).stdout.strip()
-            env["PYGPI_PYTHON_BIN"] = pygpi_python_bin
-            env["COCOTB_TEST_MODULES"] = self.__cocotb_module
-        else:
-            env["MODULE"] = self.__cocotb_module
-
-        command = [
-            "nvc",
-            "-r",
-            f"{self.__top}",
-            "--ieee-warnings",
-            "off",
-            "--dump-arrays",
-            "--load",
-            f"{cocotb_vhpi}",
-        ]
-
-        if self.__stop_time:
-            command.append(f"--stop-time={self.__stop_time}")
-
-        if self.__waveform_viewer:
-            waveform_options = ["--format", "fst", f"--wave={self.__waveform_file}"]
-            command += waveform_options
-        logger.info("    " + " ".join(cmd for cmd in command))
-        cocotb = subprocess.run(command, env=env)
-
-        if self.__waveform_viewer:
-            self.__waveform_viewer_obj.run()
-
-        if cocotb.returncode != 0:
-            logger.error("Error during cocotb simulation.")
-            sys.exit(1)
-        if not utils.is_cocotb_test_pass("results.xml"):
-            logger.error("Test failure during cocotb simulation.")
-            sys.exit(1)
+        if self.__cocotb_module:
+            if not utils.is_cocotb_test_pass("results.xml"):
+                logger.error("Test failure during cocotb simulation.")
+                sys.exit(1)
