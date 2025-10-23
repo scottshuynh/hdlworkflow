@@ -125,8 +125,8 @@ class Riviera:
     def __setup_cocotb_env(self, major_ver: int) -> dict[str, str]:
         libpython_loc = subprocess.run(["cocotb-config", "--libpython"], capture_output=True, text=True).stdout.strip()
         gpi_extra = self.__setup_procedural_interface(True)
-        env = os.environ.copy()
-        env["PYTHONPATH"] = f"{':'.join(str(path) for path in self.__pythonpaths)}:" + env.get("PYTHONPATH", "")
+        env: dict[str, str] = dict()
+        env["PYTHONPATH"] = f"{':'.join(str(path) for path in self.__pythonpaths)}"
         env["LIBPYTHON_LOC"] = libpython_loc
         env["GPI_EXTRA"] = gpi_extra
 
@@ -143,6 +143,8 @@ class Riviera:
             env["MODULE"] = self.__cocotb_module
             env["TOPLEVEL"] = self.__top
 
+        logger.info(f"Cocotb environment variables: {' '.join(f'{key}={val}' for key, val in env.items())}")
+        env = os.environ.copy() | env
         return env
 
     def __setup_procedural_interface(self, is_gpi_extra: bool = False) -> str:
@@ -190,25 +192,33 @@ class Riviera:
         with open("runsim.tcl", "w") as f:
             f.write("framework.documents.closeall\n")
             f.write("alib work\n")
+            compile_cmd = ""
             if self.__all_vhdl:
-                f.write(f"eval acom -work work -2008 -incr {' '.join(self.__vhdl_files)}\n")
+                compile_cmd = f"    eval acom -work work -2008 -incr {' '.join(self.__vhdl_files)}\n"
             elif self.__all_verilog:
-                f.write(f"eval alog -work work -v2k5 -incr {' '.join(self.__verilog_files)}\n")
+                compile_cmd = f"    eval alog -work work -v2k5 -incr {' '.join(self.__verilog_files)}\n"
             elif self.__all_verilog:
-                f.write(f"eval alog -work work -sv2k17 -incr {' '.join(self.__sysverilog_files)}\n")
+                compile_cmd = f"    eval alog -work work -sv2k17 -incr {' '.join(self.__sysverilog_files)}\n"
             else:
                 for hdl_file in self.__hdl_files:
                     ext = Path(hdl_file).suffix
                     if ext:
                         if ext == ".vhd" or ext == ".vhdl":
-                            f.write(f"eval acom -work work -2008 -incr {hdl_file}\n")
+                            compile_cmd += f"    eval acom -work work -2008 -incr {hdl_file}\n"
                         elif ext == ".v":
-                            f.write(f"eval alog -work work -v2k5 -incr {hdl_file}\n")
+                            compile_cmd += f"    eval alog -work work -v2k5 -incr {hdl_file}\n"
                         elif ext == ".sv":
-                            f.write(f"eval alog -work work -sv2k17 -incr {hdl_file}\n")
+                            compile_cmd += f"    eval alog -work work -sv2k17 -incr {hdl_file}\n"
+
+            f.write("set compile_returncode [catch {\n")
+            f.write(f"{compile_cmd}")
+            f.write("} result]\n")
+            f.write("if {$compile_returncode != 0} {\n")
+            f.write('    puts "Error when compiling HDL"\n')
+            f.write("    quit -code 1\n")
+            f.write("}\n")
 
             sim_cmd = "asim "
-
             vpi: str = ""
             if self.__cocotb_module:
                 vpi = self.__setup_procedural_interface()
@@ -228,7 +238,11 @@ class Riviera:
 
             sim_cmd += f"-ieee_nowarn work.{self.__top}"
 
-            f.write(sim_cmd + "\n")
+            f.write(f"set sim_returncode [catch {{{sim_cmd}}} return]\n")
+            f.write("if {$sim_returncode != 0} {\n")
+            f.write('    puts "Error when running asim"\n')
+            f.write("    quit -code 1\n")
+            f.write("}\n")
 
             f.write("log -rec *\n")
             f.write(f'set waveformfile "{self.__waveform_file}"\n')
@@ -240,7 +254,7 @@ class Riviera:
             f.write("}\n")
 
             if self.__stop_time:
-                f.write(f"run {self.__stop_time}")
+                f.write(f"run {self.__stop_time}\n")
             else:
                 f.write("run -all\n")
 
