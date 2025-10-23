@@ -2,7 +2,13 @@
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![Regression Tests](https://github.com/scottshuynh/hdlworkflow/actions/workflows/regression-tests.yml/badge.svg)](https://github.com/scottshuynh/hdlworkflow/actions/workflows/regression-tests.yml)
 # hdlworkflow
-All HDL simulators follow the same process (analyse, elaborate and simulate) though each uses its own variation of these commands. `hdlworkflow` abstracts away the simulator-specific commands to simplify simulation project creation.
+Seamless FPGA workflows.
+
+All HDL simulators follow the same process (analyse, elaborate and simulate) though each uses its own variation of these commands.
+
+Similarly, all HDL synthesis tools follow the same flow (synthesise, place and route, and generate bitstream).
+
+`hdlworkflow` abstracts away these tool-specific commands, making project setup and usage fast and effortless.
 
 ## Supported tools
 + [nvc](https://github.com/nickg/nvc)
@@ -12,7 +18,7 @@ All HDL simulators follow the same process (analyse, elaborate and simulate) tho
 ## Supported waveform viewers
 + [gtkwave](https://github.com/gtkwave/gtkwave)
 
-## Compatibility table
+## Simulation Compatibility table
 Each column shows support simulators and their compatibility with tools listed in the left-most column.
 
 |           | nvc                   | Riviera-PRO                   | Vivado                        |  
@@ -30,11 +36,11 @@ pip install .
 
 ## How to run
 `hdlworkflow` can be run in command line and requires the following arguments:
-+ Simulator of choice.
++ EDA tool of choice.
 + Entity name of top level design.
 + Path to a file containing a list of all files used to simulate the top design file.
 
-A directory with the name of the chosen simulator will be created in the directory `hdlworkflow` is run. This directory will contain all output artefacts produced by the simulator and waveform viewer.
+A directory with the name of the chosen EDA tool will be created in the directory `hdlworkflow` is run. This directory will contain all output artefacts produced by the tool and waveform viewer.
 
 *Note*: All HDL will be compiled into the *work* library.
 
@@ -170,18 +176,17 @@ hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --im
 + `hdlworkflow` will configure `Vivado` with [Artix-7](https://www.amd.com/en/products/adaptive-socs-and-fpgas/fpga/artix-7.html) as the default part number. Use `--part` and/or `--board` positional arguments to specify target hardware.
 + When running synthesis, the compile order file should contain all requisite files used to synthesise the design: a list of ordered source, vendor-specific files and constraint files.
 + When running synthesis, `Vivado` will default to use eight logical cores or half of the number of available logical cores, whichever is smaller.
-+ `Vivado` will use its native waveform viewer instead of third party waveform viewers. 
 
 ---
 ### Positional Arguments
-#### `simulator`
-HDL simulator to run.
+#### `eda_tool`
+EDA tool to run.
 
 #### `top`
-Entity name of top design file to simulate.
+Entity name of top design file.
 
 #### `path_to_compile_order`
-Path to a file containing a list of all files used to simulate the top design file.
+Path to a file containing a list of all requisite files for the top design.
 
 ### Options
 #### `--gui`

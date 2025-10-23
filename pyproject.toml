@@ -4,17 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hdlworkflow"
-version = "0.1.0"
+version = "0.2.0"
 authors = [
     {name="Scott Huynh", email="scott.s.huynh@gmail.com"},
     ]
 requires-python = ">=3.10"
-description = "Streamlining HDL simulation workflows."
+description = "Seamless FPGA workflows."
 readme = "README.md"
 classifiers = [
     "Programming Language :: Python :: 3.10", 
     "Operating System :: Unix",
-    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Embedded Systems",
     ]
 
 scripts.hdlworkflow = "hdlworkflow.hdlworkflow:hdlworkflow"
