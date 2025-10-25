@@ -1,6 +1,6 @@
 import argparse
 import logging
-import os
+from pathlib import Path
 import sys
 
 from hdlworkflow.nvc import Nvc
@@ -28,6 +28,7 @@ class HdlWorkflow:
         pythonpaths: str = "",
         gui: bool = False,
         wave: str = "gtkwave",
+        waveform_view_file_stem: str = "",
         part: str = "",
         board: str = "",
         synth: bool = False,
@@ -47,8 +48,8 @@ class HdlWorkflow:
             eda_tool (str): EDA tool of choice
             top (str): Name of top design
             path_to_compile_order (str): Path to a file listing HDL source files in compilation order for simulation.
-            path_to_working_directory (str): Path to hdlworkflow working directory. Any relative paths specified for
-                any hdlworkflow argument will be relative to this directory.
+            path_to_working_directory (str): Absolute path to hdlworkflow working directory. Any relative paths
+                specified for any hdlworkflow argument will be relative to this directory.
             generic (list[str], optional): Top will elaborate with specified generics. Must be in form: GENERIC=VALUE.
                 Defaults to [].
             stop_time (tuple[int, str]): Simulation stops after the specified period.
@@ -56,6 +57,7 @@ class HdlWorkflow:
             pythonpaths (str, optional): PYTHONPATH environment variable. Defaults to "".
             gui (bool, optional): Opens the EDA tool GUI, if supported. Defaults to False.
             wave (str, optional): Waveform viewer of choice. Defaults to "gtkwave".
+            waveform_view_file_stem (str, optional): Waveform view file path, not including the file extension.
             part (str, optional): Vivado part number to set up Vivado project. Defaults to "".
             board (str, optional): Vivado board part to set up Vivado project. Defaults to "".
             synth (bool, optional): Vivado starts synthesis instead of simulation. Defaults to False.
@@ -82,6 +84,22 @@ class HdlWorkflow:
         self.bitstream = bitstream
         self.ooc = ooc
         self.clk_period_constraint = clk_period_constraint
+
+        self.waveform_view_file_stem = ""
+        if waveform_view_file_stem:
+            wfm_view_file_stem_path = Path(waveform_view_file_stem)
+            if not wfm_view_file_stem_path.suffix == "":
+                logger.warning("The waveform view file includes a file extension. Ignoring...")
+                wfm_view_file_stem_path = Path(wfm_view_file_stem_path.with_suffix(""))
+
+            if not wfm_view_file_stem_path.is_absolute():
+                wfm_view_file_stem_path = (Path(path_to_working_directory) / wfm_view_file_stem_path).resolve()
+
+            if not wfm_view_file_stem_path.parent.is_dir():
+                logger.error(f"No such directory for waveform view file. Got: {wfm_view_file_stem_path.parent}")
+                sys.exit(1)
+
+            self.waveform_view_file_stem = str(wfm_view_file_stem_path)
 
         self.stop_time = ""
         if stop_time:
@@ -130,6 +148,7 @@ class HdlWorkflow:
                     stop_time="".join(self.stop_time.split()),
                     cocotb_module=self.cocotb,
                     waveform_viewer=wave,
+                    waveform_save_file_stem=self.waveform_view_file_stem,
                     path_to_working_directory=self.path_to_working_directory,
                     pythonpaths=self.pythonpaths,
                 )
@@ -217,6 +236,13 @@ def hdlworkflow():
         + " ".join(viewer for viewer in supported_waveform_viewers),
     )
     parser.add_argument(
+        "--waveform-view-file-stem",
+        default="",
+        type=str,
+        metavar="WAVEFORM_VIEW_FILE_STEM",
+        help="Waveform view file path, not including the file extension.",
+    )
+    parser.add_argument(
         "-g",
         "--generic",
         action="append",
@@ -294,7 +320,7 @@ def hdlworkflow():
         + "CLK_PORT=PERIOD_NS.",
     )
     args = parser.parse_args()
-    path_to_working_directory = os.getcwd()
+    path_to_working_directory = str(Path.cwd())
 
     pythonpaths: list[str] = [path_to_working_directory]
     if args.pythonpath:
@@ -326,6 +352,7 @@ def hdlworkflow():
         pythonpaths=pythonpaths,
         gui=args.gui,
         wave=args.wave,
+        waveform_view_file_stem=args.waveform_view_file_stem,
         part=args.part,
         board=args.board,
         synth=args.synth,
