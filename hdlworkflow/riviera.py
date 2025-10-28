@@ -22,18 +22,19 @@ class Riviera:
         stop_time: str,
         cocotb_module: str,
         gui: bool,
+        waveform_save_file_stem: str,
         path_to_working_directory: str,
         pythonpaths: list[str],
     ):
         logger.info(f"Initialising {type(self).__name__}...")
         path_to_compile_order = compile_order
-        if os.path.isabs(path_to_compile_order):
-            if not utils.is_file(path_to_compile_order):
+        if Path(path_to_compile_order).is_absolute():
+            if not Path(path_to_compile_order).is_file():
                 logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
                 sys.exit(1)
         else:
-            path_to_compile_order = path_to_working_directory + f"/{compile_order}"
-            if not utils.is_file(path_to_compile_order):
+            path_to_compile_order = Path(path_to_working_directory / Path(path_to_compile_order)).resolve()
+            if not Path(path_to_compile_order).is_file():
                 logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
                 sys.exit(1)
 
@@ -43,14 +44,20 @@ class Riviera:
         self.__stop_time: str = stop_time
         self.__cocotb_module: str = cocotb_module
         self.__pwd: str = path_to_working_directory
-        self.__pythonpaths: list[str] = utils.prepend_pwd_if_relative(pythonpaths, path_to_working_directory)
+        self.__pythonpaths: list[str] = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
 
         self.__gui: bool = gui
-        self.__waveform_file: str = self.__top
-        if generics:
-            self.__waveform_file += "".join(generic for generic in self.__generics) + ".awc"
-        else:
-            self.__waveform_file += ".awc"
+        self.__waveform_save_file_stem: str = waveform_save_file_stem
+        self.__waveform_file: str = ""
+        if gui:
+            if waveform_save_file_stem:
+                self.__waveform_file = waveform_save_file_stem + ".awc"
+            else:
+                self.__waveform_file = self.__top
+                if generics:
+                    self.__waveform_file += "".join(generic for generic in self.__generics) + ".awc"
+                else:
+                    self.__waveform_file += ".awc"
 
         dependencies_met, missing = self.__check_dependencies()
         if not dependencies_met:
@@ -245,13 +252,16 @@ class Riviera:
             f.write("}\n")
 
             f.write("log -rec *\n")
-            f.write(f'set waveformfile "{self.__waveform_file}"\n')
-            f.write("if {[file exists $waveformfile]} {\n")
-            f.write("    system.open -wave $waveformfile\n")
-            f.write("} else {\n")
-            f.write("    add wave *\n")
-            f.write("    write awc $waveformfile\n")
-            f.write("}\n")
+            if self.__gui:
+                if self.__waveform_save_file_stem:
+                    f.write(f"system.open -wave {self.__waveform_file}\n")
+                else:
+                    f.write("set instances [find hierarchy -list -component -rec *]\n")
+                    f.write("foreach inst $instances {\n")
+                    f.write("    add wave -expand -vgroup $inst $inst/*\n")
+                    f.write("}\n")
+                    f.write("write awc $waveformfile\n")
+                    f.write("}\n")
 
             if self.__stop_time:
                 f.write(f"run {self.__stop_time}\n")

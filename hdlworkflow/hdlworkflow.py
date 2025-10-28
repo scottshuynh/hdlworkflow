@@ -171,6 +171,7 @@ class HdlWorkflow:
                     part_number=self.part,
                     board_part=self.board,
                     start_gui=self.gui,
+                    waveform_save_file_stem=self.waveform_view_file_stem,
                     synth=self.synth,
                     impl=self.impl,
                     bitstream=self.bitstream,
@@ -190,6 +191,7 @@ class HdlWorkflow:
                     stop_time=self.stop_time,
                     cocotb_module=self.cocotb,
                     gui=self.gui,
+                    waveform_save_file_stem=self.waveform_view_file_stem,
                     path_to_working_directory=self.path_to_working_directory,
                     pythonpaths=self.pythonpaths,
                 )

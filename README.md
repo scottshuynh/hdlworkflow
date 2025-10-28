@@ -18,7 +18,7 @@ Similarly, all HDL synthesis tools follow the same flow (synthesise, place and r
 ## Supported waveform viewers
 + [gtkwave](https://github.com/gtkwave/gtkwave)
 
-## Simulation Compatibility table
+## Simulation compatibility table
 Each column shows support simulators and their compatibility with tools listed in the left-most column.
 
 |           | nvc                   | Riviera-PRO                   | Vivado                        |  
@@ -173,7 +173,7 @@ hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --im
 ```
 
 #### Notes
-+ `hdlworkflow` will configure `Vivado` with [Artix-7](https://www.amd.com/en/products/adaptive-socs-and-fpgas/fpga/artix-7.html) as the default part number. Use `--part` and/or `--board` positional arguments to specify target hardware.
++ `hdlworkflow` will configure `Vivado` with [Artix-7](https://www.amd.com/en/products/adaptive-socs-and-fpgas/fpga/artix-7.html) as the default part number. Use `--part` and/or `--board` arguments to specify target hardware.
 + When running synthesis, the compile order file should contain all requisite files used to synthesise the design: a list of ordered source, vendor-specific files and constraint files.
 + When running synthesis, `Vivado` will default to use eight logical cores or half of the number of available logical cores, whichever is smaller.
 
