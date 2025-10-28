@@ -35,7 +35,7 @@ class Nvc:
                 logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
                 sys.exit(1)
         else:
-            path_to_compile_order = Path(path_to_working_directory / Path(compile_order)).resolve()
+            path_to_compile_order = Path(path_to_working_directory / Path(path_to_compile_order)).resolve()
             if not Path(path_to_compile_order).is_file():
                 logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
                 sys.exit(1)
@@ -46,7 +46,7 @@ class Nvc:
         self.__stop_time: str = stop_time
         self.__cocotb_module: str = cocotb_module
         self.__pwd: str = path_to_working_directory
-        self.__pythonpaths: list[str] = utils.prepend_pwd_if_relative(pythonpaths, path_to_working_directory)
+        self.__pythonpaths: list[str] = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
 
         self.__waveform_viewer: str = ""
         if waveform_viewer:
@@ -171,9 +171,10 @@ class Nvc:
             waveform_options = ["--format", "fst", f"--wave={self.__waveform_data}"]
             command += waveform_options
 
-        if not Path(self.__waveform_save_file).is_file():
-            waveform_view_file_option = [f"--gtkw={self.__waveform_save_file}"]
-            command += waveform_view_file_option
+        if self.__waveform_save_file:
+            if not Path(self.__waveform_save_file).is_file():
+                waveform_view_file_option = [f"--gtkw={self.__waveform_save_file}"]
+                command += waveform_view_file_option
 
         logger.info("    " + " ".join(cmd for cmd in command))
         nvc = subprocess.run(command, env=env)

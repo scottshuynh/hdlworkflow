@@ -8,18 +8,13 @@ import xml.etree.ElementTree as ElementTree
 logger = logging.getLogger(__name__)
 
 
-def is_file(file: str) -> bool:
-    filepath = Path(file)
-    return filepath.is_file()
-
-
-def prepend_pwd_if_relative(paths: list[str], pwd: str) -> list[str]:
+def relative_to_absolute_paths(paths: list[str], pwd: str) -> list[str]:
     result: list[str] = []
     for path in paths:
-        if os.path.isabs(path):
+        if Path(path).is_absolute():
             result.append(path)
         else:
-            result.append(pwd + "/" + path)
+            result.append(str(Path(Path(pwd) / path).resolve(False)))
     return result
 
 
