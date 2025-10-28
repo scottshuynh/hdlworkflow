@@ -31,7 +31,7 @@ class Nvc:
         logger.info(f"Initialising {type(self).__name__}...")
         path_to_compile_order = compile_order
         if Path(path_to_compile_order).is_absolute():
-            if Path(path_to_compile_order).is_file():
+            if not Path(path_to_compile_order).is_file():
                 logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
                 sys.exit(1)
         else:
@@ -64,6 +64,7 @@ class Nvc:
             logger.error("All dependencies must be found on PATH.")
             sys.exit(1)
 
+        self.__waveform_save_file_stem: str = waveform_save_file_stem
         self.__waveform_save_file: str = ""
         self.__waveform_data: str = ""
         self.__waveform_viewer_obj: object = None
@@ -172,7 +173,7 @@ class Nvc:
             command += waveform_options
 
         if self.__waveform_save_file:
-            if not Path(self.__waveform_save_file).is_file():
+            if not self.__waveform_save_file_stem:
                 waveform_view_file_option = [f"--gtkw={self.__waveform_save_file}"]
                 command += waveform_view_file_option
 
