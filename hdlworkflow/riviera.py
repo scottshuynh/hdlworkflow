@@ -260,8 +260,7 @@ class Riviera:
                     f.write("foreach inst $instances {\n")
                     f.write("    add wave -expand -vgroup $inst $inst/*\n")
                     f.write("}\n")
-                    f.write("write awc $waveformfile\n")
-                    f.write("}\n")
+                    f.write(f"write awc {self.__waveform_file}\n")
 
             if self.__stop_time:
                 f.write(f"run {self.__stop_time}\n")
