@@ -24,7 +24,7 @@ class Nvc:
         stop_time: str,
         cocotb_module: str,
         waveform_viewer: str,
-        waveform_save_file_stem: str,
+        waveform_view_file_stem: str,
         path_to_working_directory: str,
         pythonpaths: list[str],
     ):
@@ -64,7 +64,7 @@ class Nvc:
             logger.error("All dependencies must be found on PATH.")
             sys.exit(1)
 
-        self.__waveform_save_file_stem: str = waveform_save_file_stem
+        self.__waveform_view_file_stem: str = waveform_view_file_stem
         self.__waveform_save_file: str = ""
         self.__waveform_data: str = ""
         self.__waveform_viewer_obj: object = None
@@ -75,8 +75,8 @@ class Nvc:
             if self.__waveform_viewer == "gtkwave":
                 self.__waveform_data = waveform_data_stem + ".fst"
 
-                if waveform_save_file_stem:
-                    self.__waveform_save_file = waveform_save_file_stem + ".gtkw"
+                if waveform_view_file_stem:
+                    self.__waveform_save_file = waveform_view_file_stem + ".gtkw"
                 else:
                     self.__waveform_save_file = waveform_data_stem + ".gtkw"
 
@@ -173,7 +173,7 @@ class Nvc:
             command += waveform_options
 
         if self.__waveform_save_file:
-            if not self.__waveform_save_file_stem:
+            if not self.__waveform_view_file_stem:
                 waveform_view_file_option = [f"--gtkw={self.__waveform_save_file}"]
                 command += waveform_view_file_option
 

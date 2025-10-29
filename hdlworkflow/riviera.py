@@ -22,7 +22,7 @@ class Riviera:
         stop_time: str,
         cocotb_module: str,
         gui: bool,
-        waveform_save_file_stem: str,
+        waveform_view_file_stem: str,
         path_to_working_directory: str,
         pythonpaths: list[str],
     ):
@@ -47,11 +47,11 @@ class Riviera:
         self.__pythonpaths: list[str] = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
 
         self.__gui: bool = gui
-        self.__waveform_save_file_stem: str = waveform_save_file_stem
+        self.__waveform_view_file_stem: str = waveform_view_file_stem
         self.__waveform_file: str = ""
         if gui:
-            if waveform_save_file_stem:
-                self.__waveform_file = waveform_save_file_stem + ".awc"
+            if waveform_view_file_stem:
+                self.__waveform_file = waveform_view_file_stem + ".awc"
             else:
                 self.__waveform_file = self.__top
                 if generics:
@@ -253,7 +253,7 @@ class Riviera:
 
             f.write("log -rec *\n")
             if self.__gui:
-                if self.__waveform_save_file_stem:
+                if self.__waveform_view_file_stem:
                     f.write(f"system.open -wave {self.__waveform_file}\n")
                 else:
                     f.write("set instances [find hierarchy -list -component -rec *]\n")

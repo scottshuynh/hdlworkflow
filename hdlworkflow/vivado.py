@@ -22,7 +22,7 @@ class Vivado:
         part_number: str,
         board_part: str,
         start_gui: bool,
-        waveform_save_file: str,
+        waveform_view_file_stem: str,
         synth: bool,
         impl: bool,
         bitstream: bool,
