@@ -28,7 +28,7 @@ class HdlWorkflow:
         pythonpaths: str = "",
         gui: bool = False,
         wave: str = "gtkwave",
-        waveform_view_file_stem: str = "",
+        waveform_view_file: str = "",
         part: str = "",
         board: str = "",
         synth: bool = False,
@@ -57,7 +57,7 @@ class HdlWorkflow:
             pythonpaths (str, optional): PYTHONPATH environment variable. Defaults to "".
             gui (bool, optional): Opens the EDA tool GUI, if supported. Defaults to False.
             wave (str, optional): Waveform viewer of choice. Defaults to "gtkwave".
-            waveform_view_file_stem (str, optional): Waveform view file path, not including the file extension.
+            waveform_view_file (str, optional): Waveform view file path.
             part (str, optional): Vivado part number to set up Vivado project. Defaults to "".
             board (str, optional): Vivado board part to set up Vivado project. Defaults to "".
             synth (bool, optional): Vivado starts synthesis instead of simulation. Defaults to False.
@@ -85,21 +85,28 @@ class HdlWorkflow:
         self.ooc = ooc
         self.clk_period_constraint = clk_period_constraint
 
-        self.waveform_view_file_stem = ""
-        if waveform_view_file_stem:
-            wfm_view_file_stem_path = Path(waveform_view_file_stem)
-            if not wfm_view_file_stem_path.suffix == "":
-                logger.warning("The waveform view file includes a file extension. Ignoring...")
-                wfm_view_file_stem_path = Path(wfm_view_file_stem_path.with_suffix(""))
-
-            if not wfm_view_file_stem_path.is_absolute():
-                wfm_view_file_stem_path = (Path(path_to_working_directory) / wfm_view_file_stem_path).resolve()
-
-            if not wfm_view_file_stem_path.parent.is_dir():
-                logger.error(f"No such directory for waveform view file. Got: {wfm_view_file_stem_path.parent}")
+        self.path_to_compile_order = path_to_compile_order
+        if Path(path_to_compile_order).is_absolute():
+            if not Path(path_to_compile_order).is_file():
+                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
+                sys.exit(1)
+        else:
+            self.path_to_compile_order = str((Path(path_to_working_directory) / path_to_compile_order).resolve())
+            if not Path(self.path_to_compile_order).is_file():
+                logger.error(f"Path to compile order ({self.path_to_compile_order}) does not exist.")
                 sys.exit(1)
 
-            self.waveform_view_file_stem = str(wfm_view_file_stem_path)
+        self.waveform_view_file = ""
+        if waveform_view_file:
+            wfm_view_file_path = Path(waveform_view_file)
+            if not wfm_view_file_path.is_absolute():
+                wfm_view_file_path = (Path(path_to_working_directory) / wfm_view_file_path).resolve()
+
+            if not wfm_view_file_path.is_file():
+                logger.error(f"No such waveform view file. ({wfm_view_file_path})")
+                sys.exit(1)
+
+            self.waveform_view_file = str(wfm_view_file_path)
 
         self.stop_time = ""
         if stop_time:
@@ -148,7 +155,7 @@ class HdlWorkflow:
                     stop_time="".join(self.stop_time.split()),
                     cocotb_module=self.cocotb,
                     waveform_viewer=wave,
-                    waveform_view_file_stem=self.waveform_view_file_stem,
+                    waveform_view_file=self.waveform_view_file,
                     path_to_working_directory=self.path_to_working_directory,
                     pythonpaths=self.pythonpaths,
                 )
@@ -170,8 +177,8 @@ class HdlWorkflow:
                     path_to_working_directory=self.path_to_working_directory,
                     part_number=self.part,
                     board_part=self.board,
-                    start_gui=self.gui,
-                    waveform_view_file_stem=self.waveform_view_file_stem,
+                    gui=self.gui,
+                    waveform_view_file=self.waveform_view_file,
                     synth=self.synth,
                     impl=self.impl,
                     bitstream=self.bitstream,
@@ -191,7 +198,7 @@ class HdlWorkflow:
                     stop_time=self.stop_time,
                     cocotb_module=self.cocotb,
                     gui=self.gui,
-                    waveform_view_file_stem=self.waveform_view_file_stem,
+                    waveform_view_file=self.waveform_view_file,
                     path_to_working_directory=self.path_to_working_directory,
                     pythonpaths=self.pythonpaths,
                 )
@@ -238,11 +245,11 @@ def hdlworkflow():
         + " ".join(viewer for viewer in supported_waveform_viewers),
     )
     parser.add_argument(
-        "--waveform-view-file-stem",
+        "--waveform-view-file",
         default="",
         type=str,
-        metavar="WAVEFORM_VIEW_FILE_STEM",
-        help="Waveform view file path, not including the file extension.",
+        metavar="WAVEFORM_VIEW_FILE",
+        help="Waveform view file path.",
     )
     parser.add_argument(
         "-g",
@@ -354,7 +361,7 @@ def hdlworkflow():
         pythonpaths=pythonpaths,
         gui=args.gui,
         wave=args.wave,
-        waveform_view_file_stem=args.waveform_view_file_stem,
+        waveform_view_file=args.waveform_view_file,
         part=args.part,
         board=args.board,
         synth=args.synth,

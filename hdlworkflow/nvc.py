@@ -24,23 +24,13 @@ class Nvc:
         stop_time: str,
         cocotb_module: str,
         waveform_viewer: str,
-        waveform_view_file_stem: str,
+        waveform_view_file: str,
         path_to_working_directory: str,
         pythonpaths: list[str],
     ):
         logger.info(f"Initialising {type(self).__name__}...")
-        path_to_compile_order = compile_order
-        if Path(path_to_compile_order).is_absolute():
-            if not Path(path_to_compile_order).is_file():
-                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
-                sys.exit(1)
-        else:
-            path_to_compile_order = Path(path_to_working_directory / Path(path_to_compile_order)).resolve()
-            if not Path(path_to_compile_order).is_file():
-                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
-                sys.exit(1)
 
-        self.__compile_order: str = path_to_compile_order
+        self.__compile_order: str = compile_order
         self.__top: str = top
         self.__generics: list[str] = generics
         self.__stop_time: str = stop_time
@@ -64,23 +54,27 @@ class Nvc:
             logger.error("All dependencies must be found on PATH.")
             sys.exit(1)
 
-        self.__waveform_view_file_stem: str = waveform_view_file_stem
+        self.__waveform_view_file: str = waveform_view_file
         self.__waveform_save_file: str = ""
         self.__waveform_data: str = ""
         self.__waveform_viewer_obj: object = None
         if self.__waveform_viewer:
-            waveform_data_stem: str = self.__top
-            if generics:
-                waveform_data_stem += "".join(generic for generic in generics)
             if self.__waveform_viewer == "gtkwave":
+                waveform_data_stem: str = self.__top
+                if generics:
+                    waveform_data_stem += "".join(generic for generic in generics)
                 self.__waveform_data = waveform_data_stem + ".fst"
 
-                if waveform_view_file_stem:
-                    self.__waveform_save_file = waveform_view_file_stem + ".gtkw"
+                if waveform_view_file:
+                    if Path(waveform_view_file).suffix == ".gtkw":
+                        self.__waveform_save_file = waveform_view_file
+                    else:
+                        logger.error(f"Expecting waveform view file with .gtkw extension. Got: {waveform_view_file}")
+                        sys.exit(1)
                 else:
                     self.__waveform_save_file = waveform_data_stem + ".gtkw"
 
-            self.__waveform_viewer_obj = Gtkwave(self.__waveform_data, self.__waveform_save_file)
+                self.__waveform_viewer_obj = Gtkwave(self.__waveform_data, self.__waveform_save_file)
 
         os.makedirs(f"{self.__pwd}/nvc", exist_ok=True)
         os.chdir(f"{self.__pwd}/nvc")
@@ -173,7 +167,7 @@ class Nvc:
             command += waveform_options
 
         if self.__waveform_save_file:
-            if not self.__waveform_view_file_stem:
+            if not self.__waveform_view_file:
                 waveform_view_file_option = [f"--gtkw={self.__waveform_save_file}"]
                 command += waveform_view_file_option
 

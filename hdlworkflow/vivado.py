@@ -1,5 +1,6 @@
 import subprocess
 import logging
+from pathlib import Path
 import os
 import sys
 from shutil import which
@@ -21,8 +22,8 @@ class Vivado:
         path_to_working_directory: str,
         part_number: str,
         board_part: str,
-        start_gui: bool,
-        waveform_view_file_stem: str,
+        gui: bool,
+        waveform_view_file: str,
         synth: bool,
         impl: bool,
         bitstream: bool,
@@ -30,30 +31,36 @@ class Vivado:
         clk_period_constraints: list[str],
     ):
         logger.info(f"Initialising {type(self).__name__}...")
-        path_to_compile_order = compile_order
-        if os.path.isabs(path_to_compile_order):
-            if not utils.is_file(path_to_compile_order):
-                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
-                sys.exit(1)
-        else:
-            path_to_compile_order = path_to_working_directory + f"/{compile_order}"
-            if not utils.is_file(path_to_compile_order):
-                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
-                sys.exit(1)
 
         self.__top: str = top
-        self.__compile_order: str = path_to_compile_order
+        self.__compile_order: str = compile_order
         self.__pwd: str = path_to_working_directory
         self.__generics: list[str] = generics
         self.__stop_time: str = stop_time
         self.__part_number: str = part_number
         self.__board_part: str = board_part
-        self.__start_gui: bool = start_gui
+        self.__gui: bool = gui
+        self.__waveform_view_file: str = waveform_view_file
         self.__synth: bool = synth
         self.__impl: bool = impl
         self.__bitstream: bool = bitstream
         self.__ooc: bool = ooc
         self.__clk_period_constraints: list[str] = clk_period_constraints
+
+        self.__waveform_file: str = ""
+        if gui:
+            if waveform_view_file:
+                if Path(waveform_view_file).suffix == ".wcfg":
+                    self.__waveform_file = waveform_view_file
+                else:
+                    logger.error(f"Expecting waveform view file with .wcfg extension. Got: {waveform_view_file}")
+                    sys.exit(1)
+            else:
+                self.__waveform_file = self.__top
+                if generics:
+                    self.__waveform_file += "".join(generic for generic in self.__generics) + ".wcfg"
+                else:
+                    self.__waveform_file += ".wcfg"
 
         if not self.__check_dependencies():
             logger.error("Missing dependencies: vivado")
@@ -130,16 +137,13 @@ class Vivado:
                         "set_property -append -name {steps.synth_design.args.more options} -value {-mode out_of_context} -objects [get_runs synth_1]\n"
                     )
 
-            if self.__stop_time:
-                f.write(
-                    f"set_property -name {{xsim.simulate.runtime}} -value {self.__stop_time} -objects [get_filesets sim_1]\n"
-                )
+            f.write("set_property -name {xsim.simulate.runtime} -value 0 -objects [get_filesets sim_1]\n")
 
-            if self.__start_gui:
+            if self.__gui:
                 f.write("start_gui\n")
             if self.__synth | self.__impl | self.__bitstream:
                 f.write("reset_run synth_1\n")
-                if not self.__start_gui:
+                if not self.__gui:
                     f.write(f"launch_runs synth_1 -jobs {min(os.cpu_count() // 2, 8)}\n")
                     f.write("wait_on_run synth_1\n")
                     f.write('if {[get_property PROGRESS [get_runs synth_1]] != "100%"} {\n')
@@ -167,7 +171,37 @@ class Vivado:
                     elif self.__synth:
                         f.write(f"launch_runs synth_1 -jobs {min(os.cpu_count() // 2, 8)}\n")
             else:
-                f.write("launch_simulation")
+                if self.__gui:
+                    if self.__waveform_view_file:
+                        f.write(f"add_files -fileset sim_1 -norecurse {self.__waveform_file}\n")
+                        f.write(f"set_property xsim.view {self.__waveform_file} [get_filesets sim_1]\n")
+
+                f.write("launch_simulation\n")
+                if self.__gui:
+                    if not self.__waveform_view_file:
+                        wave_filename = str(Path.cwd() / self.__waveform_file)
+                        f.write("foreach wave [get_waves *] {\n")
+                        f.write("    remove_wave $wave\n")
+                        f.write("}\n")
+                        f.write("foreach hier [get_scopes -r /*] {\n")
+                        f.write("    set objs [get_objects $hier/*]\n")
+                        f.write("    set num_objs [llength $objs]\n")
+                        f.write("    if {$num_objs > 0} {\n")
+                        f.write("        add_wave_divider $hier\n")
+                        f.write("        if {[catch {add_wave $hier}]} {\n")
+                        f.write("            remove_wave $hier\n")
+                        f.write("            continue\n")
+                        f.write("        }\n")
+                        f.write("    }\n")
+                        f.write("}\n")
+                        f.write(f"save_wave_config {{{wave_filename}}}\n")
+                        f.write(f"add_files -fileset sim_1 -norecurse {wave_filename}\n")
+                        f.write(f"set_property xsim.view {wave_filename} [get_filesets sim_1]\n")
+
+                if self.__stop_time:
+                    f.write(f"run {self.__stop_time}\n")
+                else:
+                    f.write("run -all\n")
 
     def __start_vivado(self) -> None:
         logger.info("Starting Vivado...")

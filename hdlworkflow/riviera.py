@@ -22,23 +22,13 @@ class Riviera:
         stop_time: str,
         cocotb_module: str,
         gui: bool,
-        waveform_view_file_stem: str,
+        waveform_view_file: str,
         path_to_working_directory: str,
         pythonpaths: list[str],
     ):
         logger.info(f"Initialising {type(self).__name__}...")
-        path_to_compile_order = compile_order
-        if Path(path_to_compile_order).is_absolute():
-            if not Path(path_to_compile_order).is_file():
-                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
-                sys.exit(1)
-        else:
-            path_to_compile_order = Path(path_to_working_directory / Path(path_to_compile_order)).resolve()
-            if not Path(path_to_compile_order).is_file():
-                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
-                sys.exit(1)
 
-        self.__compile_order: str = path_to_compile_order
+        self.__compile_order: str = compile_order
         self.__top: str = top
         self.__generics: list[str] = generics
         self.__stop_time: str = stop_time
@@ -47,11 +37,15 @@ class Riviera:
         self.__pythonpaths: list[str] = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
 
         self.__gui: bool = gui
-        self.__waveform_view_file_stem: str = waveform_view_file_stem
+        self.__waveform_view_file: str = waveform_view_file
         self.__waveform_file: str = ""
         if gui:
-            if waveform_view_file_stem:
-                self.__waveform_file = waveform_view_file_stem + ".awc"
+            if waveform_view_file:
+                if Path(waveform_view_file).suffix == ".awc":
+                    self.__waveform_file = waveform_view_file
+                else:
+                    logger.error(f"Expecting waveform view file with .awc extension. Got: {waveform_view_file}")
+                    sys.exit(1)
             else:
                 self.__waveform_file = self.__top
                 if generics:
@@ -253,9 +247,10 @@ class Riviera:
 
             f.write("log -rec *\n")
             if self.__gui:
-                if self.__waveform_view_file_stem:
+                if self.__waveform_view_file:
                     f.write(f"system.open -wave {self.__waveform_file}\n")
                 else:
+                    f.write("add wave -expand -vgroup [env] *\n")
                     f.write("set instances [find hierarchy -list -component -rec *]\n")
                     f.write("foreach inst $instances {\n")
                     f.write("    add wave -expand -vgroup $inst $inst/*\n")

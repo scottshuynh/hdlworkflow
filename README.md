@@ -195,8 +195,8 @@ Path to a file containing a list of all requisite files for the top design.
 #### `--wave WAVEFORM_VIEWER`
 (Optional) Waveform viewer to run for simulators that do not have native waveform viewers. Defaults to "gtkwave".
 
-#### `--waveform-view-file-stem WAVEFORM_VIEW_FILE_STEM`
-(Optional) Waveform view file path, not including the file extension.
+#### `--waveform-view-file WAVEFORM_VIEW_FILE`
+(Optional) Waveform view file path.
 
 #### `-g GENERIC=VALUE, --generic GENERIC=VALUE`
 (Optional) Generics used to elaborate top design file.
