@@ -139,6 +139,10 @@ class HdlWorkflow:
         if self.is_supported_eda_tool(self.eda_tool):
             wave = ""
             if self.eda_tool == "nvc":
+                if self.synth | self.impl | self.bitstream:
+                    logger.error(f"Synthesis options unsupported in {self.eda_tool}.")
+                    sys.exit(1)
+
                 if self.gui and not self.is_supported_waveform_viewer(self.wave):
                     logger.error(
                         f"Unsupported waveform viewer: {self.wave}. Expecting: "
@@ -188,6 +192,10 @@ class HdlWorkflow:
                 vivado.start()
 
             elif self.eda_tool == "riviera":
+                if self.synth | self.impl | self.bitstream:
+                    logger.error(f"Synthesis options unsupported in {self.eda_tool}.")
+                    sys.exit(1)
+
                 if self.gui:
                     logger.info("Riviera-PRO will open the GUI.")
 

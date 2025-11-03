@@ -266,11 +266,11 @@ class Riviera:
                 f.write("endsim\n")
                 f.write("exit\n")
 
-    def __batch_mode_run(self, major_ver: int) -> None:
+    def __batch_mode_run(self, cocotb_major_ver: int = 0) -> None:
         self.__create_runsim()
         if self.__cocotb_module:
             logger.info("Setting up cocotb environment variables...")
-            env = self.__setup_cocotb_env(major_ver)
+            env = self.__setup_cocotb_env(cocotb_major_ver)
         else:
             env = env = os.environ.copy()
 
@@ -285,6 +285,7 @@ class Riviera:
         if sim_batch_mode.returncode != 0:
             logger.error("Error during Riviera-PRO batch mode simulation.")
             sys.exit(1)
-        if not utils.is_cocotb_test_pass("results.xml"):
-            logger.error("Test failure during cocotb simulation.")
-            sys.exit(1)
+        if self.__cocotb_module:
+            if not utils.is_cocotb_test_pass("results.xml"):
+                logger.error("Test failure during cocotb simulation.")
+                sys.exit(1)
