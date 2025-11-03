@@ -19,7 +19,7 @@ Similarly, all HDL synthesis tools follow the same flow (synthesise, place and r
 + [gtkwave](https://github.com/gtkwave/gtkwave)
 
 ## Simulation compatibility table
-Each column shows support simulators and their compatibility with tools listed in the left-most column.
+The table below shows supported simulators and their compatibility with tools listed in the left-most column.
 
 |           | nvc                   | Riviera-PRO                   | Vivado                        |  
 | ---       | :---:                 | :---:                         | :---:                         |
@@ -35,12 +35,14 @@ pip install .
 ```
 
 ## How to run
-`hdlworkflow` can be run in command line and requires the following arguments:
+`hdlworkflow` can be run from the command line and requires the following arguments:
 + EDA tool of choice.
 + Entity name of top level design.
-+ Path to a file containing a list of all files used to simulate the top design file.
++ Path to a file listing all required source files for the top level design.
 
-A directory with the name of the chosen EDA tool will be created in the directory `hdlworkflow` is run. This directory will contain all output artefacts produced by the tool and waveform viewer.
+A directory with the name of the chosen EDA tool will be created in the directory `hdlworkflow` is run. This directory will contain all output artefacts produced by the EDA tool.
+
+Some examples of `hdlworkflow` usage can be found below.
 
 *Note*: All HDL will be compiled into the *work* library.
 
@@ -56,7 +58,7 @@ If `design_tb` requires `DATA_WIDTH` and `ADDR_WIDTH` generic declared:
 hdlworkflow nvc design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4
 ```
 
-If you want to stop the simulation after 42 us:
+If stopping the simulation after 42 us is required:
 ```sh
 hdlworkflow nvc design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --stop-time 42 us
 ```
@@ -64,6 +66,12 @@ hdlworkflow nvc design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --st
 If a waveform viewer, gtkwave, is required:
 ```sh
 hdlworkflow nvc design_tb compile_order.txt --gui --wave gtkwave
+```
+*NOTE*: A new waveform view file will be generated automatically, overwriting any previously existing file.
+
+If a gtkwave waveform view file is required:
+```sh
+hdlworkflow nvc design_tb compile_order.txt --gui --wave gtkwave --waveform-view-file path/to/waveform_view_file.gtkw
 ```
 
 If the testbench `design_tb` is a cocotb test module, and the top level design is called `design`:
@@ -89,7 +97,7 @@ If `design_tb` requires `DATA_WIDTH` and `ADDR_WIDTH` generic declared:
 hdlworkflow riviera design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4
 ```
 
-If you want to stop the simulation after 42 us:
+If stopping the simulation after 42 us is required:
 ```sh
 hdlworkflow riviera design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --stop-time 42 us
 ```
@@ -97,6 +105,12 @@ hdlworkflow riviera design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 
 If a GUI is required to view waveforms:
 ```sh
 hdlworkflow riviera design_tb compile_order.txt --gui
+```
+*NOTE*: A new waveform view file will be generated automatically, overwriting any previously existing file.
+
+If a GUI is required with an existing waveform file:
+```sh
+hdlworkflow riviera design_tb compile_order.txt --gui --waveform-view-file path/to/waveform_view_file.awc
 ```
 
 If the testbench `design_tb` is a cocotb test module, and the top level design is called `design`:
@@ -122,7 +136,7 @@ If `design_tb` requires `DATA_WIDTH` and `ADDR_WIDTH` generic declared:
 hdlworkflow vivado design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4
 ```
 
-If you want to stop the simulation after 42 us:
+If stopping the simulation after 42 us is required:
 ```sh
 hdlworkflow vivado design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --stop-time 42 us
 ```
@@ -131,50 +145,57 @@ If a GUI is required to view waveforms:
 ```sh
 hdlworkflow vivado design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --gui
 ```
+*NOTE*: A new waveform view file will be generated automatically, overwriting any previously existing file.
 
-If you want to run synthesis on `design` instead of simulating:
+
+If a GUI is required with an existing waveform configuration file:
 ```sh
-hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --synth --ooc
+hdlworkflow vivado design_tb compile_order.txt --gui --waveform-view-file path/to/waveform_view_file.wcfg
 ```
 
-If you want to run synthesis + implementation on `design` instead of simulating:
+If synthesis of `design` is required instead of simulating:
+```sh
+hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --synth
+```
+
+If synthesis + implementation of `design` is required instead of simulating:
 ```sh
 hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --impl
 ```
 
-If you want to run synthesis + implementation + generate bitstream on `design` instead of simulating:
+If synthesis + implementation + generate bitstream of `design` is required instead of simulating:
 ```sh
 hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --bitstream
 ```
 
-If you want to run an out-of-context (OOC) synthesis on `design` instead of simulating:
+If an out-of-context (OOC) synthesis of `design` is required instead of simulating:
 ```sh
 hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --synth --ooc
 ```
 
-If you want to run an OOC synthesis + implementation on `design` instead of simulating:
+If an OOC synthesis + implementation of `design` is required instead of simulating:
 ```sh
 hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --impl --ooc
 ```
 
-Additionally, if you wanted to set up some clock period constraints for your OOC synthesis + implementation:
+Additionally, if a clock period constraints on clock port `clk_a` for OOC synthesis + implementation is required:
 ```sh
 hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --impl --ooc --clk-period-constraint clk_a=10 --clk-period-constraint clk_b=2.000
 ```
 
-Additionally, if you wanted to set the part number `xczu7ev-ffvc1156-2-e` for your OOC synthesis + implementation:
+Additionally, if the part number `xczu7ev-ffvc1156-2-e` for OOC synthesis + implementation is required:
 ```sh
 hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --impl --ooc --clk-period-constraint clk_a=10 --clk-period-constraint clk_b=2.000 --part xczu7ev-ffvc1156-2-e
 ```
 
-Additionally, if you wanted to set the board part (`ZCU106`) for your OOC synthesis + implementation:
+Additionally, if the board part (`ZCU106`) for OOC synthesis + implementation is required:
 ```sh
 hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --impl --ooc --clk-period-constraint clk_a=10 --clk-period-constraint clk_b=2.000 --part xczu7ev-ffvc1156-2-e --board xilinx.com:zcu106:part0:2.6  
 ```
 
 #### Notes
 + `hdlworkflow` will configure `Vivado` with [Artix-7](https://www.amd.com/en/products/adaptive-socs-and-fpgas/fpga/artix-7.html) as the default part number. Use `--part` and/or `--board` arguments to specify target hardware.
-+ When running synthesis, the compile order file should contain all requisite files used to synthesise the design: a list of ordered source, vendor-specific files and constraint files.
++ When running synthesis, the compile order file should contain all requisite files used to synthesise the design: a list of ordered source files, vendor-specific files and constraint files.
 + When running synthesis, `Vivado` will default to use eight logical cores or half of the number of available logical cores, whichever is smaller.
 
 ---
