@@ -1,7 +1,5 @@
-import argparse
-import logging
+import argparse, logging, sys
 from pathlib import Path
-import sys
 
 from hdlworkflow.nvc import Nvc
 from hdlworkflow.vivado import Vivado
@@ -25,7 +23,9 @@ class HdlWorkflow:
         generic: list[str] = [],
         stop_time: tuple[int, str] = (),
         cocotb: str = "",
-        pythonpaths: str = "",
+        pythonpaths: list[str] = [],
+        path_to_libstdcpp: str = "",
+        path_to_glbl: str = "",
         gui: bool = False,
         wave: str = "gtkwave",
         waveform_view_file: str = "",
@@ -54,7 +54,9 @@ class HdlWorkflow:
                 Defaults to [].
             stop_time (tuple[int, str]): Simulation stops after the specified period.
             cocotb (str, optional): Name of cocotb test module. Defaults to "".
-            pythonpaths (str, optional): PYTHONPATH environment variable. Defaults to "".
+            pythonpaths (list[str], optional): PYTHONPATH environment variable. Defaults to [].
+            path_to_libstdcpp (str, optional): Path to libstdc++ shared object. Defaults to "".
+            path_to_glbl (str, optional): Path to glbl.v. Defaults to "".
             gui (bool, optional): Opens the EDA tool GUI, if supported. Defaults to False.
             wave (str, optional): Waveform viewer of choice. Defaults to "gtkwave".
             waveform_view_file (str, optional): Waveform view file path.
@@ -75,6 +77,8 @@ class HdlWorkflow:
         self.cocotb = cocotb
         self.path_to_working_directory = path_to_working_directory
         self.pythonpaths = pythonpaths
+        self.path_to_libstdcpp = path_to_libstdcpp
+        self.path_to_glbl = path_to_glbl
         self.gui = gui
         self.wave = wave.lower()
         self.part = part.lower()
@@ -209,6 +213,8 @@ class HdlWorkflow:
                     waveform_view_file=self.waveform_view_file,
                     path_to_working_directory=self.path_to_working_directory,
                     pythonpaths=self.pythonpaths,
+                    path_to_libstdcpp=self.path_to_libstdcpp,
+                    path_to_glbl=self.path_to_glbl,
                 )
                 riviera.simulate()
         else:
@@ -295,6 +301,18 @@ def hdlworkflow():
         help="Paths to add to PYTHONPATH",
     )
     parser.add_argument(
+        "--libstdcpp",
+        type=str,
+        metavar="LIBSTDC++",
+        help="Path to libstdc++ shared object.",
+    )
+    parser.add_argument(
+        "--glbl",
+        type=str,
+        metavar="GLBL.V",
+        help="Path to glbl.v.",
+    )
+    parser.add_argument(
         "--part",
         default="",
         type=str,
@@ -367,6 +385,8 @@ def hdlworkflow():
         stop_time=stop_time,
         cocotb=args.cocotb,
         pythonpaths=pythonpaths,
+        path_to_libstdcpp=args.libstdcpp,
+        path_to_glbl=args.glbl,
         gui=args.gui,
         wave=args.wave,
         waveform_view_file=args.waveform_view_file,

@@ -16,6 +16,7 @@ classifiers = [
     "Operating System :: Unix",
     "Topic :: Software Development :: Embedded Systems",
     ]
+keywords = ["fpga", "vhdl", "hdl", "cli", "simulation", "synthesis", "workflow"]
 
 scripts.hdlworkflow = "hdlworkflow.hdlworkflow:hdlworkflow"
 

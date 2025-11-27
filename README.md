@@ -76,13 +76,13 @@ hdlworkflow nvc design_tb compile_order.txt --gui --wave gtkwave --waveform-view
 
 If the testbench `design_tb` is a cocotb test module, and the top level design is called `design`:
 ```sh
-hdlworkflow nvc design compile_order_txt --cocotb design_tb
+hdlworkflow nvc design compile_order.txt --cocotb design_tb
 ```
 
 Cocotb test modules will be discovered in the same directory that `hdlworkflow` is run.
 Adding to `PYTHONPATH` is also supported:
 ```sh
-hdlworkflow nvc design compile_order_txt --cocotb design_tb --pythonpath /abs/path/to/python/module --pythonpath relative/path/to/python/module
+hdlworkflow nvc design compile_order.txt --cocotb design_tb --pythonpath /abs/path/to/python/module --pythonpath relative/path/to/python/module
 ```
 
 ---
@@ -115,13 +115,23 @@ hdlworkflow riviera design_tb compile_order.txt --gui --waveform-view-file path/
 
 If the testbench `design_tb` is a cocotb test module, and the top level design is called `design`:
 ```sh
-hdlworkflow riviera design compile_order_txt --cocotb design_tb
+hdlworkflow riviera design compile_order.txt --cocotb design_tb
 ```
 
 Cocotb test modules will be discovered in the same directory that `hdlworkflow` is run.
 Adding to `PYTHONPATH` is also supported:
 ```sh
-hdlworkflow riviera design compile_order_txt --cocotb design_tb --pythonpath /abs/path/to/python/module --pythonpath relative/path/to/python/module
+hdlworkflow riviera design compile_order.txt --cocotb design_tb --pythonpath /abs/path/to/python/module --pythonpath relative/path/to/python/module
+```
+
+If the path to libstdc++ is required to resolve [GLIBCXX_3.4.XX not found](https://docs.cocotb.org/en/development/troubleshooting.html#glibcxx-3-4-xx-not-found):
+```sh
+hdlworkflow riviera design compile_order.txt --cocotb design_tb --libstdcpp /abs/path/to/libstdc++.so.6
+```
+
+If the path to glbl.v is required to resolve [Unresolved hierarchical reference to"glbl.GSR"](https://www.aldec.com/en/support/resources/documentation/faq/1172):
+```sh
+hdlworkflow riviera design_tb compile_order.txt --glbl /abs/path/to/glbl.v
 ```
 
 ---
@@ -233,6 +243,12 @@ Path to a file containing a list of all requisite files for the top design.
 
 #### `--pythonpath PYTHONPATH`
 (Optional) Path to append to `PYTHONPATH` environment variable. Used in cocotb simulations.
+
+#### `--libstdcpp LIBSTDC++`
+(Optional) Path to libstdc++ shared object. Used in cocotb simulations to resolve [GLIBCXX_3.4.XX not found](https://docs.cocotb.org/en/development/troubleshooting.html#glibcxx-3-4-xx-not-found).
+
+#### `--glbl GLBL.V`
+(Optional) Path to glbl.v. Used in simulations that use Xilinx XPM library. Resolves [Unresolved hierarchical reference to"glbl.GSR"](https://www.aldec.com/en/support/resources/documentation/faq/1172).
 
 #### `--part PART`
 (Optional) Part number used to set up `Vivado` project. Only used in `Vivado` workflow.
