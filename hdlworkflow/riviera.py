@@ -1,9 +1,6 @@
-import subprocess
-import logging
+import logging, os, subprocess, sys
 from pathlib import Path
 from importlib.util import find_spec
-import os
-import sys
 from shutil import which
 
 from hdlworkflow import utils
@@ -25,6 +22,8 @@ class Riviera:
         waveform_view_file: str,
         path_to_working_directory: str,
         pythonpaths: list[str],
+        path_to_libstdcpp: str,
+        path_to_glbl: str,
     ):
         logger.info(f"Initialising {type(self).__name__}...")
 
@@ -35,6 +34,13 @@ class Riviera:
         self.__cocotb_module: str = cocotb_module
         self.__pwd: str = path_to_working_directory
         self.__pythonpaths: list[str] = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
+        self.__path_to_glbl: str = path_to_glbl
+        self.__path_to_libstdcpp: str = ""
+        if path_to_libstdcpp:
+            if Path(path_to_libstdcpp).is_absolute():
+                self.__path_to_libstdcpp = path_to_libstdcpp
+            else:
+                self.__path_to_libstdcpp = str((Path(path_to_working_directory) / path_to_libstdcpp).resolve())
 
         self.__gui: bool = gui
         self.__waveform_view_file: str = waveform_view_file
@@ -193,6 +199,8 @@ class Riviera:
         with open("runsim.tcl", "w") as f:
             f.write("framework.documents.closeall\n")
             f.write("alib work\n")
+            if self.__path_to_glbl:
+                f.write(f"eval alog -work work -v2k5 -incr {self.__path_to_glbl}\n")
             compile_cmd = ""
             if self.__all_vhdl:
                 compile_cmd = f"    eval acom -work work -2008 -incr {' '.join(self.__vhdl_files)}\n"
@@ -239,8 +247,11 @@ class Riviera:
 
             sim_cmd += f"-ieee_nowarn work.{self.__top}"
 
-            f.write(f"set sim_returncode [catch {{{sim_cmd}}} return]\n")
-            f.write("if {$sim_returncode != 0} {\n")
+            if self.__path_to_glbl:
+                sim_cmd += " work.glbl"
+
+            f.write(f"if {{[catch {{{sim_cmd}}} result]}} {{\n")
+            f.write("    puts $result\n")
             f.write('    puts "Error when running asim"\n')
             f.write("    quit -code 1\n")
             f.write("}\n")
@@ -273,6 +284,16 @@ class Riviera:
             env = self.__setup_cocotb_env(cocotb_major_ver)
         else:
             env = env = os.environ.copy()
+
+        if self.__path_to_libstdcpp:
+            cwd_libstdcpp = Path.cwd() / Path(self.__path_to_libstdcpp).name
+            if not (cwd_libstdcpp).exists():
+                logger.info(f"Creating a symlink to libstdc++: {str(cwd_libstdcpp)}")
+                os.symlink(self.__path_to_libstdcpp, str(cwd_libstdcpp))
+
+        if self.__cocotb_module:
+            results_xml = Path.cwd() / "results.xml"
+            results_xml.unlink(missing_ok=True)
 
         logger.info("Starting Riviera-PRO...")
         if self.__gui:
