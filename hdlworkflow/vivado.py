@@ -17,6 +17,7 @@ class Vivado:
         self,
         top: str,
         compile_order: str,
+        work: str,
         generics: list[str],
         stop_time: str,
         path_to_working_directory: str,
@@ -34,6 +35,7 @@ class Vivado:
 
         self.__top: str = top
         self.__compile_order: str = compile_order
+        self.__work: str = work
         self.__pwd: str = path_to_working_directory
         self.__generics: list[str] = generics
         self.__stop_time: str = stop_time
@@ -109,6 +111,9 @@ class Vivado:
             if self.__board_part:
                 f.write(f'set_property -name "board_part" -value "{self.__board_part}" -objects $obj\n')
 
+            if self.__work:
+                f.write(f"set_property default_lib {self.__work} [current_project]\n")
+
             f.write(f"set fp [open {self.__compile_order}]\n")
             f.write('set lines [split [read -nonewline $fp] "\\n"]\n')
             f.write("close $fp\n")
@@ -134,7 +139,7 @@ class Vivado:
             else:
                 if self.__ooc:
                     f.write(
-                        "set_property -append -name {steps.synth_design.args.more options} -value {-mode out_of_context} -objects [get_runs synth_1]\n"
+                        "set_property -name {steps.synth_design.args.more options} -value {-mode out_of_context} -objects [get_runs synth_1]\n"
                     )
 
             f.write("set_property -name {xsim.simulate.runtime} -value 0 -objects [get_filesets sim_1]\n")

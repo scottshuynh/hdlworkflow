@@ -27,6 +27,7 @@ class Nvc:
         waveform_view_file: str,
         path_to_working_directory: str,
         pythonpaths: list[str],
+        work: str,
     ):
         logger.info(f"Initialising {type(self).__name__}...")
 
@@ -37,6 +38,9 @@ class Nvc:
         self.__cocotb_module: str = cocotb_module
         self.__pwd: str = path_to_working_directory
         self.__pythonpaths: list[str] = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
+        self.__work: list[str] = []
+        if work:
+            self.__work = [f"--work={work}"]
 
         self.__waveform_viewer: str = ""
         if waveform_viewer:
@@ -102,7 +106,11 @@ class Nvc:
 
     def __analyse(self) -> None:
         logger.info("Analysing...")
-        command = ["nvc", "-a", "-f", f"{self.__compile_order}"]
+
+        command = ["nvc"]
+        if self.__work:
+            command += self.__work
+        command += ["-a", "-f", f"{self.__compile_order}"]
         logger.info("    " + " ".join(cmd for cmd in command))
         analyse = subprocess.run(command)
         if analyse.returncode != 0:
@@ -114,7 +122,10 @@ class Nvc:
         generics = []
         if self.__generics:
             generics = ["-g" + generic for generic in self.__generics]
-        command = ["nvc", "-e", "-j"] + generics + [self.__top]
+        command = ["nvc"]
+        if self.__work:
+            command += self.__work
+        command += ["-e", "-j"] + generics + [self.__top]
         logger.info("    " + " ".join(cmd for cmd in command))
         elaborate = subprocess.run(command)
         if elaborate.returncode != 0:
@@ -146,16 +157,14 @@ class Nvc:
             else:
                 env["MODULE"] = self.__cocotb_module
 
-        logger.info(f"Cocotb environment variables: {' '.join(f'{key}={val}' for key, val in env.items())}")
+            logger.info(f"Cocotb environment variables: {' '.join(f'{key}={val}' for key, val in env.items())}")
+
         env = os.environ.copy() | env
 
-        command = [
-            "nvc",
-            "-r",
-            f"{self.__top}",
-            "--ieee-warnings=off",
-            "--dump-arrays",
-        ]
+        command = ["nvc"]
+        if self.__work:
+            command += self.__work
+        command += ["-r", f"{self.__top}", "--ieee-warnings=off", "--dump-arrays"]
         if self.__cocotb_module:
             command += ["--load", cocotb_vhpi]
 

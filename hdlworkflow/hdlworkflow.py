@@ -26,6 +26,7 @@ class HdlWorkflow:
         pythonpaths: list[str] = [],
         path_to_libstdcpp: str = "",
         path_to_glbl: str = "",
+        work: str = "",
         gui: bool = False,
         wave: str = "gtkwave",
         waveform_view_file: str = "",
@@ -56,6 +57,7 @@ class HdlWorkflow:
             cocotb (str, optional): Name of cocotb test module. Defaults to "".
             pythonpaths (list[str], optional): PYTHONPATH environment variable. Defaults to [].
             path_to_libstdcpp (str, optional): Path to libstdc++ shared object. Defaults to "".
+            work (str, optional): Name of default library. Defaults to "",
             path_to_glbl (str, optional): Path to glbl.v. Defaults to "".
             gui (bool, optional): Opens the EDA tool GUI, if supported. Defaults to False.
             wave (str, optional): Waveform viewer of choice. Defaults to "gtkwave".
@@ -79,6 +81,7 @@ class HdlWorkflow:
         self.pythonpaths = pythonpaths
         self.path_to_libstdcpp = path_to_libstdcpp
         self.path_to_glbl = path_to_glbl
+        self.work = work
         self.gui = gui
         self.wave = wave.lower()
         self.part = part.lower()
@@ -166,6 +169,7 @@ class HdlWorkflow:
                     waveform_view_file=self.waveform_view_file,
                     path_to_working_directory=self.path_to_working_directory,
                     pythonpaths=self.pythonpaths,
+                    work=self.work,
                 )
                 nvc.simulate()
 
@@ -180,6 +184,7 @@ class HdlWorkflow:
                 vivado = Vivado(
                     top=self.top,
                     compile_order=self.path_to_compile_order,
+                    work=self.work,
                     generics=self.generic,
                     stop_time="".join(self.stop_time.split()),
                     path_to_working_directory=self.path_to_working_directory,
@@ -206,6 +211,7 @@ class HdlWorkflow:
                 riviera = Riviera(
                     top=self.top,
                     compile_order=self.path_to_compile_order,
+                    work=self.work,
                     generics=self.generic,
                     stop_time=self.stop_time,
                     cocotb_module=self.cocotb,
@@ -302,15 +308,24 @@ def hdlworkflow():
     )
     parser.add_argument(
         "--libstdcpp",
+        default="",
         type=str,
         metavar="LIBSTDC++",
         help="Path to libstdc++ shared object.",
     )
     parser.add_argument(
         "--glbl",
+        default="",
         type=str,
         metavar="GLBL.V",
         help="Path to glbl.v.",
+    )
+    parser.add_argument(
+        "--work",
+        default="",
+        type=str,
+        metavar="DEFAULT_LIB",
+        help="Name of default library.",
     )
     parser.add_argument(
         "--part",
@@ -387,6 +402,7 @@ def hdlworkflow():
         pythonpaths=pythonpaths,
         path_to_libstdcpp=args.libstdcpp,
         path_to_glbl=args.glbl,
+        work=args.work,
         gui=args.gui,
         wave=args.wave,
         waveform_view_file=args.waveform_view_file,

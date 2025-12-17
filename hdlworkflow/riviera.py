@@ -15,6 +15,7 @@ class Riviera:
         self,
         top: str,
         compile_order: str,
+        work: str,
         generics: list[str],
         stop_time: str,
         cocotb_module: str,
@@ -27,8 +28,11 @@ class Riviera:
     ):
         logger.info(f"Initialising {type(self).__name__}...")
 
-        self.__compile_order: str = compile_order
         self.__top: str = top
+        self.__compile_order: str = compile_order
+        self.__work: str = work
+        if not work:
+            self.__work = "work"
         self.__generics: list[str] = generics
         self.__stop_time: str = stop_time
         self.__cocotb_module: str = cocotb_module
@@ -198,26 +202,26 @@ class Riviera:
         logger.info("Creating simulation script...")
         with open("runsim.tcl", "w") as f:
             f.write("framework.documents.closeall\n")
-            f.write("alib work\n")
+            f.write(f"alib {self.__work}\n")
             if self.__path_to_glbl:
-                f.write(f"eval alog -work work -v2k5 -incr {self.__path_to_glbl}\n")
+                f.write(f"eval alog -work {self.__work} -v2k5 -incr {self.__path_to_glbl}\n")
             compile_cmd = ""
             if self.__all_vhdl:
-                compile_cmd = f"    eval acom -work work -2008 -incr {' '.join(self.__vhdl_files)}\n"
+                compile_cmd = f"    eval acom -work {self.__work} -2008 -incr {' '.join(self.__vhdl_files)}\n"
             elif self.__all_verilog:
-                compile_cmd = f"    eval alog -work work -v2k5 -incr {' '.join(self.__verilog_files)}\n"
+                compile_cmd = f"    eval alog -work {self.__work} -v2k5 -incr {' '.join(self.__verilog_files)}\n"
             elif self.__all_verilog:
-                compile_cmd = f"    eval alog -work work -sv2k17 -incr {' '.join(self.__sysverilog_files)}\n"
+                compile_cmd = f"    eval alog -work {self.__work} -sv2k17 -incr {' '.join(self.__sysverilog_files)}\n"
             else:
                 for hdl_file in self.__hdl_files:
                     ext = Path(hdl_file).suffix
                     if ext:
                         if ext == ".vhd" or ext == ".vhdl":
-                            compile_cmd += f"    eval acom -work work -2008 -incr {hdl_file}\n"
+                            compile_cmd += f"    eval acom -work {self.__work} -2008 -incr {hdl_file}\n"
                         elif ext == ".v":
-                            compile_cmd += f"    eval alog -work work -v2k5 -incr {hdl_file}\n"
+                            compile_cmd += f"    eval alog -work {self.__work} -v2k5 -incr {hdl_file}\n"
                         elif ext == ".sv":
-                            compile_cmd += f"    eval alog -work work -sv2k17 -incr {hdl_file}\n"
+                            compile_cmd += f"    eval alog -work {self.__work} -sv2k17 -incr {hdl_file}\n"
 
             f.write("set compile_returncode [catch {\n")
             f.write(f"{compile_cmd}")
@@ -245,10 +249,10 @@ class Riviera:
                 generics = " ".join(f"-g{generic}" for generic in self.__generics) + " "
                 sim_cmd += generics
 
-            sim_cmd += f"-ieee_nowarn work.{self.__top}"
+            sim_cmd += f"-ieee_nowarn {self.__work}.{self.__top} "
 
             if self.__path_to_glbl:
-                sim_cmd += " work.glbl"
+                sim_cmd += f"{self.__work}.glbl"
 
             f.write(f"if {{[catch {{{sim_cmd}}} result]}} {{\n")
             f.write("    puts $result\n")
