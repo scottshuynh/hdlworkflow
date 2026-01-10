@@ -14,7 +14,7 @@ readme = "README.md"
 classifiers = [
     "Programming Language :: Python :: 3.10", 
     "Operating System :: Unix",
-    "Topic :: Software Development :: Embedded Systems",
+    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
     ]
 keywords = ["fpga", "vhdl", "hdl", "cli", "simulation", "synthesis", "workflow"]
 

@@ -44,7 +44,8 @@ A directory with the name of the chosen EDA tool will be created in the director
 
 Some examples of `hdlworkflow` usage can be found below.
 
-*Note*: All HDL will be compiled into the *work* library.
+> [!NOTE]
+> By default, all HDL will be compiled into the *work* library.
 
 ---
 ### nvc
@@ -67,9 +68,10 @@ If a waveform viewer, gtkwave, is required:
 ```sh
 hdlworkflow nvc design_tb compile_order.txt --gui --wave gtkwave
 ```
-*NOTE*: A new waveform view file will be generated automatically, overwriting any previously existing file.
+> [!NOTE]
+> A new waveform view file will be generated automatically, overwriting any previously generated file.
 
-If a gtkwave waveform view file is required:
+If gtkwave is required with an existing waveform view file:
 ```sh
 hdlworkflow nvc design_tb compile_order.txt --gui --wave gtkwave --waveform-view-file path/to/waveform_view_file.gtkw
 ```
@@ -106,9 +108,10 @@ If a GUI is required to view waveforms:
 ```sh
 hdlworkflow riviera design_tb compile_order.txt --gui
 ```
-*NOTE*: A new waveform view file will be generated automatically, overwriting any previously existing file.
+> [!NOTE]
+> A new waveform view file will be generated automatically, overwriting any previously generated file.
 
-If a GUI is required with an existing waveform file:
+If a GUI is required with an existing waveform view file:
 ```sh
 hdlworkflow riviera design_tb compile_order.txt --gui --waveform-view-file path/to/waveform_view_file.awc
 ```
@@ -155,8 +158,8 @@ If a GUI is required to view waveforms:
 ```sh
 hdlworkflow vivado design_tb compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --gui
 ```
-*NOTE*: A new waveform view file will be generated automatically, overwriting any previously existing file.
-
+> [!NOTE]
+> A new waveform view file will be generated automatically, overwriting any previously generated file.
 
 If a GUI is required with an existing waveform configuration file:
 ```sh
@@ -202,11 +205,10 @@ Additionally, if the board part (`ZCU106`) for OOC synthesis + implementation is
 ```sh
 hdlworkflow vivado design compile_order.txt -g DATA_WIDTH=8 -g ADDR_WIDTH=4 --impl --ooc --clk-period-constraint clk_a=10 --clk-period-constraint clk_b=2.000 --part xczu7ev-ffvc1156-2-e --board xilinx.com:zcu106:part0:2.6  
 ```
-
-#### Notes
-+ `hdlworkflow` will configure `Vivado` with [Artix-7](https://www.amd.com/en/products/adaptive-socs-and-fpgas/fpga/artix-7.html) as the default part number. Use `--part` and/or `--board` arguments to specify target hardware.
-+ When running synthesis, the compile order file should contain all requisite files used to synthesise the design: a list of ordered source files, vendor-specific files and constraint files.
-+ When running synthesis, `Vivado` will default to use eight logical cores or half of the number of available logical cores, whichever is smaller.
+> [!NOTE]
+> + `hdlworkflow` will configure `Vivado` with [Artix-7](https://www.amd.com/en/products/adaptive-socs-and-fpgas/fpga/artix-7.html) as the default part number. Use `--part` and/or `--board` arguments to specify target hardware.
+> + When running synthesis, the compile order file should contain all requisite files used to synthesise the design: a list of ordered source files, vendor-specific files and constraint files.
+> + When running synthesis, `Vivado` will default to use eight logical cores or half of the number of available logical cores, whichever is smaller.
 
 ---
 ### Positional Arguments
@@ -249,6 +251,9 @@ Path to a file containing a list of all requisite files for the top design.
 
 #### `--glbl GLBL.V`
 (Optional) Path to glbl.v. Used in simulations that use Xilinx XPM library. Resolves [Unresolved hierarchical reference to"glbl.GSR"](https://www.aldec.com/en/support/resources/documentation/faq/1172).
+
+#### `--work DEFAULT_LIB`
+(Optional) Name of the default library.
 
 #### `--part PART`
 (Optional) Part number used to set up `Vivado` project. Only used in `Vivado` workflow.
