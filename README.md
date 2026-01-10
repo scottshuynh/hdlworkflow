@@ -27,11 +27,14 @@ The table below shows supported simulators and their compatibility with tools li
 | gtkwave   | :white_check_mark:    | :negative_squared_cross_mark: | :negative_squared_cross_mark: |
 
 ## Install
-`hdlworkflow` is a Python package and can be installed by following the steps below:
+`hdlworkflow` is a Python package and can be installed using pip:
 ```sh
-git clone https://github.com/scottshuynh/hdlworkflow.git
-cd hdlworkflow
-pip install .
+pip install hdlworkflow
+```
+
+If you want to install the development version of `hdlworkflow`:
+```sh
+pip install git+https://github.com/scottshuynh/hdlworkflow@main
 ```
 
 ## How to run
