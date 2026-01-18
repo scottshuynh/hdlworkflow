@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "type": "VHDL",
+      "path": "d.vhd",
+      "library": "d_lib"
+    },
+    {
+      "type": "VHDL",
+      "path": "b.vhd",
+      "library": "b_lib"
+    },
+    {
+      "type": "VHDL",
+      "path": "c.vhd",
+      "library": "c_lib"
+    },
+    {
+      "type": "VHDL",
+      "path": "a.vhd",
+      "is_top": true,
+      "library": "work"
+    }
+  ]
+}

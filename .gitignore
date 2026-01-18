@@ -175,3 +175,8 @@ cython_debug/
 
 # VSCode
 .vscode/
+
+# hdlworkflow
+nvc/
+riviera/
+vivado/
