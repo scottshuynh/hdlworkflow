@@ -1,4 +1,4 @@
-import logging, os, subprocess, sys
+import json, logging, os, subprocess, sys
 from pathlib import Path
 from importlib.util import find_spec
 from shutil import which
@@ -28,58 +28,65 @@ class Riviera:
     ):
         logger.info(f"Initialising {type(self).__name__}...")
 
-        self.__top: str = top
-        self.__compile_order: str = compile_order
-        self.__work: str = work
+        self._top: str = top
+        # Check if file type is supported
+        if compile_order:
+            if Path(compile_order).suffix == ".txt" or Path(compile_order).suffix == ".json":
+                self._compile_order: Path = Path(compile_order)
+            else:
+                logger.error("Unsupported compile_order file extension. Expecting:, got:")
+                sys.exit(1)
+
+        self._work: str = work
         if not work:
-            self.__work = "work"
-        self.__generics: list[str] = generics
-        self.__stop_time: str = stop_time
-        self.__cocotb_module: str = cocotb_module
-        self.__pwd: str = path_to_working_directory
-        self.__pythonpaths: list[str] = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
-        self.__path_to_glbl: str = path_to_glbl
-        self.__path_to_libstdcpp: str = ""
+            self._work = "work"
+        self._generics: list[str] = generics
+        self._stop_time: str = stop_time
+        self._cocotb_module: str = cocotb_module
+        self._pwd: Path = Path(path_to_working_directory)
+        self._pythonpaths: list[str] = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
+        self._path_to_glbl: str = path_to_glbl
+        self._path_to_libstdcpp: str = ""
         if path_to_libstdcpp:
             if Path(path_to_libstdcpp).is_absolute():
-                self.__path_to_libstdcpp = path_to_libstdcpp
+                self._path_to_libstdcpp = path_to_libstdcpp
             else:
-                self.__path_to_libstdcpp = str((Path(path_to_working_directory) / path_to_libstdcpp).resolve())
+                self._path_to_libstdcpp = str((Path(path_to_working_directory) / path_to_libstdcpp).resolve())
 
-        self.__gui: bool = gui
-        self.__waveform_view_file: str = waveform_view_file
-        self.__waveform_file: str = ""
+        self._gui: bool = gui
+        self._waveform_view_file: str = waveform_view_file
+        self._waveform_file: str = ""
         if gui:
             if waveform_view_file:
                 if Path(waveform_view_file).suffix == ".awc":
-                    self.__waveform_file = waveform_view_file
+                    self._waveform_file = waveform_view_file
                 else:
                     logger.error(f"Expecting waveform view file with .awc extension. Got: {waveform_view_file}")
                     sys.exit(1)
             else:
-                self.__waveform_file = self.__top
+                self._waveform_file = self._top
                 if generics:
-                    self.__waveform_file += "".join(generic for generic in self.__generics) + ".awc"
+                    self._waveform_file += "".join(generic for generic in self._generics) + ".awc"
                 else:
-                    self.__waveform_file += ".awc"
+                    self._waveform_file += ".awc"
 
-        dependencies_met, missing = self.__check_dependencies()
+        dependencies_met, missing = self._check_dependencies()
         if not dependencies_met:
             logger.error(f"Missing dependencies: {' '.join(str(dependency) for dependency in missing)}.")
             logger.error("All dependencies must be found on PATH.")
             sys.exit(1)
 
-        os.makedirs(f"{self.__pwd}/riviera", exist_ok=True)
-        os.chdir(f"{self.__pwd}/riviera")
+        os.makedirs(f"{self._pwd / 'riviera'}", exist_ok=True)
+        os.chdir(f"{self._pwd / 'riviera'}")
 
-    def __check_dependencies(self) -> tuple[bool, list[str]]:
+    def _check_dependencies(self) -> tuple[bool, list[str]]:
         logger.info("Checking dependencies...")
         dependencies = ["vsim", "vsimsa"]
         missing: list[str] = []
         for dependency in dependencies:
             if not which(dependency):
                 missing.append(dependency)
-        if self.__cocotb_module:
+        if self._cocotb_module:
             if not find_spec("cocotb"):
                 missing.append("cocotb")
         if missing:
@@ -88,80 +95,79 @@ class Riviera:
             return tuple([True, None])
 
     def simulate(self) -> None:
-        self.__flatten_compile_order()
-        self.__check_mixed_hdl()
+        self._flatten_compile_order()
 
         major = 0
-        if self.__cocotb_module:
+        if self._cocotb_module:
             major, minor, patch = utils.get_cocotb_version()
 
-        self.__batch_mode_run(major)
+        self._batch_mode_run(major)
 
-    def __flatten_compile_order(self) -> None:
-        self.__vhdl_files: list[str] = []
-        self.__verilog_files: list[str] = []
-        self.__sysverilog_files: list[str] = []
-        self.__hdl_files: list[str] = []
+    def _flatten_compile_order(self) -> None:
+        self._hdl_files: list[dict] = []
 
-        with open(self.__compile_order) as f:
-            for line in f:
-                hdl_file: str = line.strip()
-                self.__hdl_files.append(hdl_file)
-                ext = Path(hdl_file).suffix
-                if ext:
-                    if ext == ".vhd" or ext == ".vhdl":
-                        if self.__top in line:
-                            self.__top_type = "vhdl"
-                        self.__vhdl_files.append(hdl_file)
-                    elif ext == ".v":
-                        if self.__top in line:
-                            self.__top_type = "verilog"
-                        self.__verilog_files.append(hdl_file)
-                    elif ext == ".sv":
-                        if self.__top in line:
-                            self.__top_type = "verilog"
-                        self.__sysverilog_files.append(hdl_file)
+        if self._compile_order.suffix == ".txt":
+            with self._compile_order.open(encoding="utf-8") as f:
+                for line in f:
+                    hdl_file: Path = Path(line.strip())
+                    ext = hdl_file.suffix
+                    entity = dict()
+                    entity["library"] = self._work
+                    if ext:
+                        if ext == ".vhd" or ext == ".vhdl":
+                            entity["type"] = "vhdl"
+                            if self._top in line:
+                                self._top_type = "vhdl"
+                        elif ext == ".v" or ext == ".sv":
+                            entity["type"] = "verilog"
+                            if self._top in line:
+                                self._top_type = "verilog"
 
-    def __check_mixed_hdl(self) -> None:
-        self.__all_vhdl: bool = False
-        self.__all_verilog: bool = False
-        self.__all_sysverilog: bool = False
-        if self.__vhdl_files and not self.__verilog_files and not self.__sysverilog_files:
-            self.__all_vhdl = True
-        elif self.__verilog_files and not self.__vhdl_files and not self.__sysverilog_files:
-            self.__all_verilog = True
-        elif self.__sysverilog_files and not self.__vhdl_files and not self.__verilog_files:
-            self.__all_sysverilog = True
+                    if not hdl_file.is_absolute():
+                        hdl_file = self._pwd / hdl_file
+                        entity["path"] = str(hdl_file)
 
-    def __setup_cocotb_env(self, major_ver: int) -> dict[str, str]:
+                    self._hdl_files.append(entity)
+
+        elif self._compile_order.suffix == ".json":
+            with self._compile_order.open(encoding="utf-8") as f:
+                compile_order_dict = json.load(f)
+                self._hdl_files = compile_order_dict["files"]
+                for entity in self._hdl_files:
+                    if self._top in entity["path"]:
+                        self._top_type = entity["type"].lower()
+                    if not Path(entity["path"]).is_absolute():
+                        entity["path"] = str(self._pwd / entity["path"])
+
+    def _setup_cocotb_env(self, major_ver: int) -> dict[str, str]:
         libpython_loc = subprocess.run(["cocotb-config", "--libpython"], capture_output=True, text=True).stdout.strip()
-        gpi_extra = self.__setup_procedural_interface(True)
+        gpi_extra = self._setup_procedural_interface(True)
         env: dict[str, str] = dict()
-        env["PYTHONPATH"] = f"{':'.join(str(path) for path in self.__pythonpaths)}"
+        env["PYTHONPATH"] = f"{':'.join(str(path) for path in self._pythonpaths)}"
         env["LIBPYTHON_LOC"] = libpython_loc
         env["GPI_EXTRA"] = gpi_extra
 
-        if not self.__gui:
+        if not self._gui:
             env["COCOTB_ANSI_OUTPUT"] = "1"
         if major_ver >= 2:
             pygpi_python_bin = subprocess.run(
                 ["cocotb-config", "--python-bin"], capture_output=True, text=True
             ).stdout.strip()
             env["PYGPI_PYTHON_BIN"] = pygpi_python_bin
-            env["COCOTB_TEST_MODULES"] = self.__cocotb_module
-            env["COCOTB_TOPLEVEL"] = self.__top
+            env["COCOTB_TEST_MODULES"] = self._cocotb_module
+            env["COCOTB_TOPLEVEL"] = self._top
         else:
-            env["MODULE"] = self.__cocotb_module
-            env["TOPLEVEL"] = self.__top
+            env["MODULE"] = self._cocotb_module
+            env["TOPLEVEL"] = self._top
 
         logger.info(f"Cocotb environment variables: {' '.join(f'{key}={val}' for key, val in env.items())}")
         env = os.environ.copy() | env
         return env
 
-    def __setup_procedural_interface(self, is_gpi_extra: bool = False) -> str:
+    def _setup_procedural_interface(self, is_gpi_extra: bool = False) -> str:
         result: str = ""
         if is_gpi_extra:
-            if self.__top_type == "vhdl":
+            if self._top_type == "vhdl":
                 result = (
                     subprocess.run(
                         ["cocotb-config", "--lib-name-path", "vpi", "riviera"],
@@ -170,7 +176,7 @@ class Riviera:
                     ).stdout.strip()
                     + ":cocotbvpi_entry_point"
                 )
-            elif self.__top_type == "verilog":
+            elif self._top_type == "verilog":
                 result = (
                     subprocess.run(
                         ["cocotb-config", "--lib-name-path", "vhpi", "riviera"],
@@ -180,7 +186,7 @@ class Riviera:
                     + ":cocotbvhpi_entry_point"
                 )
         else:
-            if self.__top_type == "vhdl":
+            if self._top_type == "vhdl":
                 result = (
                     subprocess.run(
                         ["cocotb-config", "--lib-name-path", "vhpi", "riviera"],
@@ -189,7 +195,7 @@ class Riviera:
                     ).stdout.strip()
                     + ":vhpi_startup_routines_bootstrap"
                 )
-            elif self.__top_type == "verilog":
+            elif self._top_type == "verilog":
                 result = subprocess.run(
                     ["cocotb-config", "--lib-name-path", "vpi", "riviera"],
                     capture_output=True,
@@ -198,30 +204,19 @@ class Riviera:
 
         return result
 
-    def __create_runsim(self) -> None:
+    def _create_runsim(self) -> None:
         logger.info("Creating simulation script...")
         with open("runsim.tcl", "w") as f:
             f.write("framework.documents.closeall\n")
-            f.write(f"alib {self.__work}\n")
-            if self.__path_to_glbl:
-                f.write(f"eval alog -work {self.__work} -v2k5 -incr {self.__path_to_glbl}\n")
+            f.write(f"alib {self._work}\n")
+            if self._path_to_glbl:
+                f.write(f"eval alog -work {self._work} -v2k5 -incr {self._path_to_glbl}\n")
             compile_cmd = ""
-            if self.__all_vhdl:
-                compile_cmd = f"    eval acom -work {self.__work} -2008 -incr {' '.join(self.__vhdl_files)}\n"
-            elif self.__all_verilog:
-                compile_cmd = f"    eval alog -work {self.__work} -v2k5 -incr {' '.join(self.__verilog_files)}\n"
-            elif self.__all_verilog:
-                compile_cmd = f"    eval alog -work {self.__work} -sv2k17 -incr {' '.join(self.__sysverilog_files)}\n"
-            else:
-                for hdl_file in self.__hdl_files:
-                    ext = Path(hdl_file).suffix
-                    if ext:
-                        if ext == ".vhd" or ext == ".vhdl":
-                            compile_cmd += f"    eval acom -work {self.__work} -2008 -incr {hdl_file}\n"
-                        elif ext == ".v":
-                            compile_cmd += f"    eval alog -work {self.__work} -v2k5 -incr {hdl_file}\n"
-                        elif ext == ".sv":
-                            compile_cmd += f"    eval alog -work {self.__work} -sv2k17 -incr {hdl_file}\n"
+            for hdl_file in self._hdl_files:
+                if hdl_file["type"] == "vhdl":
+                    compile_cmd += f"    eval acom -work {hdl_file['library']} -2008 -incr {hdl_file['path']}\n"
+                elif hdl_file["type"] == "verilog":
+                    compile_cmd += f"    eval alog -work {hdl_file['library']} -incr {hdl_file['path']}\n"
 
             f.write("set compile_returncode [catch {\n")
             f.write(f"{compile_cmd}")
@@ -233,26 +228,26 @@ class Riviera:
 
             sim_cmd = "asim "
             vpi: str = ""
-            if self.__cocotb_module:
-                vpi = self.__setup_procedural_interface()
+            if self._cocotb_module:
+                vpi = self._setup_procedural_interface()
                 sim_cmd += f"+access +w_nets "
-                if self.__top_type == "vhdl":
+                if self._top_type == "vhdl":
                     sim_cmd += f"-loadvhpi {vpi} "
-                elif self.__top_type == "verilog":
+                elif self._top_type == "verilog":
                     sim_cmd += f"-pli {vpi} "
 
-                if self.__gui:
+                if self._gui:
                     sim_cmd += "-interceptcoutput "
 
             generics: str = ""
-            if self.__generics:
-                generics = " ".join(f"-g{generic}" for generic in self.__generics) + " "
+            if self._generics:
+                generics = " ".join(f"-g{generic}" for generic in self._generics) + " "
                 sim_cmd += generics
 
-            sim_cmd += f"-ieee_nowarn {self.__work}.{self.__top} "
+            sim_cmd += f"-ieee_nowarn {self._work}.{self._top} "
 
-            if self.__path_to_glbl:
-                sim_cmd += f"{self.__work}.glbl"
+            if self._path_to_glbl:
+                sim_cmd += f"{self._work}.glbl"
 
             f.write(f"if {{[catch {{{sim_cmd}}} result]}} {{\n")
             f.write("    puts $result\n")
@@ -261,46 +256,46 @@ class Riviera:
             f.write("}\n")
 
             f.write("log -rec *\n")
-            if self.__gui:
-                if self.__waveform_view_file:
-                    f.write(f"system.open -wave {self.__waveform_file}\n")
+            if self._gui:
+                if self._waveform_view_file:
+                    f.write(f"system.open -wave {self._waveform_file}\n")
                 else:
                     f.write("add wave -expand -vgroup [env] *\n")
                     f.write("set instances [find hierarchy -list -component -rec *]\n")
                     f.write("foreach inst $instances {\n")
                     f.write("    add wave -expand -vgroup $inst $inst/*\n")
                     f.write("}\n")
-                    f.write(f"write awc {self.__waveform_file}\n")
+                    f.write(f"write awc {self._waveform_file}\n")
 
-            if self.__stop_time:
-                f.write(f"run {self.__stop_time}\n")
+            if self._stop_time:
+                f.write(f"run {self._stop_time}\n")
             else:
                 f.write("run -all\n")
 
-            if not self.__gui:
+            if not self._gui:
                 f.write("endsim\n")
                 f.write("exit\n")
 
-    def __batch_mode_run(self, cocotb_major_ver: int = 0) -> None:
-        self.__create_runsim()
-        if self.__cocotb_module:
+    def _batch_mode_run(self, cocotb_major_ver: int = 0) -> None:
+        self._create_runsim()
+        if self._cocotb_module:
             logger.info("Setting up cocotb environment variables...")
-            env = self.__setup_cocotb_env(cocotb_major_ver)
+            env = self._setup_cocotb_env(cocotb_major_ver)
         else:
             env = env = os.environ.copy()
 
-        if self.__path_to_libstdcpp:
-            cwd_libstdcpp = Path.cwd() / Path(self.__path_to_libstdcpp).name
+        if self._path_to_libstdcpp:
+            cwd_libstdcpp = Path.cwd() / Path(self._path_to_libstdcpp).name
             if not (cwd_libstdcpp).exists():
                 logger.info(f"Creating a symlink to libstdc++: {str(cwd_libstdcpp)}")
-                os.symlink(self.__path_to_libstdcpp, str(cwd_libstdcpp))
+                os.symlink(self._path_to_libstdcpp, str(cwd_libstdcpp))
 
-        if self.__cocotb_module:
+        if self._cocotb_module:
             results_xml = Path.cwd() / "results.xml"
             results_xml.unlink(missing_ok=True)
 
         logger.info("Starting Riviera-PRO...")
-        if self.__gui:
+        if self._gui:
             command = ["vsim", "-do", "runsim.tcl"]
         else:
             command = ["vsimsa", "-do", "runsim.tcl"]
@@ -310,7 +305,7 @@ class Riviera:
         if sim_batch_mode.returncode != 0:
             logger.error("Error during Riviera-PRO batch mode simulation.")
             sys.exit(1)
-        if self.__cocotb_module:
+        if self._cocotb_module:
             if not utils.is_cocotb_test_pass("results.xml"):
                 logger.error("Test failure during cocotb simulation.")
                 sys.exit(1)

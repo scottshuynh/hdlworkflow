@@ -84,8 +84,8 @@ class Nvc:
 
                 self._waveform_viewer_obj = Gtkwave(self._waveform_data, self._waveform_save_file)
 
-        os.makedirs(f"{self._pwd}/nvc", exist_ok=True)
-        os.chdir(f"{self._pwd}/nvc")
+        os.makedirs(f"{self._pwd / 'nvc'}", exist_ok=True)
+        os.chdir(f"{self._pwd / 'nvc'}")
 
     def _check_dependencies(self) -> tuple[bool, list[str]]:
         logger.info("Checking dependencies...")
