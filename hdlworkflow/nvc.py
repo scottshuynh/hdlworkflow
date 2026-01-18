@@ -40,7 +40,7 @@ class Nvc:
         self._generics: list[str] = generics
         self._stop_time: str = stop_time
         self._cocotb_module: str = cocotb_module
-        self._pwd: str = path_to_working_directory
+        self._pwd: Path = Path(path_to_working_directory)
         self._pythonpaths: list[str] = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
         self._work: list[str] = []
         if work:
@@ -131,7 +131,7 @@ class Nvc:
 
                     entity_path = Path(entity["path"])
                     if not entity_path.is_absolute():
-                        entity_path = Path(self._pwd) / entity_path
+                        entity_path = self._pwd / entity_path
                     command += ["-a", f"{str(entity_path)}"]
                     logger.info("    " + " ".join(cmd for cmd in command))
                     analyse = subprocess.run(command)
