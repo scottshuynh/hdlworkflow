@@ -1,6 +1,6 @@
 import json, logging, os, subprocess, sys
-from pathlib import Path
 from importlib.util import find_spec
+from pathlib import Path
 from shutil import which
 
 from hdlworkflow import utils
