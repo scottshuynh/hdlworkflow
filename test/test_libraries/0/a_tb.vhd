@@ -32,7 +32,7 @@ begin
   process (clk)
   begin
     if rising_edge(clk) then
-      if and count then
+      if and count = '1' then
         finish;
       else
         count <= count + 1;

@@ -31,7 +31,7 @@ class Vivado:
         self._top: str = top
         self._compile_order: Path = Path(compile_order)
         self._work: str = work
-        self._pwd: str = path_to_working_directory
+        self._pwd: Path = Path(path_to_working_directory)
         self._generics: list[str] = generics
         self._stop_time: str = stop_time
         self._part_number: str = part_number
@@ -64,8 +64,8 @@ class Vivado:
             logger.error("All dependencies must be found on PATH.")
             sys.exit(1)
 
-        os.makedirs(f"{self._pwd}/vivado", exist_ok=True)
-        os.chdir(f"{self._pwd}/vivado")
+        os.makedirs(f"{self._pwd / 'vivado'}", exist_ok=True)
+        os.chdir(f"{self._pwd / 'vivado'}")
 
     def _check_dependencies(self) -> bool:
         logger.info("Checking dependencies...")
@@ -112,15 +112,20 @@ class Vivado:
                 f.write("close $fp\n")
                 f.write("add_files $lines\n")
             elif self._compile_order.suffix == ".json":
-                with self._compile_order.open(encoding="utf-8") as f:
-                    compile_order_dict = json.load(f)
+                with self._compile_order.open(encoding="utf-8") as jf:
+                    compile_order_dict = json.load(jf)
                     for entity in compile_order_dict["files"]:
                         if self._top in entity["path"]:
                             if not self._work:
-                                self._work = [f"{entity['library'].lower()}"]
-                        f.write(f"add_files {entity['path']}\n")
+                                self._work = f"{entity['library'].lower()}"
+                        entity_path = Path(entity["path"])
+                        if not entity_path.is_absolute():
+                            entity_path = self._pwd / entity_path
+                        f.write(f"add_files {str(entity_path)}\n")
                         if entity["type"].lower() == "vhdl":
-                            f.write(f"set_property library {entity['library'].lower()} [get_files {entity['path']}]\n")
+                            f.write(
+                                f"set_property library {entity['library'].lower()} [get_files {str(entity_path)}]\n"
+                            )
 
             if self._clk_period_constraints:
                 f.write("add_files clock_constraint.xdc\n")
@@ -173,7 +178,7 @@ class Vivado:
                         f.write("}\n")
                     if self._bitstream:
                         f.write("open_run impl_1\n")
-                        f.write(f"write_bitstream -force {self._pwd}/{self._top}.bit")
+                        f.write(f"write_bitstream -force {str(self._pwd / self._top + ".bit")}\n")
                 else:
                     if self._bitstream:
                         f.write(f"launch_runs impl_1 -to_step write_bitstream -jobs {min(os.cpu_count() // 2, 8)}\n")

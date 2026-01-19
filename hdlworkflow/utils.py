@@ -19,10 +19,10 @@ def relative_to_absolute_paths(paths: list[str], pwd: str) -> list[str]:
 
 
 def get_cocotb_version() -> tuple[int, int, int]:
-    return __get_semantic_version(version("cocotb"))
+    return _get_semantic_version(version("cocotb"))
 
 
-def __get_semantic_version(ver: str) -> tuple[int, int, int]:
+def _get_semantic_version(ver: str) -> tuple[int, int, int]:
     v = ver.split(".")
     if len(v) < 3:
         logger.error(f"Expecting MAJOR.MINOR.PATCH. Got: {'.'.join(str(num) for num in v)}")

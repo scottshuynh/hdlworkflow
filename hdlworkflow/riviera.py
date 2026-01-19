@@ -37,7 +37,7 @@ class Riviera:
                 logger.error("Unsupported compile_order file extension. Expecting:, got:")
                 sys.exit(1)
 
-        self._libraries: set[str] = []
+        self._libraries: set[str] = set()
         if work:
             self._work: str = work
             self._libraries.add(work)
