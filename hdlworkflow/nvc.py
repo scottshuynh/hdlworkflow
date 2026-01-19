@@ -125,6 +125,9 @@ class Nvc:
             with self._compile_order.open(encoding="utf-8") as f:
                 compile_order_dict = json.load(f)
                 for entity in compile_order_dict["files"]:
+                    if self._top in entity["path"]:
+                        if not self._work:
+                            self._work = [f"--work={entity['library']}"]
                     command = ["nvc", "-L", f"{str(Path.cwd())}"]
                     if entity["library"]:
                         command += [f"--work={entity['library']}"]

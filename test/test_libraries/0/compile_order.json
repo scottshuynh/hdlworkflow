@@ -18,8 +18,13 @@
     {
       "type": "VHDL",
       "path": "a.vhd",
+      "library": "a_lib"
+    },
+    {
+      "type": "VHDL",
+      "path": "a_tb.vhd",
       "is_top": true,
-      "library": "work"
+      "library": "a_lib"
     }
   ]
 }
