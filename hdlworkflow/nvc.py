@@ -127,10 +127,10 @@ class Nvc:
                 for entity in compile_order_dict["files"]:
                     if self._top in entity["path"]:
                         if not self._work:
-                            self._work = [f"--work={entity['library']}"]
+                            self._work = [f"--work={entity['library'].lower()}"]
                     command = ["nvc", "-L", f"{str(Path.cwd())}"]
                     if entity["library"]:
-                        command += [f"--work={entity['library']}"]
+                        command += [f"--work={entity['library'].lower()}"]
 
                     entity_path = Path(entity["path"])
                     if not entity_path.is_absolute():

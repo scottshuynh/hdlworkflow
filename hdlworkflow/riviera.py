@@ -37,9 +37,13 @@ class Riviera:
                 logger.error("Unsupported compile_order file extension. Expecting:, got:")
                 sys.exit(1)
 
-        self._work: str = work
-        if not work:
+        self._libraries: set[str] = []
+        if work:
+            self._work: str = work
+            self._libraries.add(work)
+        else:
             self._work = "work"
+
         self._generics: list[str] = generics
         self._stop_time: str = stop_time
         self._cocotb_module: str = cocotb_module
@@ -134,8 +138,12 @@ class Riviera:
                 compile_order_dict = json.load(f)
                 self._hdl_files = compile_order_dict["files"]
                 for entity in self._hdl_files:
-                    if self._top in entity["path"]:
+                    if self._top in entity["path"].lower():
                         self._top_type = entity["type"].lower()
+                        if self._work == "work":
+                            self._work = entity["library"].lower()
+                    if entity["library"].lower() not in self._libraries:
+                        self._libraries.add(entity["library"].lower())
                     if not Path(entity["path"]).is_absolute():
                         entity["path"] = str(self._pwd / entity["path"])
 
@@ -208,9 +216,14 @@ class Riviera:
         logger.info("Creating simulation script...")
         with open("runsim.tcl", "w") as f:
             f.write("framework.documents.closeall\n")
-            f.write(f"alib {self._work}\n")
+            if self._libraries:
+                for library in self._libraries:
+                    f.write(f"alib {library}")
+            else:
+                f.write(f"alib {self._work}")
+
             if self._path_to_glbl:
-                f.write(f"eval alog -work {self._work} -v2k5 -incr {self._path_to_glbl}\n")
+                f.write(f"eval alog -work {self._work} -incr {self._path_to_glbl}\n")
             compile_cmd = ""
             for hdl_file in self._hdl_files:
                 if hdl_file["type"] == "vhdl":
