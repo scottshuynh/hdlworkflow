@@ -127,15 +127,18 @@ class Nvc:
                 for entity in compile_order_dict["files"]:
                     if self._top in entity["path"]:
                         if not self._work:
-                            self._work = [f"--work={entity['library'].lower()}"]
+                            self._work = [f"--work={entity.get('library', 'work').lower()}"]
+
                     command = ["nvc", "-L", f"{str(Path.cwd())}"]
-                    if entity["library"]:
-                        command += [f"--work={entity['library'].lower()}"]
+                    command += [f"--work={entity.get('library', 'work').lower()}"]
 
                     entity_path = Path(entity["path"])
                     if not entity_path.is_absolute():
                         entity_path = self._pwd / entity_path
-                    command += ["-a", f"{str(entity_path)}"]
+
+                    if entity.get("type", "none") != "none":
+                        command += ["-a", f"{str(entity_path)}"]
+
                     logger.info("    " + " ".join(cmd for cmd in command))
                     analyse = subprocess.run(command)
                     if analyse.returncode != 0:

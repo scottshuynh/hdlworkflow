@@ -126,6 +126,8 @@ class Riviera:
                             entity["type"] = "verilog"
                             if self._top in line:
                                 self._top_type = "verilog"
+                        else:
+                            entity["type"] = "none"
 
                     if not hdl_file.is_absolute():
                         hdl_file = self._pwd / hdl_file
@@ -138,12 +140,14 @@ class Riviera:
                 compile_order_dict = json.load(f)
                 self._hdl_files = compile_order_dict["files"]
                 for entity in self._hdl_files:
+                    library = entity.get("library", "").lower()
+
                     if self._top in entity["path"].lower():
                         self._top_type = entity["type"].lower()
-                        if self._work == "work":
-                            self._work = entity["library"].lower()
-                    if entity["library"].lower() not in self._libraries:
-                        self._libraries.add(entity["library"].lower())
+                        if self._work == "work" and library:
+                            self._work = library
+                    if library and library not in self._libraries:
+                        self._libraries.add(library)
                     if not Path(entity["path"]).is_absolute():
                         entity["path"] = str(self._pwd / entity["path"])
 
@@ -218,18 +222,22 @@ class Riviera:
             f.write("framework.documents.closeall\n")
             if self._libraries:
                 for library in self._libraries:
-                    f.write(f"alib {library}")
+                    f.write(f"alib {library}\n")
             else:
-                f.write(f"alib {self._work}")
+                f.write(f"alib {self._work}\n")
 
             if self._path_to_glbl:
                 f.write(f"eval alog -work {self._work} -incr {self._path_to_glbl}\n")
             compile_cmd = ""
             for hdl_file in self._hdl_files:
-                if hdl_file["type"] == "vhdl":
-                    compile_cmd += f"    eval acom -work {hdl_file['library']} -2008 -incr {hdl_file['path']}\n"
-                elif hdl_file["type"] == "verilog":
-                    compile_cmd += f"    eval alog -work {hdl_file['library']} -incr {hdl_file['path']}\n"
+                library = hdl_file.get("library", self._work).lower()
+
+                if hdl_file.get("type", "none").lower() == "vhdl":
+                    compile_cmd += f"    eval acom -work {library} -2008 -incr {hdl_file['path']}\n"
+                elif hdl_file.get("type", "none").lower() == "verilog":
+                    compile_cmd += f"    eval alog -work {library} -incr {hdl_file['path']}\n"
+                else:
+                    logger.warning(f"Ignoring file: {hdl_file['path']}")
 
             f.write("set compile_returncode [catch {\n")
             f.write(f"{compile_cmd}")

@@ -117,14 +117,14 @@ class Vivado:
                     for entity in compile_order_dict["files"]:
                         if self._top in entity["path"]:
                             if not self._work:
-                                self._work = f"{entity['library'].lower()}"
+                                self._work = f"{entity.get('library', 'work').lower()}"
                         entity_path = Path(entity["path"])
                         if not entity_path.is_absolute():
                             entity_path = self._pwd / entity_path
                         f.write(f"add_files {str(entity_path)}\n")
-                        if entity["type"].lower() == "vhdl":
+                        if entity.get("type", "none").lower() == "vhdl":
                             f.write(
-                                f"set_property library {entity['library'].lower()} [get_files {str(entity_path)}]\n"
+                                f"set_property library {entity.get('library', 'work').lower()} [get_files {str(entity_path)}]\n"
                             )
 
             if self._clk_period_constraints:
@@ -178,7 +178,7 @@ class Vivado:
                         f.write("}\n")
                     if self._bitstream:
                         f.write("open_run impl_1\n")
-                        f.write(f"write_bitstream -force {str(self._pwd / self._top + ".bit")}\n")
+                        f.write(f"write_bitstream -force {str(self._pwd / self._top + '.bit')}\n")
                 else:
                     if self._bitstream:
                         f.write(f"launch_runs impl_1 -to_step write_bitstream -jobs {min(os.cpu_count() // 2, 8)}\n")
