@@ -218,84 +218,103 @@ class Riviera:
 
     def _create_runsim(self) -> None:
         logger.info("Creating simulation script...")
-        with open("runsim.tcl", "w") as f:
-            f.write("framework.documents.closeall\n")
-            if self._libraries:
-                for library in self._libraries:
-                    f.write(f"alib {library}\n")
+        tcl_lines = list()
+        tcl_lines.append("framework.documents.closeall")
+        if self._libraries:
+            for library in self._libraries:
+                tcl_lines.append(f"alib {library}")
+        else:
+            tcl_lines.append(f"alib {self._work}")
+
+        if self._path_to_glbl:
+            tcl_lines.append(f"eval alog -work {self._work} -incr {self._path_to_glbl}")
+
+        tcl_lines.append("set compile_returncode [catch {")
+        for hdl_file in self._hdl_files:
+            library = hdl_file.get("library", self._work).lower()
+
+            if hdl_file.get("type", "none").lower() == "vhdl":
+                tcl_lines.append(f"    eval acom -work {library} -2008 -incr {hdl_file['path']}")
+            elif hdl_file.get("type", "none").lower() == "verilog":
+                tcl_lines.append(f"    eval alog -work {library} -incr {hdl_file['path']}")
             else:
-                f.write(f"alib {self._work}\n")
+                logger.warning(f"Ignoring file: {hdl_file['path']}")
 
-            if self._path_to_glbl:
-                f.write(f"eval alog -work {self._work} -incr {self._path_to_glbl}\n")
-            compile_cmd = ""
-            for hdl_file in self._hdl_files:
-                library = hdl_file.get("library", self._work).lower()
+        tcl_lines.extend(
+            [
+                "} result]",
+                "if {$compile_returncode != 0} {",
+                '    puts "Error when compiling HDL"',
+                "    quit -code 1",
+                "}",
+            ]
+        )
 
-                if hdl_file.get("type", "none").lower() == "vhdl":
-                    compile_cmd += f"    eval acom -work {library} -2008 -incr {hdl_file['path']}\n"
-                elif hdl_file.get("type", "none").lower() == "verilog":
-                    compile_cmd += f"    eval alog -work {library} -incr {hdl_file['path']}\n"
-                else:
-                    logger.warning(f"Ignoring file: {hdl_file['path']}")
+        sim_cmd = "asim "
+        vpi: str = ""
+        if self._cocotb_module:
+            vpi = self._setup_procedural_interface()
+            sim_cmd += f"+access +w_nets "
+            if self._top_type == "vhdl":
+                sim_cmd += f"-loadvhpi {vpi} "
+            elif self._top_type == "verilog":
+                sim_cmd += f"-pli {vpi} "
 
-            f.write("set compile_returncode [catch {\n")
-            f.write(f"{compile_cmd}")
-            f.write("} result]\n")
-            f.write("if {$compile_returncode != 0} {\n")
-            f.write('    puts "Error when compiling HDL"\n')
-            f.write("    quit -code 1\n")
-            f.write("}\n")
-
-            sim_cmd = "asim "
-            vpi: str = ""
-            if self._cocotb_module:
-                vpi = self._setup_procedural_interface()
-                sim_cmd += f"+access +w_nets "
-                if self._top_type == "vhdl":
-                    sim_cmd += f"-loadvhpi {vpi} "
-                elif self._top_type == "verilog":
-                    sim_cmd += f"-pli {vpi} "
-
-                if self._gui:
-                    sim_cmd += "-interceptcoutput "
-
-            generics: str = ""
-            if self._generics:
-                generics = " ".join(f"-g{generic}" for generic in self._generics) + " "
-                sim_cmd += generics
-
-            sim_cmd += f"-ieee_nowarn {self._work}.{self._top} "
-
-            if self._path_to_glbl:
-                sim_cmd += f"{self._work}.glbl"
-
-            f.write(f"if {{[catch {{{sim_cmd}}} result]}} {{\n")
-            f.write("    puts $result\n")
-            f.write('    puts "Error when running asim"\n')
-            f.write("    quit -code 1\n")
-            f.write("}\n")
-
-            f.write("log -rec *\n")
             if self._gui:
-                if self._waveform_view_file:
-                    f.write(f"system.open -wave {self._waveform_file}\n")
-                else:
-                    f.write("add wave -expand -vgroup [env] *\n")
-                    f.write("set instances [find hierarchy -list -component -rec *]\n")
-                    f.write("foreach inst $instances {\n")
-                    f.write("    add wave -expand -vgroup $inst $inst/*\n")
-                    f.write("}\n")
-                    f.write(f"write awc {self._waveform_file}\n")
+                sim_cmd += "-interceptcoutput "
 
-            if self._stop_time:
-                f.write(f"run {self._stop_time}\n")
+        generics: str = ""
+        if self._generics:
+            generics = " ".join(f"-g{generic}" for generic in self._generics) + " "
+            sim_cmd += generics
+
+        sim_cmd += f"-ieee_nowarn {self._work}.{self._top} "
+
+        if self._path_to_glbl:
+            sim_cmd += f"{self._work}.glbl"
+
+        tcl_lines.extend(
+            [
+                f"if {{[catch {{{sim_cmd}}} result]}} {{",
+                "    puts $result",
+                '    puts "Error when running asim"',
+                "    quit -code 1",
+                "}",
+                "log -rec *",
+            ]
+        )
+
+        if self._gui:
+            if self._waveform_view_file:
+                tcl_lines.append(f"system.open -wave {self._waveform_file}")
             else:
-                f.write("run -all\n")
+                tcl_lines.extend(
+                    [
+                        "add wave -expand -vgroup [env] *",
+                        "set instances [find hierarchy -list -component -rec *]",
+                        "foreach inst $instances {",
+                        "    add wave -expand -vgroup $inst $inst/*",
+                        "}",
+                        f"write awc {self._waveform_file}",
+                    ]
+                )
 
-            if not self._gui:
-                f.write("endsim\n")
-                f.write("exit\n")
+        if self._stop_time:
+            tcl_lines.append(f"run {self._stop_time}")
+        else:
+            tcl_lines.append("run -all")
+
+        if not self._gui:
+            tcl_lines.extend(
+                [
+                    "endsim",
+                    "exit",
+                ]
+            )
+
+        with open("runsim.tcl", "w", encoding="utf-8") as f:
+            for tcl_line in tcl_lines:
+                f.write(f"{tcl_line}\n")
 
     def _batch_mode_run(self, cocotb_major_ver: int = 0) -> None:
         self._create_runsim()
