@@ -1,7 +1,5 @@
+import logging, os, sys
 from importlib.metadata import version
-import logging
-import os
-import sys
 from pathlib import Path
 import xml.etree.ElementTree as ElementTree
 

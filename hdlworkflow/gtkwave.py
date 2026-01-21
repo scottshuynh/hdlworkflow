@@ -1,6 +1,4 @@
-import logging
-import subprocess
-import sys
+import logging, subprocess, sys
 from shutil import which
 
 logger = logging.getLogger(__name__)

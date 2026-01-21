@@ -5,9 +5,10 @@ from shutil import which
 
 from hdlworkflow import utils
 from hdlworkflow.gtkwave import Gtkwave
+from hdlworkflow.surfer import Surfer
 
 logger = logging.getLogger(__name__)
-supported_waveform_viewers = ["gtkwave"]
+supported_waveform_viewers = ["gtkwave", "surfer"]
 
 
 class Nvc:
@@ -67,22 +68,35 @@ class Nvc:
         self._waveform_data: str = ""
         self._waveform_viewer_obj: object = None
         if self._waveform_viewer:
-            if self._waveform_viewer == "gtkwave":
-                waveform_data_stem: str = self._top
-                if generics:
-                    waveform_data_stem += "".join(generic for generic in generics)
-                self._waveform_data = waveform_data_stem + ".fst"
+            waveform_data_stem: str = self._top
+            if generics:
+                waveform_data_stem += "".join(generic for generic in generics)
+            self._waveform_data = waveform_data_stem + ".fst"
 
-                if waveform_view_file:
+            if waveform_view_file:
+                if self._waveform_viewer == "gtkwave":
                     if Path(waveform_view_file).suffix == ".gtkw":
                         self._waveform_save_file = waveform_view_file
                     else:
                         logger.error(f"Expecting waveform view file with .gtkw extension. Got: {waveform_view_file}")
                         sys.exit(1)
-                else:
-                    self._waveform_save_file = waveform_data_stem + ".gtkw"
+                elif self._waveform_viewer == "surfer":
+                    if Path(waveform_view_file).suffix == ".ron":
+                        self._waveform_save_file = waveform_view_file
+                        self._waveform_viewer_obj = Surfer(
+                            self._top, self._waveform_data, self._waveform_save_file, False
+                        )
+                    else:
+                        logger.error(f"Expecting waveform view file with .ron extension. Got: {waveform_view_file}")
+                        sys.exit(1)
 
-                self._waveform_viewer_obj = Gtkwave(self._waveform_data, self._waveform_save_file)
+            else:
+                if self._waveform_viewer == "gtkwave":
+                    self._waveform_save_file = waveform_data_stem + ".gtkw"
+                    self._waveform_viewer_obj = Gtkwave(self._waveform_data, self._waveform_save_file)
+                elif self._waveform_viewer == "surfer":
+                    self._waveform_save_file = waveform_data_stem + ".ron"
+                    self._waveform_viewer_obj = Surfer(self._top, self._waveform_data, self._waveform_save_file, True)
 
         os.makedirs(f"{self._pwd / 'nvc'}", exist_ok=True)
         os.chdir(f"{self._pwd / 'nvc'}")
@@ -204,9 +218,10 @@ class Nvc:
             command += waveform_options
 
         if self._waveform_save_file:
-            if not self._waveform_view_file:
-                waveform_view_file_option = [f"--gtkw={self._waveform_save_file}"]
-                command += waveform_view_file_option
+            if self._waveform_viewer == "gtkwave":
+                if not self._waveform_view_file:
+                    waveform_view_file_option = [f"--gtkw={self._waveform_save_file}"]
+                    command += waveform_view_file_option
 
         logger.info("    " + " ".join(cmd for cmd in command))
         nvc = subprocess.run(command, env=env)
