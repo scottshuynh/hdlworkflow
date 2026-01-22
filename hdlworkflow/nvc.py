@@ -46,6 +46,7 @@ class Nvc:
         self._work: list[str] = []
         if work:
             self._work = [f"--work={work}"]
+        self._valid_file_suffix = set([".vhd", ".vhdl", ".v", ".sv"])
 
         self._waveform_viewer: str = ""
         if waveform_viewer:
@@ -151,6 +152,8 @@ class Nvc:
                         entity_path = self._pwd / entity_path
 
                     if entity.get("type", "none") != "none":
+                        command += ["-a", f"{str(entity_path)}"]
+                    elif entity_path.suffix in self._valid_file_suffix:
                         command += ["-a", f"{str(entity_path)}"]
 
                     logger.info("    " + " ".join(cmd for cmd in command))

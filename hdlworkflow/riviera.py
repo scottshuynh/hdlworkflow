@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 
 class Riviera:
-    """Run simulations using Rivera-PRO"""
+    """Run simulations using Riviera-PRO."""
 
     def __init__(
         self,
@@ -232,10 +232,19 @@ class Riviera:
         tcl_lines.append("set compile_returncode [catch {")
         for hdl_file in self._hdl_files:
             library = hdl_file.get("library", self._work).lower()
+            hdl_filepath = Path(hdl_file["path"])
 
-            if hdl_file.get("type", "none").lower() == "vhdl":
+            if (
+                hdl_file.get("type", "none").lower() == "vhdl"
+                or hdl_filepath.suffix == ".vhd"
+                or hdl_filepath.suffix == ".vhdl"
+            ):
                 tcl_lines.append(f"    eval acom -work {library} -2008 -incr {hdl_file['path']}")
-            elif hdl_file.get("type", "none").lower() == "verilog":
+            elif (
+                hdl_file.get("type", "none").lower() == "verilog"
+                or hdl_filepath.suffix == ".v"
+                or hdl_filepath.suffix == ".sv"
+            ):
                 tcl_lines.append(f"    eval alog -work {library} -incr {hdl_file['path']}")
             else:
                 logger.warning(f"Ignoring file: {hdl_file['path']}")

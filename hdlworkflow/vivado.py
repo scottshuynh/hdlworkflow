@@ -130,7 +130,11 @@ class Vivado:
                     if not entity_path.is_absolute():
                         entity_path = self._pwd / entity_path
                     tcl_lines.append(f"add_files {str(entity_path)}")
-                    if entity.get("type", "none").lower() == "vhdl":
+                    if (
+                        entity.get("type", "none").lower() == "vhdl"
+                        or entity_path.suffix == ".vhd"
+                        or entity_path.suffix == ".vhdl"
+                    ):
                         tcl_lines.append(
                             f"set_property library {entity.get('library', 'work').lower()} [get_files {str(entity_path)}]"
                         )
