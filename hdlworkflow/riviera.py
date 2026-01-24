@@ -131,7 +131,7 @@ class Riviera:
 
                     if not hdl_file.is_absolute():
                         hdl_file = self._pwd / hdl_file
-                        entity["path"] = str(hdl_file)
+                    entity["path"] = str(hdl_file)
 
                     self._hdl_files.append(entity)
 

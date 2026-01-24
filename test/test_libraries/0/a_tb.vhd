@@ -11,7 +11,7 @@ library a_lib;
 entity a_tb is
 end entity;
 
-architecture bench of a_tb is
+architecture sim of a_tb is
   -- Clock period
   constant clk_period : time := 1 ns;
   -- Generics

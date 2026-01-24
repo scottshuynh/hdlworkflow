@@ -136,7 +136,7 @@ class Vivado:
                         or entity_path.suffix == ".vhdl"
                     ):
                         tcl_lines.append(
-                            f"set_property library {entity.get('library', 'work').lower()} [get_files {str(entity_path)}]"
+                            f"set_property library {entity.get('library', self._work).lower()} [get_files {str(entity_path)}]"
                         )
 
         if self._clk_period_constraints:
