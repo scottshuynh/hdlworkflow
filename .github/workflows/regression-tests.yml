@@ -77,6 +77,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
+      shell: bash
       run: |
         python -m pip install --upgrade pip
         python -m pip install .
@@ -89,15 +90,19 @@ jobs:
       with:
         version: ${{ matrix.nvc-version }}
     - name: Add NVC to PATH
+      shell: bash
       run: |
         echo "/c/Program\ Files/NVC/bin" >> $GITHUB_PATH
     - name: Linter check using ruff
+      shell: bash
       run: |
         ruff check
     - name: Check hdlworkflow tests
+      shell: bash
       run: |
         pytest
     - name: Test hdlworkflow with NVC
+      shell: bash
       id: nvc
       run: |
         git clone https://github.com/scottshuynh/hdl-examples.git
