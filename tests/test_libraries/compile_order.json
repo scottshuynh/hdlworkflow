@@ -2,13 +2,18 @@
   "files": [
     {
       "type": "VHDL",
-      "path": "d.vhd",
+      "path": "b.vhd",
+      "library": "b_lib"
+    },
+    {
+      "type": "VHDL",
+      "path": "e.vhd",
       "library": "d_lib"
     },
     {
       "type": "VHDL",
-      "path": "b.vhd",
-      "library": "b_lib"
+      "path": "d.vhd",
+      "library": "d_lib"
     },
     {
       "type": "VHDL",
@@ -23,8 +28,7 @@
     {
       "type": "VHDL",
       "path": "a_tb.vhd",
-      "is_top": true,
-      "library": "a_lib"
+      "library": "work"
     }
   ]
 }

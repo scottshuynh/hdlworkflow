@@ -3,8 +3,8 @@ from pathlib import Path
 from hdlworkflow import HdlWorkflow
 
 
-@pytest.mark.parametrize("eda_tool", ["nvc"])  # , "riviera", "vivado"])
-def test_libraries0(eda_tool):
+@pytest.mark.parametrize("eda_tool", ["nvc"])
+def test_libraries(eda_tool):
     pwd = Path(__file__).parent
     flow = HdlWorkflow(
         eda_tool=eda_tool,
@@ -15,8 +15,8 @@ def test_libraries0(eda_tool):
     flow.run()
 
 
-@pytest.mark.parametrize("eda_tool", ["nvc"])  # , "riviera"])
-def test_libraries0_cocotb(eda_tool):
+@pytest.mark.parametrize("eda_tool", ["nvc"])
+def test_libraries_cocotb(eda_tool):
     pwd = Path(__file__).parent
     flow = HdlWorkflow(
         eda_tool=eda_tool,
