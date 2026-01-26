@@ -1,4 +1,5 @@
 import logging, subprocess, sys
+from pathlib import Path
 from shutil import which
 
 logger = logging.getLogger(__name__)
@@ -12,7 +13,11 @@ class Gtkwave:
         self._waveform_data = waveform_data
 
         if waveform_save_file:
-            self._waveform_save = waveform_save_file
+            if Path(waveform_save_file).suffix == ".gtkw":
+                self._waveform_save = waveform_save_file
+            else:
+                logger.error(f"Expecting waveform view file with .gtkw extension. Got: {waveform_save_file}")
+                sys.exit(1)
         else:
             logger.error("Waveform save file must be specified.")
             sys.exit(1)

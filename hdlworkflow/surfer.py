@@ -15,7 +15,11 @@ class Surfer:
         self._overwrite_save_file = overwrite_save_file
 
         if waveform_save_file:
-            self._waveform_save = waveform_save_file
+            if Path(waveform_save_file).suffix == ".ron":
+                self._waveform_save = waveform_save_file
+            else:
+                logger.error(f"Expecting waveform view file with .ron extension. Got: {waveform_save_file}")
+                sys.exit(1)
         else:
             logger.error("Waveform save file must be specified.")
             sys.exit(1)
