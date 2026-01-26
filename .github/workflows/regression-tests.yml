@@ -88,6 +88,9 @@ jobs:
       uses: nickg/setup-nvc@v1
       with:
         version: ${{ matrix.nvc-version }}
+    - name: Add NVC to PATH
+      run: |
+        echo "/c/Program\ Files/NVC/bin" >> $GITHUB_PATH
     - name: Linter check using ruff
       run: |
         ruff check
