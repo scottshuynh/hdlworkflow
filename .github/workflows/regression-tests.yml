@@ -40,6 +40,9 @@ jobs:
     - name: Linter check using ruff
       run: |
         ruff check
+    - name: Check hdlworkflow tests
+      run: |
+        pytest
     - name: Test hdlworkflow with NVC
       id: nvc
       run: |
