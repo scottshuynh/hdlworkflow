@@ -92,7 +92,8 @@ jobs:
     - name: Add NVC to PATH
       shell: bash
       run: |
-        echo "/c/Program\ Files/NVC/bin" >> $GITHUB_PATH
+        NVC_BIN="$(dirname "$(command -v nvc)")"
+        echo "$NVC_BIN" >> $GITHUB_PATH
     - name: Linter check using ruff
       shell: bash
       run: |
