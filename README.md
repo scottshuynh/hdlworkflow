@@ -149,6 +149,13 @@ If the default library is called `my_lib`:
 hdlworkflow riviera design_tb compile_order.txt --work my_lib
 ```
 
+If Vivado specific libraries (XPM and UNISIM) need to be searched to elaborate `design_tb`:
+```sh
+hdlworkflow riviera design_tb compile_order.txt -l xpm -l unisim
+```
+> [!NOTE]
+> Requires user to follow steps to [install pre-compiled vendor libraries for Riviera-PRO](https://www.aldec.com/en/support/resources/documentation/articles/1105) and mapping those libraries as global.
+
 If a GUI is required to view waveforms:
 ```sh
 hdlworkflow riviera design_tb compile_order.txt --gui
@@ -269,7 +276,7 @@ EDA tool to run.
 Entity name of top design file.
 
 #### `path_to_compile_order`
-Path to a file containing a list of all requisite files for the top design. See [file formats](##compile-order-file-format).
+Path to a file containing a list of all requisite files for the top design. See [file formats](#compile-order-file-format).
 
 ### Options
 #### `--gui`
@@ -283,6 +290,9 @@ Path to a file containing a list of all requisite files for the top design. See 
 
 #### `-g GENERIC=VALUE, --generic GENERIC=VALUE`
 (Optional) Generics used to elaborate top design file.
+
+#### `-l LIBRARY_NAME, --libraries LIBRARY_NAME`
+(Optional) Libraries searched during top level design instantiation in simulation.
 
 #### `--stop-time INTEGER_PERIOD TIME_UNITS`
 (Optional) Simulation stops after the specified period.

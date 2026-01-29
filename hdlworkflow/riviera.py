@@ -17,6 +17,7 @@ class Riviera:
         compile_order: str,
         work: str,
         generics: list[str],
+        search_libraries: list[str],
         stop_time: str,
         cocotb_module: str,
         gui: bool,
@@ -36,6 +37,8 @@ class Riviera:
             else:
                 logger.error("Unsupported compile_order file extension. Expecting:, got:")
                 sys.exit(1)
+
+        self._search_libraries: list[str] = search_libraries
 
         self._libraries: set[str] = set()
         if work:
@@ -276,6 +279,9 @@ class Riviera:
         if self._generics:
             generics = " ".join(f"-g{generic}" for generic in self._generics) + " "
             sim_cmd += generics
+
+        if self._search_libraries:
+            sim_cmd += "-L " + " -L ".join(self._search_libraries) + " "
 
         sim_cmd += f"-ieee_nowarn {self._work}.{self._top} "
 

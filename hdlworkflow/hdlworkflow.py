@@ -21,6 +21,7 @@ class HdlWorkflow:
         path_to_compile_order: str,
         path_to_working_directory: str,
         generic: list[str] = [],
+        libraries: list[str] = [],
         stop_time: tuple[int, str] = (),
         cocotb: str = "",
         pythonpaths: list[str] = [],
@@ -53,6 +54,8 @@ class HdlWorkflow:
                 specified for any hdlworkflow argument will be relative to this directory.
             generic (list[str], optional): Top will elaborate with specified generics. Must be in form: GENERIC=VALUE.
                 Defaults to [].
+            libraries (list[str], optional): Libraries searched during top level design instantiation in simulation.
+                Defaults to [].
             stop_time (tuple[int, str]): Simulation stops after the specified period.
             cocotb (str, optional): Name of cocotb test module. Defaults to "".
             pythonpaths (list[str], optional): PYTHONPATH environment variable. Defaults to [].
@@ -76,6 +79,7 @@ class HdlWorkflow:
         self.top = top
         self.path_to_compile_order = path_to_compile_order
         self.generic = generic
+        self.libraries = libraries
         self.cocotb = cocotb
         self.path_to_working_directory = path_to_working_directory
         self.pythonpaths = pythonpaths
@@ -213,6 +217,7 @@ class HdlWorkflow:
                     compile_order=self.path_to_compile_order,
                     work=self.work,
                     generics=self.generic,
+                    search_libraries=self.libraries,
                     stop_time=self.stop_time,
                     cocotb_module=self.cocotb,
                     gui=self.gui,
@@ -278,6 +283,14 @@ def hdlworkflow():
         type=str,
         metavar="GENERIC=VALUE",
         help="Generics used to elaborate top design file. Must take the form: GENERIC=VALUE.",
+    )
+    parser.add_argument(
+        "-l",
+        "--libraries",
+        action="append",
+        type=str,
+        metavar="LIBRARY_NAME",
+        help="Libraries searched during top level design instantiation in simulation.",
     )
     parser.add_argument(
         "--stop-time",
@@ -397,6 +410,7 @@ def hdlworkflow():
         path_to_compile_order=args.path_to_compile_order,
         path_to_working_directory=path_to_working_directory,
         generic=args.generic,
+        libraries=args.libraries,
         stop_time=stop_time,
         cocotb=args.cocotb,
         pythonpaths=pythonpaths,
