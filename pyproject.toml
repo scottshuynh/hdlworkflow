@@ -13,7 +13,7 @@ description = "Seamless FPGA workflows."
 readme = "README.md"
 classifiers = [
     "Programming Language :: Python :: 3.10", 
-    "Operating System :: Unix",
+    "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
     ]
 keywords = ["fpga", "vhdl", "hdl", "cli", "simulation", "synthesis", "workflow"]

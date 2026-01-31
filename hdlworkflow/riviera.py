@@ -158,7 +158,8 @@ class Riviera:
         libpython_loc = subprocess.run(["cocotb-config", "--libpython"], capture_output=True, text=True).stdout.strip()
         gpi_extra = self._setup_procedural_interface(True)
         env: dict[str, str] = dict()
-        env["PYTHONPATH"] = f"{':'.join(str(path) for path in self._pythonpaths)}"
+        pathsep = os.pathsep
+        env["PYTHONPATH"] = f"{pathsep.join(str(path) for path in self._pythonpaths)}"
         env["LIBPYTHON_LOC"] = libpython_loc
         env["GPI_EXTRA"] = gpi_extra
 

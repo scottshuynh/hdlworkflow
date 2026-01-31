@@ -191,7 +191,8 @@ class Nvc:
                 text=True,
             ).stdout.strip()
 
-            env["PYTHONPATH"] = f"{':'.join(str(path) for path in self._pythonpaths)}"
+            pathsep = os.pathsep
+            env["PYTHONPATH"] = f"{pathsep.join(str(path) for path in self._pythonpaths)}"
             env["LIBPYTHON_LOC"] = libpython_loc
             if major >= 2:
                 pygpi_python_bin = subprocess.run(

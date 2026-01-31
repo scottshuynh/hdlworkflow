@@ -23,11 +23,11 @@ Similarly, all HDL synthesis tools follow the same flow (synthesise, place and r
 ## Simulation compatibility table
 The table below shows supported simulators and their compatibility with tools listed in the left-most column.
 
-|           | nvc                   | Riviera-PRO                   | Vivado                        |  
-| ---       | :---:                 | :---:                         | :---:                         |
-| cocotb    | :white_check_mark:    | :white_check_mark:            | :negative_squared_cross_mark: |
-| gtkwave   | :white_check_mark:    | :negative_squared_cross_mark: | :negative_squared_cross_mark: |
-| surfer    | :white_check_mark:    | :negative_squared_cross_mark: | :negative_squared_cross_mark: |
+|           | nvc                   | Riviera-PRO        | Vivado |  
+| ---       | :---:                 | :---:              | :---:  |
+| cocotb    | :white_check_mark:    | :white_check_mark: | :x:    |
+| gtkwave   | :white_check_mark:    | :x:                | :x:    |
+| surfer    | :white_check_mark:    | :x:                | :x:    |
 
 ## Install
 `hdlworkflow` is a Python package and can be installed using pip:
