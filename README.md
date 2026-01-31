@@ -11,6 +11,9 @@ Similarly, all HDL synthesis tools follow the same flow (synthesise, place and r
 
 `hdlworkflow` abstracts away these tool-specific commands, making project setup and usage fast and effortless.
 
+## Supported operating systems
+`hdlworkflow` can be used on Linux and Windows systems.
+
 ## Supported tools
 + [nvc](https://github.com/nickg/nvc)
 + [Riviera-PRO](https://www.aldec.com/en/products/functional_verification/riviera-pro)
