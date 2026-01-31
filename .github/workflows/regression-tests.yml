@@ -76,6 +76,12 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Setup NVC
+      uses: nickg/setup-nvc@v1
+      with:
+        version: ${{ matrix.nvc-version }}
+    - run: |
+        echo "/c/Program\ Files/NVC/bin" >> $GITHUB_PATH
     - name: Install dependencies
       shell: bash
       run: |
@@ -85,15 +91,6 @@ jobs:
         python -m pip install pytest
         python -m pip install git+https://github.com/cocotb/cocotb.git@${{ matrix.cocotb-refs }}
         python -m pip install git+https://github.com/pevhall/hdldepends.git@${{ matrix.hdldepends-ref }}
-    - name: Setup NVC
-      uses: nickg/setup-nvc@v1
-      with:
-        version: ${{ matrix.nvc-version }}
-    - name: Add NVC to PATH
-      shell: bash
-      run: |
-        NVC_BIN="$(dirname "$(command -v nvc)")"
-        echo "$NVC_BIN" >> $GITHUB_PATH
     - name: Linter check using ruff
       shell: bash
       run: |
