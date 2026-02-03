@@ -174,7 +174,12 @@ class Vivado:
         if self._gui:
             tcl_lines.append("start_gui")
         if self._synth | self._impl | self._bitstream:
-            tcl_lines.append("reset_run synth_1")
+            tcl_lines.extend(
+                [
+                    "set_property steps.synth_design.args.assert true [get_runs synth_1]",
+                    "reset_run synth_1",
+                ]
+            )
             if not self._gui:
                 tcl_lines.extend(
                     [
