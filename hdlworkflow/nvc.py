@@ -78,6 +78,7 @@ class Nvc:
                 if self._waveform_viewer == "gtkwave":
                     if Path(waveform_view_file).suffix == ".gtkw":
                         self._waveform_save_file = waveform_view_file
+                        self._waveform_viewer_obj = Gtkwave(self._waveform_data, self._waveform_save_file)
                     else:
                         logger.error(f"Expecting waveform view file with .gtkw extension. Got: {waveform_view_file}")
                         sys.exit(1)
