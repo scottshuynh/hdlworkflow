@@ -45,7 +45,7 @@ class Nvc:
         self._pythonpaths: list[str] = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
         self._work: list[str] = []
         if work:
-            self._work = [f"--work={work}"]
+            self._work = [f"--work={work.lower()}"]
         self._valid_file_suffix = set([".vhd", ".vhdl", ".v", ".sv"])
 
         self._waveform_viewer: str = ""

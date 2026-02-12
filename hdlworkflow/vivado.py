@@ -30,7 +30,7 @@ class Vivado:
 
         self._top: str = top
         self._compile_order: Path = Path(compile_order)
-        self._work: str = work
+        self._work: str = work.lower()
         self._pwd: Path = Path(path_to_working_directory)
         self._generics: list[str] = generics
         self._stop_time: str = stop_time

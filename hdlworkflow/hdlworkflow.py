@@ -85,7 +85,7 @@ class HdlWorkflow:
         self.pythonpaths = pythonpaths
         self.path_to_libstdcpp = path_to_libstdcpp
         self.path_to_glbl = path_to_glbl
-        self.work = work
+        self.work = work.lower()
         self.gui = gui
         self.wave = wave.lower()
         self.part = part.lower()

@@ -42,8 +42,8 @@ class Riviera:
 
         self._libraries: set[str] = set()
         if work:
-            self._work: str = work
-            self._libraries.add(work)
+            self._work: str = work.lower()
+            self._libraries.add(work.lower())
         else:
             self._work = "work"
 
