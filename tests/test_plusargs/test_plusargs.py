@@ -1,6 +1,5 @@
 import cocotb
 from cocotb.clock import Clock
-from cocotb.handle import Immediate
 from cocotb.triggers import FallingEdge, RisingEdge
 
 from ctypes import c_uint8
@@ -12,8 +11,8 @@ from hdlworkflow import HdlWorkflow
 
 async def initialise(dut):
     Clock(dut.clk_i, 1, "ns").start()
-    dut.rst_i.set(Immediate(0))
-    dut.ce_i.set(Immediate(1))
+    dut.rst_i.set(cocotb.handle.Immediate(0))
+    dut.ce_i.set(cocotb.handle.Immediate(1))
     await RisingEdge(dut.clk_i)
 
 
