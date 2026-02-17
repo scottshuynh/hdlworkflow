@@ -16,6 +16,7 @@ class Vivado:
         generics: list[str],
         stop_time: str,
         path_to_working_directory: str,
+        plusargs: list[str],
         part_number: str,
         board_part: str,
         gui: bool,
@@ -34,6 +35,7 @@ class Vivado:
         self._pwd: Path = Path(path_to_working_directory)
         self._generics: list[str] = generics
         self._stop_time: str = stop_time
+        self._plusargs: list[str] = plusargs
         self._part_number: str = part_number
         self._board_part: str = board_part
         self._gui: bool = gui

@@ -196,6 +196,7 @@ class HdlWorkflow:
                     generics=self.generic,
                     stop_time="".join(self.stop_time.split()),
                     path_to_working_directory=self.path_to_working_directory,
+                    plusargs=self.plusargs,
                     part_number=self.part,
                     board_part=self.board,
                     gui=self.gui,

@@ -278,6 +278,9 @@ class Riviera:
             if self._gui:
                 sim_cmd += "-interceptcoutput "
 
+        for plusarg in self._plusargs:
+            sim_smd += f"+{plusarg} "
+
         generics: str = ""
         if self._generics:
             generics = " ".join(f"-g{generic}" for generic in self._generics) + " "
