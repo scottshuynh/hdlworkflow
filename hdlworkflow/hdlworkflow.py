@@ -25,6 +25,7 @@ class HdlWorkflow:
         stop_time: tuple[int, str] = (),
         cocotb: str = "",
         pythonpaths: list[str] = [],
+        plusargs: list[str] = [],
         path_to_libstdcpp: str = "",
         path_to_glbl: str = "",
         work: str = "",
@@ -59,6 +60,7 @@ class HdlWorkflow:
             stop_time (tuple[int, str]): Simulation stops after the specified period.
             cocotb (str, optional): Name of cocotb test module. Defaults to "".
             pythonpaths (list[str], optional): PYTHONPATH environment variable. Defaults to [].
+            plusargs (list[str], optional): Simulation plusargs. Defaults to [].
             path_to_libstdcpp (str, optional): Path to libstdc++ shared object. Defaults to "".
             work (str, optional): Name of default library. Defaults to "",
             path_to_glbl (str, optional): Path to glbl.v. Defaults to "".
@@ -83,6 +85,7 @@ class HdlWorkflow:
         self.cocotb = cocotb
         self.path_to_working_directory = path_to_working_directory
         self.pythonpaths = pythonpaths
+        self.plusargs = plusargs
         self.path_to_libstdcpp = path_to_libstdcpp
         self.path_to_glbl = path_to_glbl
         self.work = work.lower()
@@ -169,6 +172,7 @@ class HdlWorkflow:
                     generics=self.generic,
                     stop_time="".join(self.stop_time.split()),
                     cocotb_module=self.cocotb,
+                    plusargs=self.plusargs,
                     waveform_viewer=wave,
                     waveform_view_file=self.waveform_view_file,
                     path_to_working_directory=self.path_to_working_directory,
@@ -220,6 +224,7 @@ class HdlWorkflow:
                     search_libraries=self.libraries,
                     stop_time=self.stop_time,
                     cocotb_module=self.cocotb,
+                    plusargs=self.plusargs,
                     gui=self.gui,
                     waveform_view_file=self.waveform_view_file,
                     path_to_working_directory=self.path_to_working_directory,
@@ -320,6 +325,13 @@ def hdlworkflow():
         help="Paths to add to PYTHONPATH",
     )
     parser.add_argument(
+        "--plusargs",
+        action="append",
+        type=str,
+        metavar="PLUSARG",
+        help="Simulation plusargs",
+    )
+    parser.add_argument(
         "--libstdcpp",
         default="",
         type=str,
@@ -414,6 +426,7 @@ def hdlworkflow():
         stop_time=stop_time,
         cocotb=args.cocotb,
         pythonpaths=pythonpaths,
+        plusargs=args.plusargs,
         path_to_libstdcpp=args.libstdcpp,
         path_to_glbl=args.glbl,
         work=args.work,

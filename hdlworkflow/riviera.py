@@ -20,6 +20,7 @@ class Riviera:
         search_libraries: list[str],
         stop_time: str,
         cocotb_module: str,
+        plusargs: list[str],
         gui: bool,
         waveform_view_file: str,
         path_to_working_directory: str,
@@ -50,6 +51,7 @@ class Riviera:
         self._generics: list[str] = generics
         self._stop_time: str = stop_time
         self._cocotb_module: str = cocotb_module
+        self._plusargs: list[str] = plusargs
         self._pwd: Path = Path(path_to_working_directory)
         self._pythonpaths: list[str] = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
         self._path_to_glbl: str = path_to_glbl

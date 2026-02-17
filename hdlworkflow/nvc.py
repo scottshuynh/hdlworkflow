@@ -21,6 +21,7 @@ class Nvc:
         generics: list[str],
         stop_time: str,
         cocotb_module: str,
+        plusargs: list[str],
         waveform_viewer: str,
         waveform_view_file: str,
         path_to_working_directory: str,
@@ -41,6 +42,7 @@ class Nvc:
         self._generics: list[str] = generics
         self._stop_time: str = stop_time
         self._cocotb_module: str = cocotb_module
+        self._plusargs: list[str] = plusargs
         self._pwd: Path = Path(path_to_working_directory)
         self._pythonpaths: list[str] = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
         self._work: list[str] = []
@@ -211,9 +213,14 @@ class Nvc:
         command = ["nvc", "-L", f"{str(Path.cwd())}"]
         if self._work:
             command += self._work
+
         command += ["-r", f"{self._top}", "--ieee-warnings=off", "--dump-arrays"]
+
         if self._cocotb_module:
             command += ["--load", cocotb_vhpi]
+
+        for plusarg in self._plusargs:
+            command += [f"+{plusarg}"]
 
         if self._stop_time:
             command.append(f"--stop-time={self._stop_time}")
