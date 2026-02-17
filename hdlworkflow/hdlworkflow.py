@@ -285,6 +285,7 @@ def hdlworkflow():
         "-g",
         "--generic",
         action="append",
+        default=[],
         type=str,
         metavar="GENERIC=VALUE",
         help="Generics used to elaborate top design file. Must take the form: GENERIC=VALUE.",
@@ -293,6 +294,7 @@ def hdlworkflow():
         "-l",
         "--libraries",
         action="append",
+        default=[],
         type=str,
         metavar="LIBRARY_NAME",
         help="Libraries searched during top level design instantiation in simulation.",
@@ -320,6 +322,7 @@ def hdlworkflow():
     parser.add_argument(
         "--pythonpath",
         action="append",
+        default=[],
         type=str,
         metavar="PYTHONPATH",
         help="Paths to add to PYTHONPATH",
@@ -327,6 +330,7 @@ def hdlworkflow():
     parser.add_argument(
         "--plusargs",
         action="append",
+        default=[],
         type=str,
         metavar="PLUSARG",
         help="Simulation plusargs",
@@ -389,6 +393,7 @@ def hdlworkflow():
     parser.add_argument(
         "--clk-period-constraint",
         action="append",
+        default=[],
         type=str,
         metavar="CLK_PORT=PERIOD_NS",
         help="Clock period constraint for synthesis. Only for synthesis tools. Must take the form: "
