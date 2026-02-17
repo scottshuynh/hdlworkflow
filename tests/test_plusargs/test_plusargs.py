@@ -47,22 +47,23 @@ async def verify_count(dut, num_outputs: int):
         await FallingEdge(dut.clk_i)
 
 
-if cocotb.is_simulation:
+if int(cocotb.__version__.split(".", 1)[0]) > 1:
+    if cocotb.is_simulation:
 
-    @cocotb.test()
-    @cocotb.parametrize(
-        rand_clk_en=[False] + [True] * (1 if "rand_clk_en" in cocotb.plusargs else 0),
-        num_outputs=[
-            int(cocotb.plusargs.get("num_outputs", 42)),
-        ],
-    )
-    async def test_counter(dut, rand_clk_en: bool, num_outputs: int):
-        await initialise(dut)
-        await reset(dut)
-        if rand_clk_en:
-            cocotb.start_soon(drive_rand_en(dut))
+        @cocotb.test()
+        @cocotb.parametrize(
+            rand_clk_en=[False] + [True] * (1 if "rand_clk_en" in cocotb.plusargs else 0),
+            num_outputs=[
+                int(cocotb.plusargs.get("num_outputs", 42)),
+            ],
+        )
+        async def test_counter(dut, rand_clk_en: bool, num_outputs: int):
+            await initialise(dut)
+            await reset(dut)
+            if rand_clk_en:
+                cocotb.start_soon(drive_rand_en(dut))
 
-        await verify_count(dut, num_outputs)
+            await verify_count(dut, num_outputs)
 
 
 @pytest.mark.parametrize("eda_tool", ["nvc"])
