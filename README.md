@@ -309,6 +309,9 @@ Path to a file containing a list of all requisite files for the top design. See 
 #### `--pythonpath PYTHONPATH`
 (Optional) Path to append to `PYTHONPATH` environment variable. Used in cocotb simulations.
 
+#### `--plusargs PLUSARG`
+(Optional) Simulator plusargs. 
+
 #### `--libstdcpp LIBSTDC++`
 (Optional) Path to libstdc++ shared object. Used in cocotb simulations to resolve [GLIBCXX_3.4.XX not found](https://docs.cocotb.org/en/development/troubleshooting.html#glibcxx-3-4-xx-not-found).
 
