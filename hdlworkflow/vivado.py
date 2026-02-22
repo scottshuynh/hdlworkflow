@@ -159,8 +159,9 @@ class Vivado:
             tcl_line: str = "set_property -name {steps.synth_design.args.more options} -value {"
             if self._ooc:
                 tcl_line += "-mode out_of_context "
-                tcl_line += f"{'-generic ' + ' -generic '.join(generic for generic in self._generics)}}} -objects [get_runs synth_1]"
-                tcl_lines.append(tcl_line)
+
+            tcl_line += f"{'-generic ' + ' -generic '.join(generic for generic in self._generics)}}} -objects [get_runs synth_1]"
+            tcl_lines.append(tcl_line)
 
             tcl_lines.append(
                 f"set_property -name {{xsim.elaborate.xelab.more_options}} -value {{{'-generic_top ' + ' -generic_top '.join(generic for generic in self._generics)}}} -objects [get_filesets sim_1]"
