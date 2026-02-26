@@ -116,7 +116,7 @@ hdlworkflow nvc design_tb compile_order.txt --gui --wave surfer
 
 If surfer is required with an existing waveform view file:
 ```sh
-hdlworkflow nvc design_tb compile_order.txt --gui --wave gtkwave --waveform-view-file path/to/waveform_view_file.ron
+hdlworkflow nvc design_tb compile_order.txt --gui --wave surfer --waveform-view-file path/to/waveform_view_file.ron
 ```
 
 If the testbench `design_tb` is a cocotb test module, and the top level design is called `design`:

@@ -149,6 +149,7 @@ class HdlWorkflow:
         return False
 
     def run(self):
+        """Runs the selected EDA tool with the current hdlworkflow configuration."""
         logger.info("Starting hdlworkflow...")
         if self.is_supported_eda_tool(self.eda_tool):
             wave = ""

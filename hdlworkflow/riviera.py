@@ -152,9 +152,9 @@ class Riviera:
                             self._top_type = entity["type"].lower()
                         else:
                             top_suffix = Path(entity["path"].lower()).suffix
-                            if top_suffix == "vhd" or top_suffix == "vhdl":
+                            if top_suffix == ".vhd" or top_suffix == ".vhdl":
                                 self._top_type = "vhdl"
-                            elif top_suffix == "v" or top_suffix == "sv":
+                            elif top_suffix == ".v" or top_suffix == ".sv":
                                 self._top_type = "verilog"
                         if self._work == "work" and library:
                             self._work = library
