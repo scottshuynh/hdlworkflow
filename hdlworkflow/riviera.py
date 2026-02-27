@@ -286,7 +286,7 @@ class Riviera:
                 sim_cmd += "-interceptcoutput "
 
         for plusarg in self._plusargs:
-            sim_smd += f"+{plusarg} "
+            sim_cmd += f"+{plusarg} "
 
         generics: str = ""
         if self._generics:
