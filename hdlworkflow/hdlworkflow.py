@@ -8,9 +8,9 @@ from hdlworkflow.logging import set_log_level, LoggingLevel
 
 
 logger = logging.getLogger(__name__)
-supported_eda_tools: set[str] = set(["nvc", "vivado", "riviera"])
-supported_waveform_viewers: set[str] = set(["gtkwave", "surfer"])
-supported_time_units: set[str] = set(["fs", "ps", "ns", "us", "ms", "s"])
+supported_eda_tools: list[str] = ["nvc", "vivado", "riviera"]
+supported_waveform_viewers: list[str] = ["gtkwave", "surfer"]
+supported_time_units: list[str] = ["fs", "ps", "ns", "us", "ms", "s"]
 
 
 class HdlWorkflow:

@@ -180,3 +180,7 @@ cython_debug/
 nvc/
 riviera/
 vivado/
+
+# pytest
+output_*/
+master/

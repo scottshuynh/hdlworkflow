@@ -6,7 +6,7 @@ import hdlworkflow
 from hdlworkflow import HdlWorkflow
 
 
-@pytest.mark.parametrize("eda_tool", list(hdlworkflow.supported_eda_tools))
+@pytest.mark.parametrize("eda_tool", hdlworkflow.supported_eda_tools)
 def test_libraries(eda_tool):
     pwd = Path(__file__).parent
 
@@ -22,7 +22,7 @@ def test_libraries(eda_tool):
     flow.run()
 
 
-@pytest.mark.parametrize("eda_tool", list(hdlworkflow.supported_eda_tools))
+@pytest.mark.parametrize("eda_tool", hdlworkflow.supported_eda_tools)
 def test_libraries_cocotb(eda_tool):
     pwd = Path(__file__).parent
 

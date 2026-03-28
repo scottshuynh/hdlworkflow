@@ -1,7 +1,7 @@
 {
   "files": [
     {
-      "path": "counter.vhd"
+      "path": "../counter.vhd"
     }
   ]
 }
