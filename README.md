@@ -1,7 +1,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue)](https://www.python.org/)
 [![Regression Tests](https://github.com/scottshuynh/hdlworkflow/actions/workflows/regression-tests.yml/badge.svg)](https://github.com/scottshuynh/hdlworkflow/actions/workflows/regression-tests.yml)
-[![PyPI downloads](https://img.shields.io/pypi/dm/hdlworkflow?label=PyPI%20downloads)](https://pypi.org/p/hdlworkflow)
+[![PyPI Downloads](https://static.pepy.tech/personalized-badge/hdlworkflow?period=monthly&units=INTERNATIONAL_SYSTEM&left_color=GREY&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/hdlworkflow)
 # hdlworkflow
 Seamless FPGA workflows.
 
