@@ -1,1 +1,3 @@
 from hdlworkflow.hdlworkflow import HdlWorkflow
+from hdlworkflow.hdlworkflow import supported_eda_tools
+from hdlworkflow.hdlworkflow import supported_waveform_viewers
