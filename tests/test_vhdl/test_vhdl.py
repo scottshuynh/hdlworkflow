@@ -9,7 +9,8 @@ from hdlworkflow import HdlWorkflow
 @pytest.mark.parametrize("eda_tool", hdlworkflow.supported_eda_tools)
 @pytest.mark.parametrize("data_w", [8])
 @pytest.mark.parametrize("depth", [16])
-def test_vhdl_sim(eda_tool, data_w, depth, worker_id):
+@pytest.mark.parametrize("stop_time", [tuple([10, "ns"])])
+def test_vhdl_sim(eda_tool, data_w, depth, stop_time, worker_id):
     if not which(eda_tool):
         pytest.skip(f"{eda_tool} is not installed. Skipping...")
 
@@ -22,6 +23,7 @@ def test_vhdl_sim(eda_tool, data_w, depth, worker_id):
         path_to_compile_order="../compile_order.json",
         path_to_working_directory=pwd,
         generic=[f"{data_w=}", f"{depth=}"],
+        stop_time=stop_time,
     )
     flow.run()
 
