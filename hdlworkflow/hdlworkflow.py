@@ -243,7 +243,7 @@ class HdlWorkflow:
             sys.exit(1)
 
 
-def hdlworkflow():
+def hdlworkflow(argv=None):
     parser = argparse.ArgumentParser(
         "hdlworkflow",
         description="Streamlining FPGA EDA tool workflows.",
@@ -401,7 +401,7 @@ def hdlworkflow():
         help="Clock period constraint for synthesis. Only for synthesis tools. Must take the form: "
         + "CLK_PORT=PERIOD_NS.",
     )
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     path_to_working_directory = str(Path.cwd())
 
     pythonpaths: list[str] = [path_to_working_directory]

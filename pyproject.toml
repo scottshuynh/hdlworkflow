@@ -20,6 +20,10 @@ keywords = ["fpga", "vhdl", "hdl", "cli", "simulation", "synthesis", "workflow"]
 
 scripts.hdlworkflow = "hdlworkflow.hdlworkflow:hdlworkflow"
 
+[project.optional-dependencies]
+test = ["pytest", "pytest-xdist"]
+dev = ["ruff"]
+
 [tool.setuptools_scm]
 tag_regex = "^r(?P<version>\\d+\\.\\d+\\.\\d+)$"
 version_scheme = "post-release"

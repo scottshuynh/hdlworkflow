@@ -1,4 +1,4 @@
-import pytest
+import os, pytest
 from pathlib import Path
 from shutil import which
 
@@ -9,7 +9,8 @@ from hdlworkflow import HdlWorkflow
 @pytest.mark.parametrize("eda_tool", hdlworkflow.supported_eda_tools)
 @pytest.mark.parametrize("data_w", [8])
 @pytest.mark.parametrize("depth", [16])
-def test_vhdl_sim(eda_tool, data_w, depth, worker_id):
+@pytest.mark.parametrize("stop_time", [tuple([10, "ns"])])
+def test_vhdl_sim(eda_tool, data_w, depth, stop_time, worker_id):
     if not which(eda_tool):
         pytest.skip(f"{eda_tool} is not installed. Skipping...")
 
@@ -22,6 +23,7 @@ def test_vhdl_sim(eda_tool, data_w, depth, worker_id):
         path_to_compile_order="../compile_order.json",
         path_to_working_directory=pwd,
         generic=[f"{data_w=}", f"{depth=}"],
+        stop_time=stop_time,
     )
     flow.run()
 
@@ -84,3 +86,105 @@ def test_vhdl_cocotb(eda_tool, data_w, depth, worker_id):
         cocotb="fifo_sync_tb",
     )
     flow.run()
+
+
+@pytest.mark.parametrize("eda_tool", hdlworkflow.supported_eda_tools)
+@pytest.mark.parametrize("data_w", [8])
+@pytest.mark.parametrize("depth", [16])
+@pytest.mark.parametrize("stop_time", [tuple([10, "ns"])])
+def test_vhdl_sim_cli(eda_tool, data_w, depth, stop_time, worker_id):
+    if not which(eda_tool):
+        pytest.skip(f"{eda_tool} is not installed. Skipping...")
+
+    pwd = Path(__file__).parent / ("output_" + worker_id)
+    pwd.mkdir(parents=True, exist_ok=True)
+    os.chdir(pwd)
+
+    argv = [
+        eda_tool,
+        "fifo_sync_tb",
+        "../compile_order.json",
+        "-g",
+        f"{data_w=}",
+        "-g",
+        f"{depth=}",
+        "--stop-time",
+        str(stop_time[0]),
+        str(stop_time[1]),
+    ]
+    hdlworkflow.hdlworkflow.hdlworkflow(argv)
+
+
+@pytest.mark.parametrize("data_w", [8])
+@pytest.mark.parametrize("depth", [16])
+@pytest.mark.parametrize("synth", [False, True])
+@pytest.mark.parametrize("impl", [False, True])
+@pytest.mark.parametrize(
+    "part",
+    ["", "xczu7ev-ffvc1156-2-e"],
+)
+@pytest.mark.parametrize("board", ["", "xilinx.com:zcu106:part0:2.6"])
+@pytest.mark.parametrize("clk_period_constraint", ["clk_i=4"])
+def test_vhdl_synth_vivado_cli(data_w, depth, synth, impl, part, board, clk_period_constraint, worker_id):
+    eda_tool = "vivado"
+    if not which(eda_tool):
+        pytest.skip(f"{eda_tool} is not installed. Skipping...")
+    if not synth ^ impl:
+        pytest.skip(f"{synth=} and {impl=} must be mutually exclusive. Skipping...")
+
+    pwd = Path(__file__).parent / ("output_" + worker_id)
+    pwd.mkdir(parents=True, exist_ok=True)
+    os.chdir(pwd)
+
+    argv = [
+        eda_tool,
+        "fifo_sync",
+        "../compile_order.json",
+        "-g",
+        f"{data_w=}",
+        "-g",
+        f"{depth=}",
+        "--ooc",
+        "--clk-period-constraint",
+        clk_period_constraint,
+    ]
+    if synth:
+        argv.append("--synth")
+    if impl:
+        argv.append("--impl")
+    if part:
+        argv.extend(["--part", part])
+    if board:
+        argv.extend(["--board", board])
+
+    hdlworkflow.hdlworkflow.hdlworkflow(argv)
+
+
+@pytest.mark.parametrize("eda_tool", hdlworkflow.supported_eda_tools)
+@pytest.mark.parametrize("data_w", [8])
+@pytest.mark.parametrize("depth", [16])
+def test_vhdl_cocotb_cli(eda_tool, data_w, depth, worker_id):
+    if eda_tool == "vivado":
+        pytest.skip("Vivado does not support cocotb. Skipping...")
+    if not which(eda_tool):
+        pytest.skip(f"{eda_tool} is not installed. Skipping...")
+
+    pwd = Path(__file__).parent / ("output_" + worker_id)
+    pwd.mkdir(parents=True, exist_ok=True)
+    os.chdir(pwd)
+
+    argv = [
+        eda_tool,
+        "fifo_sync",
+        "../compile_order.json",
+        "-g",
+        f"{data_w=}",
+        "-g",
+        f"{depth=}",
+        "--cocotb",
+        "fifo_sync_tb",
+        "--pythonpath",
+        str(pwd.parent),
+    ]
+
+    hdlworkflow.hdlworkflow.hdlworkflow(argv)
