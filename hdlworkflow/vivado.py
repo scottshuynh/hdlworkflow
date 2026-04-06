@@ -112,7 +112,16 @@ class Vivado:
         if self._board_part:
             tcl_lines.append(f'set_property -name "board_part" -value "{self._board_part}" -objects $obj')
 
+        have_any_vhdl: bool = False
         if self._compile_order.suffix == ".txt":
+            with self._compile_order.open("r", encoding="utf-8") as f:
+                lines = f.readlines()
+                for line in lines:
+                    if Path(line).suffix == ".vhdl" or Path(line).suffix == ".vhd":
+                        have_any_vhdl = True
+                        break
+                files = " ".join(lines)
+
             tcl_lines.extend(
                 [
                     f"set fp [open {str(self._compile_order)}]",
@@ -137,6 +146,7 @@ class Vivado:
                         or entity_path.suffix == ".vhd"
                         or entity_path.suffix == ".vhdl"
                     ):
+                        have_any_vhdl = True
                         tcl_lines.append(
                             f"set_property library {entity.get('library', self._work).lower()} [get_files {str(entity_path)}]"
                         )
@@ -151,9 +161,11 @@ class Vivado:
             [
                 f"set_property top {self._top} [current_fileset]",
                 f"set_property top {self._top} [get_filesets sim_1]",
-                "set_property file_type {VHDL 2008} [get_files *.vhd]",
             ]
         )
+
+        if have_any_vhdl:
+            tcl_lines.append("set_property file_type {VHDL 2008} [get_files *.vhd]")
 
         if self._generics:
             tcl_line: str = "set_property -name {steps.synth_design.args.more options} -value {"
