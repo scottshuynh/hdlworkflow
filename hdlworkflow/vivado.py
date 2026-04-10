@@ -45,6 +45,7 @@ class Vivado:
         self._bitstream: bool = bitstream
         self._ooc: bool = ooc
         self._clk_period_constraints: list[str] = clk_period_constraints
+        self._top_type: str = ""
 
         self._waveform_file: str = ""
         if gui:
@@ -117,9 +118,15 @@ class Vivado:
             with self._compile_order.open("r", encoding="utf-8") as f:
                 lines = f.readlines()
                 for line in lines:
-                    if Path(line).suffix == ".vhdl" or Path(line).suffix == ".vhd":
+                    filepath = Path(line.strip())
+                    if filepath.stem == self._top:
+                        if filepath.suffix == ".vhdl" or filepath.suffix == ".vhd":
+                            self._top_type = "vhdl"
+                        elif filepath.suffix == ".sv" or filepath.suffix == ".v":
+                            self._top_type = "verilog"
+
+                    if filepath.suffix == ".vhdl" or filepath.suffix == ".vhd":
                         have_any_vhdl = True
-                        break
                 files = " ".join(lines)
 
             tcl_lines.extend(
@@ -134,10 +141,17 @@ class Vivado:
             with self._compile_order.open(encoding="utf-8") as jf:
                 compile_order_dict = json.load(jf)
                 for entity in compile_order_dict["files"]:
+                    entity_path = Path(entity["path"])
                     if self._top in entity["path"]:
                         if not self._work:
                             self._work = f"{entity.get('library', 'work').lower()}"
-                    entity_path = Path(entity["path"])
+                        if entity.get("type", ""):
+                            self._top_type = entity.get("type", "")
+                        else:
+                            if entity_path.suffix == ".vhd" or entity_path.suffix == ".vhdl":
+                                self._top_type = "vhdl"
+                            elif entity_path.suffix == ".sv" or entity_path.suffix == ".v":
+                                self._top_type = "verilog"
                     if not entity_path.is_absolute():
                         entity_path = self._pwd / entity_path
                     tcl_lines.append(f"add_files {str(entity_path)}")
@@ -161,6 +175,7 @@ class Vivado:
             [
                 f"set_property top {self._top} [current_fileset]",
                 f"set_property top {self._top} [get_filesets sim_1]",
+                f"set_property target_language {self._top_type} [current_project]",
             ]
         )
 
