@@ -31,7 +31,7 @@ class Vivado:
 
         self._top: str = top
         self._compile_order: Path = Path(compile_order)
-        self._work: str = work.lower()
+        self._work: str = ""
         self._pwd: Path = Path(path_to_working_directory)
         self._generics: list[str] = generics
         self._stop_time: str = stop_time
@@ -46,6 +46,11 @@ class Vivado:
         self._ooc: bool = ooc
         self._clk_period_constraints: list[str] = clk_period_constraints
         self._top_type: str = ""
+
+        if work:
+            self._work = work.lower()
+        else:
+            self._work = "xil_defaultlib"
 
         self._waveform_file: str = ""
         if gui:
@@ -143,8 +148,6 @@ class Vivado:
                 for entity in compile_order_dict["files"]:
                     entity_path = Path(entity["path"])
                     if self._top in entity["path"]:
-                        if not self._work:
-                            self._work = f"{entity.get('library', 'work').lower()}"
                         if entity.get("type", ""):
                             self._top_type = entity.get("type", "")
                         else:

@@ -2,32 +2,32 @@
   "files": [
     {
       "type": "VHDL",
-      "path": "b.vhd",
+      "path": "../b.vhd",
       "library": "b_lib"
     },
     {
       "type": "VHDL",
-      "path": "e.vhd",
+      "path": "../e.vhd",
       "library": "d_lib"
     },
     {
       "type": "VHDL",
-      "path": "d.vhd",
+      "path": "../d.vhd",
       "library": "d_lib"
     },
     {
       "type": "VHDL",
-      "path": "c.vhd",
+      "path": "../c.vhd",
       "library": "c_lib"
     },
     {
       "type": "VHDL",
-      "path": "a.vhd",
+      "path": "../a.vhd",
       "library": "a_lib"
     },
     {
       "type": "VHDL",
-      "path": "a_tb.vhd",
+      "path": "../a_tb.vhd",
       "library": "work"
     }
   ]

@@ -112,7 +112,7 @@ def test_vhdl_sim_cli(eda_tool, data_w, depth, stop_time, worker_id):
         str(stop_time[0]),
         str(stop_time[1]),
     ]
-    hdlworkflow.hdlworkflow.hdlworkflow(argv)
+    hdlworkflow.cli.main(argv)
 
 
 @pytest.mark.parametrize("data_w", [8])
@@ -157,7 +157,7 @@ def test_vhdl_synth_vivado_cli(data_w, depth, synth, impl, part, board, clk_peri
     if board:
         argv.extend(["--board", board])
 
-    hdlworkflow.hdlworkflow.hdlworkflow(argv)
+    hdlworkflow.cli.main(argv)
 
 
 @pytest.mark.parametrize("eda_tool", hdlworkflow.supported_eda_tools)
@@ -187,4 +187,4 @@ def test_vhdl_cocotb_cli(eda_tool, data_w, depth, worker_id):
         str(pwd.parent),
     ]
 
-    hdlworkflow.hdlworkflow.hdlworkflow(argv)
+    hdlworkflow.cli.main(argv)

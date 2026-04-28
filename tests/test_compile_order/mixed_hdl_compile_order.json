@@ -1,0 +1,25 @@
+{
+  "files": [
+    {
+      "type": "vhdl",
+      "path": "../compile_me_0.vhd"
+    },
+    {
+      "type": "vhdl",
+      "path": "../compile_me_1.vhdl"
+    },
+    {
+      "type": "verilog",
+      "path": "../compile_me_2.sv"
+    },
+    {
+      "type": "verilog",
+      "path": "../compile_me_3.v"
+    },
+    {
+      "type": "verilog",
+      "path": "../top_compile_me.sv",
+      "is_top": true
+    }
+  ]
+}

@@ -1,3 +1,4 @@
-from hdlworkflow.hdlworkflow import HdlWorkflow
-from hdlworkflow.hdlworkflow import supported_eda_tools
-from hdlworkflow.hdlworkflow import supported_waveform_viewers
+from .core import HdlWorkflow
+from .core import supported_eda_tools
+from .core import supported_waveform_viewers
+from . import cli

@@ -1,0 +1,17 @@
+{
+  "files": [
+    {
+      "type": "vhdl",
+      "path": "../compile_me_0.vhd"
+    },
+    {
+      "type": "vhdl",
+      "path": "../compile_me_1.vhdl"
+    },
+    {
+      "type": "vhdl",
+      "path": "../top_compile_me.vhd",
+      "is_top": true
+    }
+  ]
+}

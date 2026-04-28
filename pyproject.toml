@@ -18,7 +18,7 @@ classifiers = [
     ]
 keywords = ["fpga", "vhdl", "hdl", "cli", "simulation", "synthesis", "workflow"]
 
-scripts.hdlworkflow = "hdlworkflow.hdlworkflow:hdlworkflow"
+scripts.hdlworkflow = "hdlworkflow.cli:main"
 
 [project.optional-dependencies]
 test = ["pytest", "pytest-xdist"]

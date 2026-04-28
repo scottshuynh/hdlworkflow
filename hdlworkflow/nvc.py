@@ -3,9 +3,9 @@ from importlib.util import find_spec
 from pathlib import Path
 from shutil import which
 
-from hdlworkflow import utils
-from hdlworkflow.gtkwave import Gtkwave
-from hdlworkflow.surfer import Surfer
+from . import utils
+from .gtkwave import Gtkwave
+from .surfer import Surfer
 
 logger = logging.getLogger(__name__)
 supported_waveform_viewers = ["gtkwave", "surfer"]
@@ -152,18 +152,21 @@ class Nvc:
 
                     entity_path = Path(entity["path"])
                     if not entity_path.is_absolute():
-                        entity_path = self._pwd / entity_path
+                        entity_path = (self._pwd / entity_path).resolve()
 
-                    if entity.get("type", "none") != "none":
-                        command += ["-a", f"{str(entity_path)}"]
-                    elif entity_path.suffix in self._valid_file_suffix:
-                        command += ["-a", f"{str(entity_path)}"]
+                    if entity_path.suffix in self._valid_file_suffix:
+                        if not entity_path.is_file():
+                            logger.error(f"File not found: {str(entity_path)}")
+                            sys.exit(1)
 
-                    logger.info("    " + " ".join(cmd for cmd in command))
-                    analyse = subprocess.run(command)
-                    if analyse.returncode != 0:
-                        logger.error("Error during analysis.")
-                        sys.exit(1)
+                        command += ["-a", f"{str(entity_path)}"]
+                        logger.info("    " + " ".join(cmd for cmd in command))
+                        analyse = subprocess.run(command)
+                        if analyse.returncode != 0:
+                            logger.error("Error during analysis.")
+                            sys.exit(1)
+                    else:
+                        logger.warning(f"Skipping non-HDL file: {str(entity_path)}")
 
     def _elaborate(self) -> None:
         logger.info("Elaborating...")
