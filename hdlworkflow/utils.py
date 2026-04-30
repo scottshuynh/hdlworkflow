@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ElementTree
 logger = logging.getLogger(__name__)
 
 
-def relative_to_absolute_paths(paths: list[str], pwd: str) -> list[str]:
+def relative_to_absolute_paths(paths: list[str], pwd: str | Path) -> list[str]:
     result: list[str] = []
     for path in paths:
         if Path(path).is_absolute():

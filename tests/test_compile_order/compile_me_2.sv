@@ -1,7 +1,7 @@
 module compile_me_2 (
     input wire clk_i,
     input wire rst_i,
-    input wire ce_i = 1
+    input wire ce_i
 );
     logic [7:0] count = 0;
     always @(posedge clk_i) begin

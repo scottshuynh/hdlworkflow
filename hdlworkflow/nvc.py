@@ -17,37 +17,28 @@ class Nvc:
     def __init__(
         self,
         top: str,
-        compile_order: str,
+        compile_order: list[dict],
         generics: list[str],
         stop_time: str,
         cocotb_module: str,
         plusargs: list[str],
         waveform_viewer: str,
         waveform_view_file: str,
-        path_to_working_directory: str,
+        path_to_working_directory: Path,
         pythonpaths: list[str],
         work: str,
     ):
         logger.info(f"Initialising {type(self).__name__}...")
 
-        # Check if file type is supported
-        if compile_order:
-            if Path(compile_order).suffix == ".txt" or Path(compile_order).suffix == ".json":
-                self._compile_order: Path = Path(compile_order)
-            else:
-                logger.error("Unsupported compile_order file extension. Expecting:, got:")
-                sys.exit(1)
-
-        self._top: str = top
-        self._generics: list[str] = generics
-        self._stop_time: str = stop_time
-        self._cocotb_module: str = cocotb_module
-        self._plusargs: list[str] = plusargs
-        self._pwd: Path = Path(path_to_working_directory)
-        self._pythonpaths: list[str] = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
-        self._work: list[str] = []
-        if work:
-            self._work = [f"--work={work.lower()}"]
+        self._compile_order = compile_order
+        self._top = top
+        self._generics = generics
+        self._stop_time = stop_time
+        self._cocotb_module = cocotb_module
+        self._plusargs = plusargs
+        self._pwd = path_to_working_directory
+        self._pythonpaths = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
+        self._work = work
         self._valid_file_suffix = set([".vhd", ".vhdl", ".v", ".sv"])
 
         self._waveform_viewer: str = ""
@@ -127,46 +118,28 @@ class Nvc:
         self._run()
 
     def _analyse(self) -> None:
+        """Constructs then runs the nvc analyse command.
+        - Explicit library to compile design into
+        - Any other extra args (not yet implemented)
+        """
         logger.info("Analysing...")
 
-        command = ["nvc", "-L", f"{str(Path.cwd())}"]
-        if self._compile_order.suffix == ".txt":
-            if self._work:
-                command += self._work
-            command += ["-a", "-f", f"{str(self._compile_order)}"]
-            logger.info("    " + " ".join(cmd for cmd in command))
-            analyse = subprocess.run(command)
-            if analyse.returncode != 0:
-                logger.error("Error during analysis.")
-                sys.exit(1)
-        elif self._compile_order.suffix == ".json":
-            with self._compile_order.open(encoding="utf-8") as f:
-                compile_order_dict = json.load(f)
-                for entity in compile_order_dict["files"]:
-                    if self._top in entity["path"]:
-                        if not self._work:
-                            self._work = [f"--work={entity.get('library', 'work').lower()}"]
+        for hdl in self._compile_order:
+            command = ["nvc", "-L", f"{str(Path.cwd())}"]
 
-                    command = ["nvc", "-L", f"{str(Path.cwd())}"]
-                    command += [f"--work={entity.get('library', 'work').lower()}"]
+            hdl_path = Path(hdl.get("path", ""))
+            hdl_lib = hdl.get("library", self._work)
 
-                    entity_path = Path(entity["path"])
-                    if not entity_path.is_absolute():
-                        entity_path = (self._pwd / entity_path).resolve()
-
-                    if entity_path.suffix in self._valid_file_suffix:
-                        if not entity_path.is_file():
-                            logger.error(f"File not found: {str(entity_path)}")
-                            sys.exit(1)
-
-                        command += ["-a", f"{str(entity_path)}"]
-                        logger.info("    " + " ".join(cmd for cmd in command))
-                        analyse = subprocess.run(command)
-                        if analyse.returncode != 0:
-                            logger.error("Error during analysis.")
-                            sys.exit(1)
-                    else:
-                        logger.warning(f"Skipping non-HDL file: {str(entity_path)}")
+            if hdl_lib:
+                command += [f"--work={hdl_lib}"]
+            if hdl_path.suffix in self._valid_file_suffix:
+                command += ["-a", f"{str(hdl_path)}"]
+                analyse = subprocess.run(command)
+                if analyse.returncode != 0:
+                    logger.error("Error during analysis.")
+                    sys.exit(1)
+            else:
+                logger.warning(f"Skipping non-HDL file: {hdl_path}")
 
     def _elaborate(self) -> None:
         logger.info("Elaborating...")

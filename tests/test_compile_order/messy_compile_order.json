@@ -9,19 +9,19 @@
       "path": "../compile_me_1.vhdl"
     },
     {
-      "path": "skip.me"
+      "path": "../skip.me"
     },
     {
       "path": "../skip.tcl"
     },
     {
-      "path": "skip.xdc"
+      "path": "../skip.xdc"
     },
     {
       "path": "../skip.xci"
     },
     {
-      "path": "skip.bd"
+      "path": "../skip.bd"
     },
     {
       "path": "../skip.txt"

@@ -14,7 +14,7 @@ class Riviera:
     def __init__(
         self,
         top: str,
-        compile_order: str,
+        compile_order: list[dict],
         work: str,
         generics: list[str],
         search_libraries: list[str],
@@ -30,41 +30,35 @@ class Riviera:
     ):
         logger.info(f"Initialising {type(self).__name__}...")
 
-        self._top: str = top
-        # Check if file type is supported
-        if compile_order:
-            if Path(compile_order).suffix == ".txt" or Path(compile_order).suffix == ".json":
-                self._compile_order: Path = Path(compile_order)
-            else:
-                logger.error("Unsupported compile_order file extension. Expecting:, got:")
-                sys.exit(1)
+        self._hdl_files = compile_order
+        self._top = top
+        self._top_type = self._get_top_type()
+        self._search_libraries = search_libraries
 
-        self._search_libraries: list[str] = search_libraries
-
-        self._libraries: set[str] = set()
+        self._libraries = list()
+        self._work = "work"
         if work:
-            self._work: str = work.lower()
-            self._libraries.add(work.lower())
-        else:
-            self._work = "work"
+            self._work = work
+            self._libraries.append(work)
 
-        self._generics: list[str] = generics
-        self._stop_time: str = stop_time
-        self._cocotb_module: str = cocotb_module
-        self._plusargs: list[str] = plusargs
-        self._pwd: Path = Path(path_to_working_directory)
-        self._pythonpaths: list[str] = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
-        self._path_to_glbl: str = path_to_glbl
-        self._path_to_libstdcpp: str = ""
+        self._generics = generics
+        self._stop_time = stop_time
+        self._cocotb_module = cocotb_module
+        self._plusargs = plusargs
+        self._pwd = Path(path_to_working_directory)
+        self._pythonpaths = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
+        self._path_to_glbl = path_to_glbl
+        self._path_to_libstdcpp = ""
+
         if path_to_libstdcpp:
             if Path(path_to_libstdcpp).is_absolute():
                 self._path_to_libstdcpp = path_to_libstdcpp
             else:
                 self._path_to_libstdcpp = str((Path(path_to_working_directory) / path_to_libstdcpp).resolve())
 
-        self._gui: bool = gui
-        self._waveform_view_file: str = waveform_view_file
-        self._waveform_file: str = ""
+        self._gui = gui
+        self._waveform_view_file = waveform_view_file
+        self._waveform_file = ""
         if gui:
             if waveform_view_file:
                 if Path(waveform_view_file).suffix == ".awc":
@@ -103,65 +97,25 @@ class Riviera:
         else:
             return tuple([True, None])
 
-    def simulate(self) -> None:
-        self._flatten_compile_order()
+    def _get_top_type(self) -> str:
+        top_type = ""
+        for hdl in self._hdl_files:
+            hdl_path = Path(hdl.get("path", ""))
+            if self._top in str(hdl_path):
+                if hdl_path.suffix == ".vhd" or hdl_path.suffix == ".vhdl":
+                    top_type = "vhdl"
+                elif hdl_path.suffix == ".v" or hdl_path.suffix == ".sv":
+                    top_type = "verilog"
+                break
 
+        return top_type
+
+    def simulate(self) -> None:
         major = 0
         if self._cocotb_module:
             major, minor, patch = utils.get_cocotb_version()
 
         self._batch_mode_run(major)
-
-    def _flatten_compile_order(self) -> None:
-        self._hdl_files: list[dict] = []
-
-        if self._compile_order.suffix == ".txt":
-            with self._compile_order.open(encoding="utf-8") as f:
-                for line in f:
-                    hdl_file: Path = Path(line.strip())
-                    ext = hdl_file.suffix
-                    entity = dict()
-                    entity["library"] = self._work
-                    if ext:
-                        if ext == ".vhd" or ext == ".vhdl":
-                            entity["type"] = "vhdl"
-                            if self._top in line:
-                                self._top_type = "vhdl"
-                        elif ext == ".v" or ext == ".sv":
-                            entity["type"] = "verilog"
-                            if self._top in line:
-                                self._top_type = "verilog"
-                        else:
-                            entity["type"] = "none"
-
-                    if not hdl_file.is_absolute():
-                        hdl_file = self._pwd / hdl_file
-                    entity["path"] = str(hdl_file)
-
-                    self._hdl_files.append(entity)
-
-        elif self._compile_order.suffix == ".json":
-            with self._compile_order.open(encoding="utf-8") as f:
-                compile_order_dict = json.load(f)
-                self._hdl_files = compile_order_dict["files"]
-                for entity in self._hdl_files:
-                    library = entity.get("library", "").lower()
-
-                    if self._top in entity["path"].lower():
-                        if entity.get("type", ""):
-                            self._top_type = entity["type"].lower()
-                        else:
-                            top_suffix = Path(entity["path"].lower()).suffix
-                            if top_suffix == ".vhd" or top_suffix == ".vhdl":
-                                self._top_type = "vhdl"
-                            elif top_suffix == ".v" or top_suffix == ".sv":
-                                self._top_type = "verilog"
-                        if self._work == "work" and library:
-                            self._work = library
-                    if library and library not in self._libraries:
-                        self._libraries.add(library)
-                    if not Path(entity["path"]).is_absolute():
-                        entity["path"] = str(self._pwd / entity["path"])
 
     def _setup_cocotb_env(self, major_ver: int) -> dict[str, str]:
         libpython_loc = subprocess.run(["cocotb-config", "--libpython"], capture_output=True, text=True).stdout.strip()
@@ -245,6 +199,10 @@ class Riviera:
         tcl_lines.append("set compile_returncode [catch {")
         for hdl_file in self._hdl_files:
             library = hdl_file.get("library", self._work).lower()
+            if library not in self._libraries:
+                self._libraries.append(library)
+                tcl_lines.append(f"alib {library}")
+
             hdl_filepath = Path(hdl_file["path"])
 
             if (

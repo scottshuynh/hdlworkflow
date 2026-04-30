@@ -1,3 +1,4 @@
+from re import L
 import json, logging, os, subprocess, sys
 from pathlib import Path
 from shutil import which
@@ -11,7 +12,7 @@ class Vivado:
     def __init__(
         self,
         top: str,
-        compile_order: str,
+        compile_order: list[dict],
         work: str,
         generics: list[str],
         stop_time: str,
@@ -29,23 +30,23 @@ class Vivado:
     ):
         logger.info(f"Initialising {type(self).__name__}...")
 
-        self._top: str = top
-        self._compile_order: Path = Path(compile_order)
-        self._work: str = ""
-        self._pwd: Path = Path(path_to_working_directory)
-        self._generics: list[str] = generics
-        self._stop_time: str = stop_time
-        self._plusargs: list[str] = plusargs
-        self._part_number: str = part_number
-        self._board_part: str = board_part
-        self._gui: bool = gui
-        self._waveform_view_file: str = waveform_view_file
-        self._synth: bool = synth
-        self._impl: bool = impl
-        self._bitstream: bool = bitstream
-        self._ooc: bool = ooc
-        self._clk_period_constraints: list[str] = clk_period_constraints
-        self._top_type: str = ""
+        self._top = top
+        self._compile_order = compile_order
+        self._work = ""
+        self._pwd = Path(path_to_working_directory)
+        self._generics = generics
+        self._stop_time = stop_time
+        self._plusargs = plusargs
+        self._part_number = part_number
+        self._board_part = board_part
+        self._gui = gui
+        self._waveform_view_file = waveform_view_file
+        self._synth = synth
+        self._impl = impl
+        self._bitstream = bitstream
+        self._ooc = ooc
+        self._clk_period_constraints = clk_period_constraints
+        self._top_type = self._get_top_type()
 
         if work:
             self._work = work.lower()
@@ -80,6 +81,19 @@ class Vivado:
         if not which("vivado"):
             return False
         return True
+
+    def _get_top_type(self) -> str:
+        top_type = ""
+        for hdl in self._compile_order:
+            hdl_path = Path(hdl.get("path", ""))
+            if self._top in str(hdl_path):
+                if hdl_path.suffix == ".vhd" or hdl_path.suffix == ".vhdl":
+                    top_type = "vhdl"
+                elif hdl_path.suffix == ".v" or hdl_path.suffix == ".sv":
+                    top_type = "verilog"
+                break
+
+        return top_type
 
     def start(self) -> None:
         self._create_clock_constraint()
@@ -118,61 +132,21 @@ class Vivado:
         if self._board_part:
             tcl_lines.append(f'set_property -name "board_part" -value "{self._board_part}" -objects $obj')
 
+        if self._work:
+            tcl_lines.append(f"set_property default_lib {self._work} [current_project]")
+
         have_any_vhdl: bool = False
-        if self._compile_order.suffix == ".txt":
-            with self._compile_order.open("r", encoding="utf-8") as f:
-                lines = f.readlines()
-                for line in lines:
-                    filepath = Path(line.strip())
-                    if filepath.stem == self._top:
-                        if filepath.suffix == ".vhdl" or filepath.suffix == ".vhd":
-                            self._top_type = "vhdl"
-                        elif filepath.suffix == ".sv" or filepath.suffix == ".v":
-                            self._top_type = "verilog"
-
-                    if filepath.suffix == ".vhdl" or filepath.suffix == ".vhd":
-                        have_any_vhdl = True
-                files = " ".join(lines)
-
-            tcl_lines.extend(
-                [
-                    f"set fp [open {str(self._compile_order)}]",
-                    'set lines [split [read -nonewline $fp] "\\n"]',
-                    "close $fp",
-                    "add_files $lines",
-                ]
-            )
-        elif self._compile_order.suffix == ".json":
-            with self._compile_order.open(encoding="utf-8") as jf:
-                compile_order_dict = json.load(jf)
-                for entity in compile_order_dict["files"]:
-                    entity_path = Path(entity["path"])
-                    if self._top in entity["path"]:
-                        if entity.get("type", ""):
-                            self._top_type = entity.get("type", "")
-                        else:
-                            if entity_path.suffix == ".vhd" or entity_path.suffix == ".vhdl":
-                                self._top_type = "vhdl"
-                            elif entity_path.suffix == ".sv" or entity_path.suffix == ".v":
-                                self._top_type = "verilog"
-                    if not entity_path.is_absolute():
-                        entity_path = self._pwd / entity_path
-                    tcl_lines.append(f"add_files {str(entity_path)}")
-                    if (
-                        entity.get("type", "none").lower() == "vhdl"
-                        or entity_path.suffix == ".vhd"
-                        or entity_path.suffix == ".vhdl"
-                    ):
-                        have_any_vhdl = True
-                        tcl_lines.append(
-                            f"set_property library {entity.get('library', self._work).lower()} [get_files {str(entity_path)}]"
-                        )
+        for elem in self._compile_order:
+            elem_path = Path(elem.get("path", ""))
+            elem_lib = elem.get("library")
+            tcl_lines.append(f"add_files {str(elem_path)}")
+            if elem_lib:
+                tcl_lines.append(f"set_property library {elem_lib} [get_files {str(elem_path)}]")
+            if elem_path.suffix == ".vhd" or elem_path.suffix == ".vhdl":
+                have_any_vhdl = True
 
         if self._clk_period_constraints:
             tcl_lines.append("add_files clock_constraint.xdc")
-
-        if self._work:
-            tcl_lines.append(f"set_property default_lib {self._work} [current_project]")
 
         tcl_lines.extend(
             [
@@ -241,7 +215,7 @@ class Vivado:
                     tcl_lines.extend(
                         [
                             "open_run impl_1",
-                            f"write_bitstream -force {str(self._pwd / self._top + '.bit')}",
+                            f"write_bitstream -force {str(self._pwd / self._top / '.bit')}",
                         ]
                     )
             else:

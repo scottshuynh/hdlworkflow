@@ -16,7 +16,7 @@ def test_libraries(eda_tool, worker_id):
     flow = HdlWorkflow(
         eda_tool=eda_tool,
         top="a_tb",
-        path_to_compile_order="../compile_order.json",
+        compile_order="../compile_order.json",
         path_to_working_directory=str(pwd),
     )
     flow.run()
@@ -34,7 +34,7 @@ def test_libraries_cocotb(eda_tool, worker_id):
     flow = HdlWorkflow(
         eda_tool=eda_tool,
         top="a_tb",
-        path_to_compile_order="../compile_order.json",
+        compile_order="../compile_order.json",
         path_to_working_directory=str(pwd),
         pythonpaths=[str(pwd.parent)],
         cocotb="a_tb",

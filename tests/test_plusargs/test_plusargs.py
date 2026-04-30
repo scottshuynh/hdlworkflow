@@ -104,7 +104,7 @@ def test_plusargs(eda_tool, adjust, is_decrement, test, num_outputs, worker_id):
     flow = HdlWorkflow(
         eda_tool=eda_tool,
         top="counter",
-        path_to_compile_order="../compile_order.json",
+        compile_order="../compile_order.json",
         path_to_working_directory=pwd,
         generic=[f"{adjust=}", f"{is_decrement=}"],
         cocotb=str(Path(__file__).stem),

@@ -1,4 +1,4 @@
-import logging, sys
+import json, logging, sys
 from pathlib import Path
 
 from hdlworkflow.nvc import Nvc
@@ -18,8 +18,8 @@ class HdlWorkflow:
         self,
         eda_tool: str,
         top: str,
-        path_to_compile_order: str,
-        path_to_working_directory: str,
+        compile_order: str | Path | list[dict],
+        path_to_working_directory: str | Path,
         generic: list[str] = [],
         libraries: list[str] = [],
         stop_time: tuple[int, str] = (),
@@ -50,8 +50,8 @@ class HdlWorkflow:
         Args:
             eda_tool (str): EDA tool of choice
             top (str): Name of top design
-            path_to_compile_order (str): Path to a file listing HDL source files in compilation order for simulation.
-            path_to_working_directory (str): Absolute path to hdlworkflow working directory. Any relative paths
+            compile_order (str | Path | list[dict]): Path to a file listing HDL source files in compilation order for simulation.
+            path_to_working_directory (str | Path): Absolute path to hdlworkflow working directory. Any relative paths
                 specified for any hdlworkflow argument will be relative to this directory.
             generic (list[str], optional): Top will elaborate with specified generics. Must be in form: GENERIC=VALUE.
                 Defaults to [].
@@ -79,11 +79,10 @@ class HdlWorkflow:
         """
         self.eda_tool = eda_tool.lower()
         self.top = top
-        self.path_to_compile_order = path_to_compile_order
         self.generic = generic
         self.libraries = libraries
         self.cocotb = cocotb
-        self.path_to_working_directory = path_to_working_directory
+        self.path_to_working_directory = Path(path_to_working_directory)
         self.pythonpaths = pythonpaths
         self.plusargs = plusargs
         self.path_to_libstdcpp = path_to_libstdcpp
@@ -98,17 +97,7 @@ class HdlWorkflow:
         self.bitstream = bitstream
         self.ooc = ooc
         self.clk_period_constraint = clk_period_constraint
-
-        self.path_to_compile_order = path_to_compile_order
-        if Path(path_to_compile_order).is_absolute():
-            if not Path(path_to_compile_order).is_file():
-                logger.error(f"Path to compile order ({path_to_compile_order}) does not exist.")
-                sys.exit(1)
-        else:
-            self.path_to_compile_order = str((Path(path_to_working_directory) / path_to_compile_order).resolve())
-            if not Path(self.path_to_compile_order).is_file():
-                logger.error(f"Path to compile order ({self.path_to_compile_order}) does not exist.")
-                sys.exit(1)
+        self.compile_order = self._parse_compile_order(compile_order)
 
         self.waveform_view_file = ""
         if waveform_view_file:
@@ -137,6 +126,106 @@ class HdlWorkflow:
             else:
                 logger.error(f"--stop-time must be an integer. Got {stop_time[0]}")
                 sys.exit(1)
+
+    def _parse_compile_order(self, compile_order: str | Path | list[dict]) -> list[dict]:
+        if isinstance(compile_order, str):
+            return self._parse_compile_order_file(Path(compile_order))
+        elif isinstance(compile_order, Path):
+            return self._parse_compile_order_file(compile_order)
+        elif isinstance(compile_order, list):
+            if isinstance(compile_order[0], dict):
+                return self._parse_compile_order_list_of_dicts(compile_order)
+            else:
+                raise TypeError(
+                    f"Expecting the compile order list to have dict elements. Got a list of {type(compile_order[0])}"
+                )
+        else:
+            raise TypeError(f"Expecting compile order to be a str, Path, or list of dicts. Got {type(compile_order)}")
+
+    def _parse_compile_order_file(self, compile_order: Path) -> list[dict]:
+        resolved_compile_order = compile_order
+        if resolved_compile_order.is_absolute():
+            if not compile_order.is_file():
+                logger.error(f"Path to compile order ({compile_order}) does not exist.")
+                sys.exit(1)
+        else:
+            resolved_compile_order = (self.path_to_working_directory / compile_order).resolve()
+            if not resolved_compile_order.is_file():
+                logger.error(f"Path to compile order ({resolved_compile_order}) does not exist.")
+                sys.exit(1)
+
+        if resolved_compile_order.suffix == ".txt":
+            return self._parse_compile_order_txt(resolved_compile_order)
+        elif resolved_compile_order.suffix == ".json":
+            return self._parse_compile_order_json(resolved_compile_order)
+        else:
+            logger.info(f"Expecting compile order file to be .txt or .json. Got {resolved_compile_order.suffix} ")
+            sys.exit(1)
+
+    def _parse_compile_order_txt(self, compile_order: Path) -> list[dict]:
+        compile_order_list = list()
+        with compile_order.open("r", encoding="utf-8") as f:
+            for line in f:
+                elem = dict()
+
+                # Check file exists
+                file = Path(line.strip())
+                if not file.is_absolute():
+                    file = (self.path_to_working_directory / file).resolve()
+                if not file.is_file():
+                    logger.error(f"File not found: {file}")
+                    sys.exit(1)
+                elem["path"] = str(file)
+
+                # Check file type
+                if file.suffix == ".vhd" or file.suffix == ".vhdl":
+                    elem["type"] = "vhdl"
+                elif file.suffix == ".v" or file.suffix == ".sv":
+                    elem["type"] = "verilog"
+
+                # Add library
+                if self.work:
+                    elem["library"] = self.work
+                else:
+                    if self.eda_tool == "vivado":
+                        elem["library"] = "xil_defaultlib"
+                    else:
+                        elem["library"] = "work"
+
+                compile_order_list.append(elem)
+
+        return compile_order_list
+
+    def _parse_compile_order_json(self, compile_order: Path) -> list[dict]:
+        with compile_order.open("r", encoding="utf-8") as f:
+            compile_order_dict: dict = json.load(f)
+            files = compile_order_dict.get("files")
+            if files:
+                if isinstance(files, list) and isinstance(files[0], dict):
+                    return self._parse_compile_order_list_of_dicts(files)
+                else:
+                    logger.error("JSON schema mismatch! Please check JSON schema then try again.")
+                    sys.exit(1)
+            else:
+                logger.error("JSON schema mismatch! Please check JSON schema then try again.")
+                sys.exit(1)
+
+    def _parse_compile_order_list_of_dicts(self, compile_order: list[dict]):
+        for elem in compile_order:
+            elem_path = Path(elem.get("path", ""))
+            if not elem_path:
+                logger.error("JSON schema mismatch! Please check JSON schema then try again.")
+                sys.exit(1)
+            else:
+                if not elem_path.is_absolute():
+                    elem_path = (self.path_to_working_directory / elem_path).resolve()
+                if elem_path.is_file():
+                    elem["path"] = str(elem_path)
+                else:
+                    logger.error(f"File not found: {elem_path}")
+                    sys.exit(1)
+
+        return compile_order
 
     def is_supported_eda_tool(self, eda_tool: str) -> bool:
         if eda_tool in supported_eda_tools:
@@ -169,7 +258,7 @@ class HdlWorkflow:
 
                 nvc = Nvc(
                     top=self.top,
-                    compile_order=self.path_to_compile_order,
+                    compile_order=self.compile_order,
                     generics=self.generic,
                     stop_time="".join(self.stop_time.split()),
                     cocotb_module=self.cocotb,
@@ -192,7 +281,7 @@ class HdlWorkflow:
 
                 vivado = Vivado(
                     top=self.top,
-                    compile_order=self.path_to_compile_order,
+                    compile_order=self.compile_order,
                     work=self.work,
                     generics=self.generic,
                     stop_time="".join(self.stop_time.split()),
@@ -220,7 +309,7 @@ class HdlWorkflow:
 
                 riviera = Riviera(
                     top=self.top,
-                    compile_order=self.path_to_compile_order,
+                    compile_order=self.compile_order,
                     work=self.work,
                     generics=self.generic,
                     search_libraries=self.libraries,
