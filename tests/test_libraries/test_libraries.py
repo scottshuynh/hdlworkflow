@@ -18,6 +18,7 @@ def test_libraries(eda_tool, worker_id):
         top="a_tb",
         compile_order="../compile_order.json",
         path_to_working_directory=str(pwd),
+        work="top",
     )
     flow.run()
 
@@ -38,5 +39,6 @@ def test_libraries_cocotb(eda_tool, worker_id):
         path_to_working_directory=str(pwd),
         pythonpaths=[str(pwd.parent)],
         cocotb="a_tb",
+        work="top",
     )
     flow.run()

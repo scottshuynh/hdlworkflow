@@ -20,6 +20,7 @@ class Riviera:
         search_libraries: list[str],
         stop_time: str,
         cocotb_module: str,
+        extra_args: list[str],
         plusargs: list[str],
         gui: bool,
         waveform_view_file: str,
@@ -44,6 +45,7 @@ class Riviera:
         self._generics = generics
         self._stop_time = stop_time
         self._cocotb_module = cocotb_module
+        self._extra_args = extra_args
         self._plusargs = plusargs
         self._pwd = Path(path_to_working_directory)
         self._pythonpaths = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
@@ -194,7 +196,9 @@ class Riviera:
             tcl_lines.append(f"alib {self._work}")
 
         if self._path_to_glbl:
-            tcl_lines.append(f"eval alog -work {self._work} -incr {self._path_to_glbl}")
+            tcl_lines.append(
+                f"eval alog -work {self._work} -incr {' '.join(arg for arg in self._extra_args)} {self._path_to_glbl}"
+            )
 
         tcl_lines.append("set compile_returncode [catch {")
         for hdl_file in self._hdl_files:
@@ -210,13 +214,17 @@ class Riviera:
                 or hdl_filepath.suffix == ".vhd"
                 or hdl_filepath.suffix == ".vhdl"
             ):
-                tcl_lines.append(f"    eval acom -work {library} -2008 -incr {hdl_file['path']}")
+                tcl_lines.append(
+                    f"    eval acom -work {library} -2008 -incr {' '.join(arg for arg in self._extra_args)} {hdl_file['path']}"
+                )
             elif (
                 hdl_file.get("type", "none").lower() == "verilog"
                 or hdl_filepath.suffix == ".v"
                 or hdl_filepath.suffix == ".sv"
             ):
-                tcl_lines.append(f"    eval alog -work {library} -incr {hdl_file['path']}")
+                tcl_lines.append(
+                    f"    eval alog -work {library} -incr {' '.join(arg for arg in self._extra_args)} {hdl_file['path']}"
+                )
             else:
                 logger.warning(f"Ignoring file: {hdl_file['path']}")
 
@@ -254,7 +262,7 @@ class Riviera:
         if self._search_libraries:
             sim_cmd += "-L " + " -L ".join(self._search_libraries) + " "
 
-        sim_cmd += f"-ieee_nowarn {self._work}.{self._top} "
+        sim_cmd += f"-ieee_nowarn {' '.join(arg for arg in self._extra_args)} {self._work}.{self._top} "
 
         if self._path_to_glbl:
             sim_cmd += f"{self._work}.glbl"

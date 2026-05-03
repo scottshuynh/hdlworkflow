@@ -1,0 +1,30 @@
+{
+  "files": [
+    {
+      "type": "VHDL",
+      "path": "../../vhdl/standard_pkg.vhd",
+      "library": "work"
+    },
+    {
+      "type": "VHDL",
+      "path": "../../vhdl/array_pkg.vhd",
+      "library": "work"
+    },
+    {
+      "type": "VHDL",
+      "path": "../../vhdl/ram_simple_dual_port.vhd",
+      "library": "work"
+    },
+    {
+      "type": "VHDL",
+      "path": "../../vhdl/fifo_sync.vhd",
+      "library": "work"
+    },
+    {
+      "type": "VHDL",
+      "path": "../../vhdl/fifo_sync_tb.vhd",
+      "is_top": true,
+      "library": "work"
+    }
+  ]
+}

@@ -27,8 +27,7 @@
     },
     {
       "type": "VHDL",
-      "path": "../a_tb.vhd",
-      "library": "work"
+      "path": "../a_tb.vhd"
     }
   ]
 }

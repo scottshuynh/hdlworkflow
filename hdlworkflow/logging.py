@@ -48,5 +48,3 @@ handler.setFormatter(formatter)
 
 if not logger.hasHandlers():
     logger.addHandler(handler)
-
-logger.propagate = False

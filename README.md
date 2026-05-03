@@ -309,6 +309,9 @@ Path to a file containing a list of all requisite files for the top design. See 
 #### `--pythonpath PYTHONPATH`
 (Optional) Path to append to `PYTHONPATH` environment variable. Used in cocotb simulations.
 
+#### `--extra_args EXTRA_ARGS`
+(Optional) Simulator extra arguments. Applied to all steps (analyse, elaborate, simulate). 
+
 #### `--plusargs PLUSARG`
 (Optional) Simulator plusargs. 
 

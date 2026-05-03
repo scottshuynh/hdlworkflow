@@ -1,5 +1,6 @@
 from .core import HdlWorkflow, supported_eda_tools, supported_waveform_viewers
 from .logging import set_log_level, LoggingLevel
+
 import argparse, logging, sys
 from pathlib import Path
 
@@ -9,7 +10,7 @@ logger = logging.getLogger(__name__)
 def main(argv=None):
     parser = argparse.ArgumentParser(
         "hdlworkflow",
-        description="Streamlining FPGA EDA tool workflows.",
+        description="Streamlining FPGA EDA tool workflows",
     )
     parser.add_argument(
         "eda_tool",
@@ -19,17 +20,17 @@ def main(argv=None):
     parser.add_argument(
         "top",
         type=str,
-        help="Top design file.",
+        help="Top design file",
     )
     parser.add_argument(
         "path_to_compile_order",
         type=str,
-        help="Path to a file containing a list of all requisite files for the top design.",
+        help="Path to a file containing a list of all requisite files for the top design",
     )
     parser.add_argument(
         "--gui",
         action="store_true",
-        help="Opens the EDA tool GUI.",
+        help="Opens the EDA tool GUI",
     )
     parser.add_argument(
         "--wave",
@@ -44,7 +45,7 @@ def main(argv=None):
         default="",
         type=str,
         metavar="WAVEFORM_VIEW_FILE",
-        help="Waveform view file path.",
+        help="Waveform view file path",
     )
     parser.add_argument(
         "-g",
@@ -53,36 +54,36 @@ def main(argv=None):
         default=[],
         type=str,
         metavar="GENERIC=VALUE",
-        help="Generics used to elaborate top design file. Must take the form: GENERIC=VALUE.",
+        help="Generic/parameter used to elaborate the top design file. Must take the form: GENERIC=VALUE",
     )
     parser.add_argument(
         "-l",
-        "--libraries",
+        "--library",
         action="append",
         default=[],
         type=str,
         metavar="LIBRARY_NAME",
-        help="Libraries searched during top level design instantiation in simulation.",
+        help="Library searched during top level design instantiation in simulation/synthesis",
     )
     parser.add_argument(
         "--stop-time",
         nargs=2,
         metavar=("INTEGER_PERIOD", "TIME_UNITS"),
         type=str,
-        help="Stop simulation after the specified period. Must take the form: INTEGER_PERIOD TIME_UNITS.",
+        help="Stop simulation after the specified period. Must take the form: INTEGER_PERIOD TIME_UNITS",
     )
     parser.add_argument(
         "-v",
         "--verbose",
         type=int,
         metavar="VERBOSE_LEVEL",
-        help="Level of verbosity. Valid verbose levels are: 0, 1, 2.",
+        help="Level of verbosity. Valid verbose levels are: 0, 1, 2",
     )
     parser.add_argument(
         "--cocotb",
         type=str,
         metavar="COCOTB_MODULE",
-        help="Cocotb test module to run during simulation.",
+        help="Cocotb test module to run during simulation",
     )
     parser.add_argument(
         "--pythonpath",
@@ -91,6 +92,14 @@ def main(argv=None):
         type=str,
         metavar="PYTHONPATH",
         help="Paths to add to PYTHONPATH",
+    )
+    parser.add_argument(
+        "--extra_args",
+        action="append",
+        default=[],
+        type=str,
+        metavar="EXTRA_ARGS",
+        help="Extra arguments for simulation",
     )
     parser.add_argument(
         "--plusargs",
@@ -105,55 +114,55 @@ def main(argv=None):
         default="",
         type=str,
         metavar="LIBSTDC++",
-        help="Path to libstdc++ shared object.",
+        help="Path to libstdc++ shared object",
     )
     parser.add_argument(
         "--glbl",
         default="",
         type=str,
         metavar="GLBL.V",
-        help="Path to glbl.v.",
+        help="Path to glbl.v",
     )
     parser.add_argument(
         "--work",
         default="",
         type=str,
         metavar="DEFAULT_LIB",
-        help="Name of default library.",
+        help="Name of default library",
     )
     parser.add_argument(
         "--part",
         default="",
         type=str,
         metavar="PART_NUMBER",
-        help="Hardware part number for synthesis. Only for synthesis tools.",
+        help="Hardware part number for synthesis. Only for synthesis tools",
     )
     parser.add_argument(
         "--board",
         default="",
         type=str,
         metavar="BOARD",
-        help="Hardware board for synthesis. Only for synthesis tools.",
+        help="Hardware board for synthesis. Only for synthesis tools",
     )
     parser.add_argument(
         "--synth",
         action="store_true",
-        help="Specifies EDA tool to run synthesis instead of simulation. Only for synthesis tools.",
+        help="Specifies EDA tool to run synthesis instead of simulation. Only for synthesis tools",
     )
     parser.add_argument(
         "--impl",
         action="store_true",
-        help="Specifies EDA tool to run implementation instead of simulation. Only for synthesis tools.",
+        help="Specifies EDA tool to run implementation instead of simulation. Only for synthesis tools",
     )
     parser.add_argument(
         "--bitstream",
         action="store_true",
-        help="Specifies EDA tool to generate a bitfile instead of simulation. Only for synthesis tools.",
+        help="Specifies EDA tool to generate a bitfile instead of simulation. Only for synthesis tools",
     )
     parser.add_argument(
         "--ooc",
         action="store_true",
-        help="Specifies EDA tool to set synthesis mode to out-of-context. Only for synthesis tools.",
+        help="Specifies EDA tool to set synthesis mode to out-of-context. Only for synthesis tools",
     )
     parser.add_argument(
         "--clk-period-constraint",
@@ -162,7 +171,7 @@ def main(argv=None):
         type=str,
         metavar="CLK_PORT=PERIOD_NS",
         help="Clock period constraint for synthesis. Only for synthesis tools. Must take the form: "
-        + "CLK_PORT=PERIOD_NS.",
+        + "CLK_PORT=PERIOD_NS",
     )
     args = parser.parse_args(argv)
     path_to_working_directory = str(Path.cwd())
@@ -191,11 +200,12 @@ def main(argv=None):
         top=args.top,
         compile_order=args.path_to_compile_order,
         path_to_working_directory=path_to_working_directory,
-        generic=args.generic,
-        libraries=args.libraries,
+        generics=args.generic,
+        libraries=args.library,
         stop_time=stop_time,
         cocotb=args.cocotb,
         pythonpaths=pythonpaths,
+        extra_args=args.extra_args,
         plusargs=args.plusargs,
         path_to_libstdcpp=args.libstdcpp,
         path_to_glbl=args.glbl,

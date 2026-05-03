@@ -17,6 +17,7 @@ class Vivado:
         generics: list[str],
         stop_time: str,
         path_to_working_directory: str,
+        extra_args: list[str],
         plusargs: list[str],
         part_number: str,
         board_part: str,
@@ -36,6 +37,7 @@ class Vivado:
         self._pwd = Path(path_to_working_directory)
         self._generics = generics
         self._stop_time = stop_time
+        self._extra_args = extra_args
         self._plusargs = plusargs
         self._part_number = part_number
         self._board_part = board_part
@@ -226,6 +228,18 @@ class Vivado:
                 elif self._synth:
                     tcl_lines.append(f"launch_runs synth_1 -jobs {min(os.cpu_count() // 2, 8)}")
         else:
+            simulate_options = ""
+            if self._plusargs:
+                simulate_options += '-testplusarg "{" ".join(plusarg for plusarg in self._plusargs)}" '
+
+            if self._extra_args:
+                simulate_options += " ".join(arg for arg in self._extra_args)
+
+            if simulate_options:
+                tcl_lines.append(
+                    f"set_property {{xsim.simulate.more_options}} -value {{{simulate_options}}} -objects [get_filesets sim_1]"
+                )
+
             if self._gui:
                 if self._waveform_view_file:
                     tcl_lines.extend(

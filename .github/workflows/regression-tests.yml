@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
-        nvc-version: ["r1.18.2", "r1.19.3"]
+        nvc-version: ["r1.19.3", "r1.20.1" ]
         cocotb-refs: [v1.9.2, v2.0.0, v2.0.1]
 
     steps:
@@ -46,7 +46,7 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
-        nvc-version: ["r1.18.2", "r1.19.3"]
+        nvc-version: ["r1.19.3", "r1.20.1" ]
         cocotb-refs: [v2.0.1]
 
     steps:

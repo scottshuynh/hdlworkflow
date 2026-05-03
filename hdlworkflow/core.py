@@ -4,8 +4,7 @@ from pathlib import Path
 from hdlworkflow.nvc import Nvc
 from hdlworkflow.vivado import Vivado
 from hdlworkflow.riviera import Riviera
-from hdlworkflow.logging import set_log_level, LoggingLevel
-
+import warnings
 
 logger = logging.getLogger(__name__)
 supported_eda_tools: list[str] = ["nvc", "vivado", "riviera"]
@@ -18,13 +17,14 @@ class HdlWorkflow:
         self,
         eda_tool: str,
         top: str,
-        compile_order: str | Path | list[dict],
         path_to_working_directory: str | Path,
-        generic: list[str] = [],
+        compile_order: str | Path | list[dict] = "",
+        generics: list[str] = [],
         libraries: list[str] = [],
         stop_time: tuple[int, str] = (),
         cocotb: str = "",
         pythonpaths: list[str] = [],
+        extra_args: list[str] = [],
         plusargs: list[str] = [],
         path_to_libstdcpp: str = "",
         path_to_glbl: str = "",
@@ -38,52 +38,78 @@ class HdlWorkflow:
         impl: bool = False,
         bitstream: bool = False,
         ooc: bool = False,
+        clk_period_constraints: list[str] = [],
+        path_to_compile_order="",
+        generic=[],
         clk_period_constraint: list[str] = [],
     ):
         """
         Runs a workflow for the specified EDA tool.
-            Simulation tools run: analyse, elaborate, simulate.
-            Synthesis tools run: synthesis, place and route, generate bitstream.
 
-                Default behaviour is simulation. Running synthesis will require use of arguments - see below.
+        Simulation tools run: analyse, elaborate, simulate.
+        Synthesis tools run: synthesis, place and route, generate bitstream.
 
-        Args:
-            eda_tool (str): EDA tool of choice
-            top (str): Name of top design
-            compile_order (str | Path | list[dict]): Path to a file listing HDL source files in compilation order for simulation.
-            path_to_working_directory (str | Path): Absolute path to hdlworkflow working directory. Any relative paths
-                specified for any hdlworkflow argument will be relative to this directory.
-            generic (list[str], optional): Top will elaborate with specified generics. Must be in form: GENERIC=VALUE.
-                Defaults to [].
-            libraries (list[str], optional): Libraries searched during top level design instantiation in simulation.
-                Defaults to [].
-            stop_time (tuple[int, str]): Simulation stops after the specified period.
-            cocotb (str, optional): Name of cocotb test module. Defaults to "".
-            pythonpaths (list[str], optional): PYTHONPATH environment variable. Defaults to [].
-            plusargs (list[str], optional): Simulation plusargs. Defaults to [].
-            path_to_libstdcpp (str, optional): Path to libstdc++ shared object. Defaults to "".
-            work (str, optional): Name of default library. Defaults to "",
-            path_to_glbl (str, optional): Path to glbl.v. Defaults to "".
-            gui (bool, optional): Opens the EDA tool GUI, if supported. Defaults to False.
-            wave (str, optional): Waveform viewer of choice. Defaults to "gtkwave".
-            waveform_view_file (str, optional): Waveform view file path.
-            part (str, optional): Vivado part number to set up Vivado project. Defaults to "".
-            board (str, optional): Vivado board part to set up Vivado project. Defaults to "".
-            synth (bool, optional): Vivado starts synthesis instead of simulation. Defaults to False.
-            impl (bool, optional): Vivado starts synthesis + implementation instead of simulation. Defaults to False.
-            bitstream (bool, optional): Vivado starts synthesis + implementation + generate bitstream instead of
-                simulation. Defaults to False.
-            ooc (bool, optional): Vivado synthesis mode set to out-of-context. Defaults to False.
-            clk_period_constraint (list[str], optional): Vivado clock period constraints.
-                Must be in form: CLK_PORT=PERIOD_NS. Defaults to [].
+        Default behaviour is simulation. Running synthesis will require use of arguments - see below.
+
+        :param eda_tool: EDA tool of choice
+        :type eda_tool: str
+        :param top: Name of top design
+        :type top: str
+        :param path_to_working_directory: Absolute path to hdlworkflow working directory. Any relative paths
+            soecified for any hdlworkflow argument will be relative to this directory
+        :type path_to_working_directory: str | Path
+        :param compile_order: Path to a file, or list of dictionaries containing HDL source files in compilation order
+        :type compile_order: str | Path | list[dict]
+        :param generics: Elaborate top design with specified generics. Elements in list must be a string in the form: GENERIC=VALUE, defaults to []
+        :type generics: list[str], optional
+        :param libraries: Libraries searched during top level design instantiation in simulation, defaults to []
+        :type libraries: list[str], optional
+        :param stop_time: Simulation stops after the specified period, defaults to ()
+        :type stop_time: tuple[int, str], optional
+        :param cocotb: Name of cocotb test module, defaults to ""
+        :type cocotb: str, optional
+        :param pythonpaths: PYTHONPATH environment variables, defaults to []
+        :type pythonpaths: list[str], optional
+        :param extra_args: Extra arguments for EDA tools, defaults to []
+        :type extra_args: list[str], optional
+        :param plusargs: Plusargs for EDA tools, defaults to []
+        :type plusargs: list[str], optional
+        :param path_to_libstdcpp: Path to libstdc++ shared object, defaults to ""
+        :type path_to_libstdcpp: str, optional
+        :param path_to_glbl: Path to AMD/Xilinx glbl.v, defaults to ""
+        :type path_to_glbl: str, optional
+        :param work: Name of default library, defaults to ""
+        :type work: str, optional
+        :param gui: Opens the EDA tool GUI, defaults to False
+        :type gui: bool, optional
+        :param wave: Waveform viewer of choice for EDA tools with no native GUI, defaults to "gtkwave"
+        :type wave: str, optional
+        :param waveform_view_file: Waveform view configuration file, defaults to ""
+        :type waveform_view_file: str, optional
+        :param part: Vivado part number to set up Vivado project, defaults to ""
+        :type part: str, optional
+        :param board: Vivado board part to set up Vivado project, defaults to ""
+        :type board: str, optional
+        :param synth: Vivado starts synthesis instead of simulation, defaults to False
+        :type synth: bool, optional
+        :param impl: Vivado starts synthesis + implementation instead of simulation, defaults to False
+        :type impl: bool, optional
+        :param bitstream: Vivado starts synthesis + implementation + generate bitstream instead of
+            simulation, defaults to False
+        :type bitstream: bool, optional
+        :param ooc: Vivado synthesis mode set to out-of-context, defaults to False
+        :type ooc: bool, optional
+        :param clk_period_constraints: Vivado clock period constraints. Elements in list must be a string in the form:
+            CLK_PORT=PERIOD_NS, defaults to []
+        :type clk_period_constraints: list[str], optional
         """
         self.eda_tool = eda_tool.lower()
         self.top = top
-        self.generic = generic
         self.libraries = libraries
         self.cocotb = cocotb
         self.path_to_working_directory = Path(path_to_working_directory)
         self.pythonpaths = pythonpaths
+        self.extra_args = extra_args
         self.plusargs = plusargs
         self.path_to_libstdcpp = path_to_libstdcpp
         self.path_to_glbl = path_to_glbl
@@ -96,8 +122,29 @@ class HdlWorkflow:
         self.impl = impl
         self.bitstream = bitstream
         self.ooc = ooc
-        self.clk_period_constraint = clk_period_constraint
-        self.compile_order = self._parse_compile_order(compile_order)
+
+        self.compile_order = []
+        if path_to_compile_order:
+            warnings.warn("HdlWorkflow argument 'path_to_compile_order' is deprecated. Use 'compile_order' instead")
+            self.compile_order = self._parse_compile_order(path_to_compile_order)
+        else:
+            self.compile_order = self._parse_compile_order(compile_order)
+
+        self.generics = []
+        if generic:
+            warnings.warn("HdlWorkflow argument 'generic' is deprecated. Use 'generics' instead")
+            self.generics = generic
+        else:
+            self.generics = generics
+
+        self.clk_period_constraints = []
+        if clk_period_constraint:
+            warnings.warn(
+                "HdlWorkflow argument 'clk_period_constraint' is deprecated. Use 'clk_period_constraints' instead"
+            )
+            self.clk_period_constraints = clk_period_constraint
+        else:
+            self.clk_period_constraints = clk_period_constraints
 
         self.waveform_view_file = ""
         if waveform_view_file:
@@ -259,9 +306,10 @@ class HdlWorkflow:
                 nvc = Nvc(
                     top=self.top,
                     compile_order=self.compile_order,
-                    generics=self.generic,
+                    generics=self.generics,
                     stop_time="".join(self.stop_time.split()),
                     cocotb_module=self.cocotb,
+                    extra_args=self.extra_args,
                     plusargs=self.plusargs,
                     waveform_viewer=wave,
                     waveform_view_file=self.waveform_view_file,
@@ -283,9 +331,10 @@ class HdlWorkflow:
                     top=self.top,
                     compile_order=self.compile_order,
                     work=self.work,
-                    generics=self.generic,
+                    generics=self.generics,
                     stop_time="".join(self.stop_time.split()),
                     path_to_working_directory=self.path_to_working_directory,
+                    extra_args=self.extra_args,
                     plusargs=self.plusargs,
                     part_number=self.part,
                     board_part=self.board,
@@ -295,7 +344,7 @@ class HdlWorkflow:
                     impl=self.impl,
                     bitstream=self.bitstream,
                     ooc=self.ooc,
-                    clk_period_constraints=self.clk_period_constraint,
+                    clk_period_constraints=self.clk_period_constraints,
                 )
                 vivado.start()
 
@@ -311,10 +360,11 @@ class HdlWorkflow:
                     top=self.top,
                     compile_order=self.compile_order,
                     work=self.work,
-                    generics=self.generic,
+                    generics=self.generics,
                     search_libraries=self.libraries,
                     stop_time=self.stop_time,
                     cocotb_module=self.cocotb,
+                    extra_args=self.extra_args,
                     plusargs=self.plusargs,
                     gui=self.gui,
                     waveform_view_file=self.waveform_view_file,

@@ -21,6 +21,7 @@ class Nvc:
         generics: list[str],
         stop_time: str,
         cocotb_module: str,
+        extra_args: list[str],
         plusargs: list[str],
         waveform_viewer: str,
         waveform_view_file: str,
@@ -35,6 +36,7 @@ class Nvc:
         self._generics = generics
         self._stop_time = stop_time
         self._cocotb_module = cocotb_module
+        self._extra_args = extra_args
         self._plusargs = plusargs
         self._pwd = path_to_working_directory
         self._pythonpaths = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
@@ -120,12 +122,15 @@ class Nvc:
     def _analyse(self) -> None:
         """Constructs then runs the nvc analyse command.
         - Explicit library to compile design into
-        - Any other extra args (not yet implemented)
+        - Any other extra args
         """
         logger.info("Analysing...")
 
         for hdl in self._compile_order:
             command = ["nvc", "-L", f"{str(Path.cwd())}"]
+            if self._extra_args:
+                for arg in self._extra_args:
+                    command += arg.split(" ")
 
             hdl_path = Path(hdl.get("path", ""))
             hdl_lib = hdl.get("library", self._work)
@@ -143,12 +148,20 @@ class Nvc:
 
     def _elaborate(self) -> None:
         logger.info("Elaborating...")
+
+        command = ["nvc", "-L", f"{str(Path.cwd())}"]
+
+        if self._extra_args:
+            for arg in self._extra_args:
+                command += arg.split(" ")
+
         generics = []
         if self._generics:
             generics = ["-g" + generic for generic in self._generics]
-        command = ["nvc", "-L", f"{str(Path.cwd())}"]
+
         if self._work:
-            command += self._work
+            command += [f"--work={self._work}"]
+
         command += ["-e", "-j"] + generics + [self._top]
         logger.info("    " + " ".join(cmd for cmd in command))
         elaborate = subprocess.run(command)
@@ -187,10 +200,15 @@ class Nvc:
         env = os.environ.copy() | env
 
         command = ["nvc", "-L", f"{str(Path.cwd())}"]
-        if self._work:
-            command += self._work
 
-        command += ["-r", f"{self._top}", "--ieee-warnings=off", "--dump-arrays"]
+        if self._extra_args:
+            for arg in self._extra_args:
+                command += arg.split(" ")
+
+        if self._work:
+            command += [f"--work={self._work}"]
+
+        command += ["-r", f"{self._top}", "--dump-arrays"]
 
         if self._cocotb_module:
             command += ["--load", cocotb_vhpi]
@@ -210,6 +228,10 @@ class Nvc:
                 if not self._waveform_view_file:
                     waveform_view_file_option = [f"--gtkw={self._waveform_save_file}"]
                     command += waveform_view_file_option
+
+        if self._cocotb_module:
+            results_xml = Path.cwd() / "results.xml"
+            results_xml.unlink(missing_ok=True)
 
         logger.info("    " + " ".join(cmd for cmd in command))
         nvc = subprocess.run(command, env=env)

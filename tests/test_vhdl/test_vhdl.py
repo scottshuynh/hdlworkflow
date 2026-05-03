@@ -22,7 +22,7 @@ def test_vhdl_sim(eda_tool, data_w, depth, stop_time, worker_id):
         top="fifo_sync_tb",
         compile_order="../compile_order.json",
         path_to_working_directory=pwd,
-        generic=[f"{data_w=}", f"{depth=}"],
+        generics=[f"{data_w=}", f"{depth=}"],
         stop_time=stop_time,
     )
     flow.run()
@@ -53,7 +53,7 @@ def test_vhdl_synth_vivado(data_w, depth, synth, impl, part, board, clk_period_c
         top="fifo_sync",
         compile_order="../compile_order.json",
         path_to_working_directory=pwd,
-        generic=[f"{data_w=}", f"{depth=}"],
+        generics=[f"{data_w=}", f"{depth=}"],
         synth=synth,
         impl=impl,
         ooc=True,
@@ -81,7 +81,7 @@ def test_vhdl_cocotb(eda_tool, data_w, depth, worker_id):
         top="fifo_sync",
         compile_order="../compile_order.json",
         path_to_working_directory=pwd,
-        generic=[f"{data_w=}", f"{depth=}"],
+        generics=[f"{data_w=}", f"{depth=}"],
         pythonpaths=[str(pwd.parent)],
         cocotb="fifo_sync_tb",
     )

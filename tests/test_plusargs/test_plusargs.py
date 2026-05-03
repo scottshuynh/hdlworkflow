@@ -106,7 +106,7 @@ def test_plusargs(eda_tool, adjust, is_decrement, test, num_outputs, worker_id):
         top="counter",
         compile_order="../compile_order.json",
         path_to_working_directory=pwd,
-        generic=[f"{adjust=}", f"{is_decrement=}"],
+        generics=[f"{adjust=}", f"{is_decrement=}"],
         cocotb=str(Path(__file__).stem),
         plusargs=[f"{test}", f"{num_outputs=}"],
         pythonpaths=[str(pwd.parent)],
