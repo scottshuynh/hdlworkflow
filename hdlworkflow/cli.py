@@ -219,6 +219,6 @@ def main(argv=None):
         impl=args.impl,
         bitstream=args.bitstream,
         ooc=args.ooc,
-        clk_period_constraint=args.clk_period_constraint,
+        clk_period_constraints=args.clk_period_constraint,
     )
     workflow.run()
