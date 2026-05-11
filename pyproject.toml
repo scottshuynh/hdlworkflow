@@ -32,3 +32,8 @@ local_scheme = "no-local-version"
 [tool.ruff]
 line-length = 120
 lint.select = ["UP"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "error",
+]

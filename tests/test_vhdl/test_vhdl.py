@@ -37,8 +37,8 @@ def test_vhdl_sim(eda_tool, data_w, depth, stop_time, worker_id):
     ["", "xczu7ev-ffvc1156-2-e"],
 )
 @pytest.mark.parametrize("board", ["", "xilinx.com:zcu106:part0:2.6"])
-@pytest.mark.parametrize("clk_period_constraint", ["clk_i=4"])
-def test_vhdl_synth_vivado(data_w, depth, synth, impl, part, board, clk_period_constraint, worker_id):
+@pytest.mark.parametrize("clk_period_constraints", ["clk_i=4"])
+def test_vhdl_synth_vivado(data_w, depth, synth, impl, part, board, clk_period_constraints, worker_id):
     eda_tool = "vivado"
     if not which(eda_tool):
         pytest.skip(f"{eda_tool} is not installed. Skipping...")
@@ -59,7 +59,7 @@ def test_vhdl_synth_vivado(data_w, depth, synth, impl, part, board, clk_period_c
         ooc=True,
         part=part,
         board=board,
-        clk_period_constraint=[clk_period_constraint],
+        clk_period_constraints=[clk_period_constraints],
     )
     flow.run()
 
@@ -124,8 +124,8 @@ def test_vhdl_sim_cli(eda_tool, data_w, depth, stop_time, worker_id):
     ["", "xczu7ev-ffvc1156-2-e"],
 )
 @pytest.mark.parametrize("board", ["", "xilinx.com:zcu106:part0:2.6"])
-@pytest.mark.parametrize("clk_period_constraint", ["clk_i=4"])
-def test_vhdl_synth_vivado_cli(data_w, depth, synth, impl, part, board, clk_period_constraint, worker_id):
+@pytest.mark.parametrize("clk_period_constraints", ["clk_i=4"])
+def test_vhdl_synth_vivado_cli(data_w, depth, synth, impl, part, board, clk_period_constraints, worker_id):
     eda_tool = "vivado"
     if not which(eda_tool):
         pytest.skip(f"{eda_tool} is not installed. Skipping...")
@@ -146,7 +146,7 @@ def test_vhdl_synth_vivado_cli(data_w, depth, synth, impl, part, board, clk_peri
         f"{depth=}",
         "--ooc",
         "--clk-period-constraint",
-        clk_period_constraint,
+        clk_period_constraints,
     ]
     if synth:
         argv.append("--synth")
