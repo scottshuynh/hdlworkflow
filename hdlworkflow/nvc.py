@@ -139,6 +139,7 @@ class Nvc:
                 command += [f"--work={hdl_lib}"]
             if hdl_path.suffix in self._valid_file_suffix:
                 command += ["-a", f"{str(hdl_path)}"]
+                logger.info("    " + " ".join(cmd for cmd in command))
                 analyse = subprocess.run(command)
                 if analyse.returncode != 0:
                     logger.error("Error during analysis.")
