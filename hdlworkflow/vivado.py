@@ -217,7 +217,7 @@ class Vivado:
                     tcl_lines.extend(
                         [
                             "open_run impl_1",
-                            f"write_bitstream -force {str(self._pwd / self._top / '.bit')}",
+                            f"write_bitstream -force {str(self._pwd / (self._top + '.bit'))}",
                         ]
                     )
             else:
