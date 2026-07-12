@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "type": "VHDL",
+      "path": "../../vhdl/standard_pkg.vhd",
+      "library": "work"
+    },
+    {
+      "type": "VHDL",
+      "path": "../../vhdl/blinky.vhd",
+      "is_top": true,
+      "library": "work"
+    },
+    {
+      "type": "OTHER",
+      "path": "../blinky.xdc"
+    }
+  ]
+}

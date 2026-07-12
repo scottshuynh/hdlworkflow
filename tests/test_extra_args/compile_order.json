@@ -12,6 +12,11 @@
     },
     {
       "type": "VHDL",
+      "path": "../../vhdl/skid_buffer.vhd",
+      "library": "work"
+    },
+    {
+      "type": "VHDL",
       "path": "../../vhdl/ram_simple_dual_port.vhd",
       "library": "work"
     },

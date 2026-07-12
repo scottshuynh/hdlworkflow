@@ -1,0 +1,14 @@
+{
+  "files": [
+    {
+      "type": "Verilog",
+      "path": "../../verilog/blinky.sv",
+      "is_top": true,
+      "library": "work"
+    },
+    {
+      "type": "OTHER",
+      "path": "../blinky.xdc"
+    }
+  ]
+}
