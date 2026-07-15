@@ -309,6 +309,15 @@ Path to a file containing a list of all requisite files for the top design. See 
 #### `--pythonpath PYTHONPATH`
 (Optional) Path to append to `PYTHONPATH` environment variable. Used in cocotb simulations.
 
+#### `--analyse_args=ANALYSE_ARGS`
+(Optional) Simulator analyse arguments. Applied to simulation analyse step. 
+
+#### `--elaborate_args=ELABORATE_ARGS`
+(Optional) Simulator elaborate arguments. Applied to simulation elaborate step. 
+
+#### `--run_args=RUN_ARGS`
+(Optional) Simulator run arguments. Applied to simulation run step. 
+
 #### `--extra_args EXTRA_ARGS`
 (Optional) Simulator extra arguments. Applied to all steps (analyse, elaborate, simulate). 
 

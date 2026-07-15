@@ -24,6 +24,9 @@ class HdlWorkflow:
         stop_time: tuple[int, str] = (),
         cocotb: str = "",
         pythonpaths: list[str] = [],
+        analyse_args: list[str] = [],
+        elaborate_args: list[str] = [],
+        run_args: list[str] = [],
         extra_args: list[str] = [],
         plusargs: list[str] = [],
         path_to_libstdcpp: str = "",
@@ -70,6 +73,12 @@ class HdlWorkflow:
         :type cocotb: str, optional
         :param pythonpaths: PYTHONPATH environment variables, defaults to []
         :type pythonpaths: list[str], optional
+        :param analyse_args: Analyse arguments for EDA tools, defaults to []
+        :type analyse_args: list[str], optional
+        :param elaborate_args: Elaborate arguments for EDA tools, defaults to []
+        :type elaborateargs: list[str], optional
+        :param run_args: Run arguments for EDA tools, defaults to []
+        :type run_args: list[str], optional
         :param extra_args: Extra arguments for EDA tools, defaults to []
         :type extra_args: list[str], optional
         :param plusargs: Plusargs for EDA tools, defaults to []
@@ -109,6 +118,9 @@ class HdlWorkflow:
         self.cocotb = cocotb
         self.path_to_working_directory = Path(path_to_working_directory)
         self.pythonpaths = pythonpaths
+        self.analyse_args = analyse_args
+        self.elaborate_args = elaborate_args
+        self.run_args = run_args
         self.extra_args = extra_args
         self.plusargs = plusargs
         self.path_to_libstdcpp = path_to_libstdcpp
@@ -309,6 +321,9 @@ class HdlWorkflow:
                     generics=self.generics,
                     stop_time="".join(self.stop_time.split()),
                     cocotb_module=self.cocotb,
+                    analyse_args=self.analyse_args,
+                    elaborate_args=self.elaborate_args,
+                    run_args=self.run_args,
                     extra_args=self.extra_args,
                     plusargs=self.plusargs,
                     waveform_viewer=wave,
@@ -334,6 +349,9 @@ class HdlWorkflow:
                     generics=self.generics,
                     stop_time="".join(self.stop_time.split()),
                     path_to_working_directory=self.path_to_working_directory,
+                    analyse_args=self.analyse_args,
+                    elaborate_args=self.elaborate_args,
+                    run_args=self.run_args,
                     extra_args=self.extra_args,
                     plusargs=self.plusargs,
                     part_number=self.part,
@@ -364,6 +382,9 @@ class HdlWorkflow:
                     search_libraries=self.libraries,
                     stop_time=self.stop_time,
                     cocotb_module=self.cocotb,
+                    analyse_args=self.analyse_args,
+                    elaborate_args=self.elaborate_args,
+                    run_args=self.run_args,
                     extra_args=self.extra_args,
                     plusargs=self.plusargs,
                     gui=self.gui,

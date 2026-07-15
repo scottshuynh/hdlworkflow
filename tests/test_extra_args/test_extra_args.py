@@ -56,8 +56,7 @@ def test_nvc_extra_args_cocotb_cli(data_w, depth, worker_id):
         "fifo_sync_tb",
         "--pythonpath",
         str(pwd.parent),
-        "--extra_args",
-        "-H 64m",
+        "--extra_args=-H 64m",
     ]
 
     hdlworkflow.cli.main(argv)
@@ -109,8 +108,7 @@ def test_riviera_extra_args_cocotb_cli(data_w, depth, worker_id):
         "fifo_sync_tb",
         "--pythonpath",
         str(pwd.parent),
-        "--extra_args",
-        "-dbg ",
+        "--extra_args=-dbg",
     ]
 
     hdlworkflow.cli.main(argv)
@@ -132,7 +130,7 @@ def test_vivado_extra_args(data_w, depth, worker_id):
         compile_order="../compile_order.json",
         path_to_working_directory=pwd,
         generics=[f"{data_w=}", f"{depth=}"],
-        extra_args=["-quiet", "-onfinish quit"],
+        extra_args=["-nolog"],
     )
     flow.run()
 
@@ -156,10 +154,7 @@ def test_vivado_extra_args_cli(data_w, depth, worker_id):
         f"{data_w=}",
         "-g",
         f"{depth=}",
-        "--extra_args",
-        "-quiet ",
-        "--extra_args",
-        "-onfinish quit",
+        "--extra_args=-nolog",
     ]
 
     hdlworkflow.cli.main(argv)

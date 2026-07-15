@@ -94,12 +94,36 @@ def main(argv=None):
         help="Paths to add to PYTHONPATH",
     )
     parser.add_argument(
+        "--analyse_args",
+        action="append",
+        default=[],
+        type=str,
+        metavar="=ANALYSE_ARGS",
+        help="Extra analyse step arguments for simulation. Pass with '='. e.g. --analyse_args=--relaxed",
+    )
+    parser.add_argument(
+        "--elaborate_args",
+        action="append",
+        default=[],
+        type=str,
+        metavar="=ELABORATE_ARGS",
+        help="Extra elaborate step arguments for simulation. Pass with '='. e.g. --elaborate_args=-O3",
+    )
+    parser.add_argument(
+        "--run_args",
+        action="append",
+        default=[],
+        type=str,
+        metavar="=RUN_ARGS",
+        help="Extra run arguments for simulation. Pass with '='. e.g. --run_args=--stats",
+    )
+    parser.add_argument(
         "--extra_args",
         action="append",
         default=[],
         type=str,
-        metavar="EXTRA_ARGS",
-        help="Extra arguments for simulation",
+        metavar="=EXTRA_ARGS",
+        help="Extra global arguments for simulation. Pass with '='. e.g. --extra_args=-quiet",
     )
     parser.add_argument(
         "--plusargs",
@@ -205,6 +229,9 @@ def main(argv=None):
         stop_time=stop_time,
         cocotb=args.cocotb,
         pythonpaths=pythonpaths,
+        analyse_args=args.analyse_args,
+        elaborate_args=args.elaborate_args,
+        run_args=args.run_args,
         extra_args=args.extra_args,
         plusargs=args.plusargs,
         path_to_libstdcpp=args.libstdcpp,

@@ -21,6 +21,9 @@ class Nvc:
         generics: list[str],
         stop_time: str,
         cocotb_module: str,
+        analyse_args: list[str],
+        elaborate_args: list[str],
+        run_args: list[str],
         extra_args: list[str],
         plusargs: list[str],
         waveform_viewer: str,
@@ -36,6 +39,9 @@ class Nvc:
         self._generics = generics
         self._stop_time = stop_time
         self._cocotb_module = cocotb_module
+        self._analyse_args = analyse_args
+        self._elaborate_args = elaborate_args
+        self._run_args = run_args
         self._extra_args = extra_args
         self._plusargs = plusargs
         self._pwd = path_to_working_directory
@@ -138,7 +144,12 @@ class Nvc:
             if hdl_lib:
                 command += [f"--work={hdl_lib}"]
             if hdl_path.suffix in self._valid_file_suffix:
-                command += ["-a", f"{str(hdl_path)}"]
+                command += ["-a"]
+                if self._analyse_args:
+                    for arg in self._analyse_args:
+                        command += arg.split(" ")
+                command += [f"{str(hdl_path)}"]
+
                 logger.info("    " + " ".join(cmd for cmd in command))
                 analyse = subprocess.run(command)
                 if analyse.returncode != 0:
@@ -163,7 +174,14 @@ class Nvc:
         if self._work:
             command += [f"--work={self._work}"]
 
-        command += ["-e", "-j"] + generics + [self._top]
+        command += ["-e", "-j"] + generics
+
+        if self._elaborate_args:
+            for arg in self._elaborate_args:
+                command += arg.split(" ")
+
+        command += [self._top]
+
         logger.info("    " + " ".join(cmd for cmd in command))
         elaborate = subprocess.run(command)
         if elaborate.returncode != 0:
@@ -209,7 +227,13 @@ class Nvc:
         if self._work:
             command += [f"--work={self._work}"]
 
-        command += ["-r", f"{self._top}", "--dump-arrays"]
+        command += ["-r", "--dump-arrays"]
+
+        if self._run_args:
+            for arg in self._run_args:
+                command += arg.split(" ")
+
+        command += [f"{self._top}"]
 
         if self._cocotb_module:
             command += ["--load", cocotb_vhpi]

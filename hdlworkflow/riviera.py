@@ -20,6 +20,9 @@ class Riviera:
         search_libraries: list[str],
         stop_time: str,
         cocotb_module: str,
+        analyse_args: list[str],
+        elaborate_args: list[str],
+        run_args: list[str],
         extra_args: list[str],
         plusargs: list[str],
         gui: bool,
@@ -45,6 +48,9 @@ class Riviera:
         self._generics = generics
         self._stop_time = stop_time
         self._cocotb_module = cocotb_module
+        self._analyse_args = analyse_args
+        self._elaborate_args = elaborate_args
+        self._run_args = run_args
         self._extra_args = extra_args
         self._plusargs = plusargs
         self._pwd = Path(path_to_working_directory)
@@ -117,6 +123,7 @@ class Riviera:
         if self._cocotb_module:
             major, minor, patch = utils.get_cocotb_version()
 
+        self._create_runsim()
         self._batch_mode_run(major)
 
     def _setup_cocotb_env(self, major_ver: int) -> dict[str, str]:
@@ -197,7 +204,9 @@ class Riviera:
 
         if self._path_to_glbl:
             tcl_lines.append(
-                f"eval alog -work {self._work} -incr {' '.join(arg for arg in self._extra_args)} {self._path_to_glbl}"
+                f"eval alog -work {self._work} -incr "
+                + " ".join(arg for arg in self._analyse_args)
+                + f" {' '.join(arg for arg in self._extra_args)} {self._path_to_glbl}",
             )
 
         tcl_lines.append("set compile_returncode [catch {")
@@ -215,7 +224,9 @@ class Riviera:
                 or hdl_filepath.suffix == ".vhdl"
             ):
                 tcl_lines.append(
-                    f"    eval acom -work {library} -2008 -incr {' '.join(arg for arg in self._extra_args)} {hdl_file['path']}"
+                    f"    eval acom -work {library} -2008 -incr "
+                    + " ".join(arg for arg in self._analyse_args)
+                    + f"{' '.join(arg for arg in self._extra_args)} {hdl_file['path']}",
                 )
             elif (
                 hdl_file.get("type", "none").lower() == "verilog"
@@ -223,7 +234,9 @@ class Riviera:
                 or hdl_filepath.suffix == ".sv"
             ):
                 tcl_lines.append(
-                    f"    eval alog -work {library} -incr {' '.join(arg for arg in self._extra_args)} {hdl_file['path']}"
+                    f"    eval alog -work {library} -incr "
+                    + " ".join(arg for arg in self._analyse_args)
+                    + f" {' '.join(arg for arg in self._extra_args)} {hdl_file['path']}",
                 )
             else:
                 logger.warning(f"Ignoring file: {hdl_file['path']}")
@@ -262,7 +275,10 @@ class Riviera:
         if self._search_libraries:
             sim_cmd += "-L " + " -L ".join(self._search_libraries) + " "
 
-        sim_cmd += f"-ieee_nowarn {' '.join(arg for arg in self._extra_args)} {self._work}.{self._top} "
+        sim_cmd += "-ieee_nowarn "
+        if self._elaborate_args:
+            sim_cmd += f"{' '.join(arg for arg in self._elaborate_args)} "
+        sim_cmd += f"{' '.join(arg for arg in self._extra_args)} {self._work}.{self._top} "
 
         if self._path_to_glbl:
             sim_cmd += f"{self._work}.glbl"
@@ -311,7 +327,6 @@ class Riviera:
                 f.write(f"{tcl_line}\n")
 
     def _batch_mode_run(self, cocotb_major_ver: int = 0) -> None:
-        self._create_runsim()
         if self._cocotb_module:
             logger.info("Setting up cocotb environment variables...")
             env = self._setup_cocotb_env(cocotb_major_ver)
@@ -333,6 +348,10 @@ class Riviera:
             command = ["vsim", "-do", "runsim.tcl"]
         else:
             command = ["vsimsa", "-do", "runsim.tcl"]
+
+        if self._run_args:
+            for arg in self._run_args:
+                command += arg.split(" ")
 
         logger.info("    " + " ".join(cmd for cmd in command))
         sim_batch_mode = subprocess.run(command, env=env)

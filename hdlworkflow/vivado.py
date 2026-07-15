@@ -17,6 +17,9 @@ class Vivado:
         generics: list[str],
         stop_time: str,
         path_to_working_directory: str,
+        analyse_args: list[str],
+        elaborate_args: list[str],
+        run_args: list[str],
         extra_args: list[str],
         plusargs: list[str],
         part_number: str,
@@ -37,6 +40,9 @@ class Vivado:
         self._pwd = Path(path_to_working_directory)
         self._generics = generics
         self._stop_time = stop_time
+        self._analyse_args = analyse_args
+        self._elaborate_args = elaborate_args
+        self._run_args = run_args
         self._extra_args = extra_args
         self._plusargs = plusargs
         self._part_number = part_number
@@ -138,6 +144,7 @@ class Vivado:
             tcl_lines.append(f"set_property default_lib {self._work} [current_project]")
 
         have_any_vhdl: bool = False
+        have_any_verilog: bool = False
         for elem in self._compile_order:
             elem_path = Path(elem.get("path", ""))
             elem_lib = elem.get("library")
@@ -146,6 +153,8 @@ class Vivado:
                 tcl_lines.append(f"set_property library {elem_lib} [get_files {str(elem_path)}]")
             if elem_path.suffix == ".vhd" or elem_path.suffix == ".vhdl":
                 have_any_vhdl = True
+            elif elem_path.suffix == ".v" or elem_path.suffix == ".sv":
+                have_any_verilog = True
 
         if self._clk_period_constraints:
             tcl_lines.append("add_files clock_constraint.xdc")
@@ -161,6 +170,17 @@ class Vivado:
         if have_any_vhdl:
             tcl_lines.append("set_property file_type {VHDL 2008} [get_files *.vhd]")
 
+        analyse_options = " ".join(self._analyse_args + self._extra_args)
+        if analyse_options:
+            if have_any_vhdl:
+                tcl_lines.append(
+                    f"set_property -name {{xsim.compile.xvhdl.more_options}} -value {{{analyse_options}}} -objects [get_filesets sim_1]"
+                )
+            if have_any_verilog:
+                tcl_lines.append(
+                    f"set_property -name {{xsim.compile.xvlog.more_options}} -value {{{analyse_options}}} -objects [get_filesets sim_1]"
+                )
+
         if self._generics:
             tcl_line: str = "set_property -name {steps.synth_design.args.more options} -value {"
             if self._ooc:
@@ -168,15 +188,21 @@ class Vivado:
 
             tcl_line += f"{'-generic ' + ' -generic '.join(generic for generic in self._generics)}}} -objects [get_runs synth_1]"
             tcl_lines.append(tcl_line)
-
+        elif self._ooc:
             tcl_lines.append(
-                f"set_property -name {{xsim.elaborate.xelab.more_options}} -value {{{'-generic_top ' + ' -generic_top '.join(generic for generic in self._generics)}}} -objects [get_filesets sim_1]"
+                "set_property -name {steps.synth_design.args.more options} -value {-mode out_of_context} -objects [get_runs synth_1]"
             )
-        else:
-            if self._ooc:
-                tcl_lines.append(
-                    "set_property -name {steps.synth_design.args.more options} -value {-mode out_of_context} -objects [get_runs synth_1]"
-                )
+
+        elaborate_options_parts: list[str] = []
+        if self._generics:
+            elaborate_options_parts.append("-generic_top " + " -generic_top ".join(self._generics))
+        elaborate_options_parts.extend(self._elaborate_args)
+        elaborate_options_parts.extend(self._extra_args)
+
+        if elaborate_options_parts:
+            tcl_lines.append(
+                f"set_property -name {{xsim.elaborate.xelab.more_options}} -value {{{' '.join(elaborate_options_parts)}}} -objects [get_filesets sim_1]"
+            )
 
         tcl_lines.append("set_property -name {xsim.simulate.runtime} -value 0 -objects [get_filesets sim_1]")
 
@@ -230,14 +256,17 @@ class Vivado:
         else:
             simulate_options = ""
             if self._plusargs:
-                simulate_options += '-testplusarg "{" ".join(plusarg for plusarg in self._plusargs)}" '
+                simulate_options += f"-testplusarg {' '.join(plusarg for plusarg in self._plusargs)} "
+
+            if self._run_args:
+                simulate_options += " ".join(arg for arg in self._run_args) + " "
 
             if self._extra_args:
                 simulate_options += " ".join(arg for arg in self._extra_args)
 
             if simulate_options:
                 tcl_lines.append(
-                    f"set_property {{xsim.simulate.more_options}} -value {{{simulate_options}}} -objects [get_filesets sim_1]"
+                    f"set_property {{xsim.simulate.xsim.more_options}} -value {{{simulate_options}}} -objects [get_filesets sim_1]"
                 )
 
             if self._gui:
