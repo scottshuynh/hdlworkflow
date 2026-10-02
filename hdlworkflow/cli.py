@@ -48,6 +48,13 @@ def main(argv=None):
         help="Waveform view file path",
     )
     parser.add_argument(
+        "--waveform-dump-file",
+        default="",
+        type=str,
+        metavar="WAVEFORM_DUMP_FILE",
+        help="Waveform dump file path",
+    )
+    parser.add_argument(
         "-g",
         "--generic",
         action="append",
@@ -240,6 +247,7 @@ def main(argv=None):
         gui=args.gui,
         wave=args.wave,
         waveform_view_file=args.waveform_view_file,
+        waveform_dump_file=args.waveform_dump_file,
         part=args.part,
         board=args.board,
         synth=args.synth,

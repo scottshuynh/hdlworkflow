@@ -9,7 +9,7 @@ authors = [
     {name="Scott Huynh", email="scott.s.huynh@gmail.com"},
     ]
 requires-python = ">=3.10"
-description = "Seamless FPGA workflows."
+description = "Seamless FPGA workflows"
 readme = "README.md"
 classifiers = [
     "Programming Language :: Python :: 3.10", 
@@ -36,4 +36,8 @@ lint.select = ["UP"]
 [tool.pytest.ini_options]
 filterwarnings = [
     "error",
+]
+addopts = "-m 'not gui'"
+markers = [
+    "gui: Tests that open EDA tool GUI or waveform viewers"
 ]

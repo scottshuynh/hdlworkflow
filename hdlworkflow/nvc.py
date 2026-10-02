@@ -27,6 +27,7 @@ class Nvc:
         extra_args: list[str],
         plusargs: list[str],
         waveform_viewer: str,
+        waveform_dump_file: str,
         waveform_view_file: str,
         path_to_working_directory: Path,
         pythonpaths: list[str],
@@ -59,50 +60,43 @@ class Nvc:
                 )
                 sys.exit(1)
 
+        self._waveform_view_file: str = waveform_view_file
+        self._waveform_data: str = waveform_dump_file
+
         dependencies_met, missing = self._check_dependencies()
         if not dependencies_met:
             logger.error(f"Missing dependencies: {' '.join(str(dependency) for dependency in missing)}.")
             logger.error("All dependencies must be found on PATH.")
             sys.exit(1)
 
-        self._waveform_view_file: str = waveform_view_file
-        self._waveform_save_file: str = ""
-        self._waveform_data: str = ""
         self._waveform_viewer_obj: object = None
+
         if self._waveform_viewer:
-            waveform_data_stem: str = self._top
-            if generics:
-                waveform_data_stem += "".join(generic for generic in generics)
-            self._waveform_data = waveform_data_stem + ".fst"
-
-            if waveform_view_file:
-                if self._waveform_viewer == "gtkwave":
-                    if Path(waveform_view_file).suffix == ".gtkw":
-                        self._waveform_save_file = waveform_view_file
-                        self._waveform_viewer_obj = Gtkwave(self._waveform_data, self._waveform_save_file)
-                    else:
-                        logger.error(f"Expecting waveform view file with .gtkw extension. Got: {waveform_view_file}")
-                        sys.exit(1)
-                elif self._waveform_viewer == "surfer":
-                    if Path(waveform_view_file).suffix == ".ron":
-                        self._waveform_save_file = waveform_view_file
-                        self._waveform_viewer_obj = Surfer(
-                            self._top, self._waveform_data, self._waveform_save_file, False
-                        )
-                    else:
-                        logger.error(f"Expecting waveform view file with .ron extension. Got: {waveform_view_file}")
-                        sys.exit(1)
-
-            else:
-                if self._waveform_viewer == "gtkwave":
-                    self._waveform_save_file = waveform_data_stem + ".gtkw"
-                    self._waveform_viewer_obj = Gtkwave(self._waveform_data, self._waveform_save_file)
-                elif self._waveform_viewer == "surfer":
-                    self._waveform_save_file = waveform_data_stem + ".ron"
-                    self._waveform_viewer_obj = Surfer(self._top, self._waveform_data, self._waveform_save_file, True)
+            self._iniialise_waveform_variables(self._waveform_viewer, self._waveform_view_file, self._waveform_data)
 
         os.makedirs(f"{self._pwd / 'nvc'}", exist_ok=True)
         os.chdir(f"{self._pwd / 'nvc'}")
+
+    def _iniialise_waveform_variables(self, waveform_viewer, view_file, dump_file) -> None:
+        waveform_data_stem = ""
+        if not view_file or not dump_file:
+            waveform_data_stem: str = self._top
+            if self._generics:
+                waveform_data_stem += "".join(generic for generic in self._generics)
+
+        waveform_data_stem = utils.truncate_filestem(utils.sanitise_filename(waveform_data_stem), "")
+        if not dump_file:
+            self._waveform_data = waveform_data_stem + ".fst"
+
+        if waveform_viewer == "gtkwave":
+            if not view_file:
+                self._waveform_view_file = waveform_data_stem + ".gtkw"
+            self._waveform_viewer_obj = Gtkwave(self._waveform_data, self._waveform_view_file)
+        elif waveform_viewer == "surfer":
+            overwrite = not Path(self._waveform_view_file).is_file()
+            if not view_file:
+                self._waveform_view_file = waveform_data_stem + ".ron"
+            self._waveform_viewer_obj = Surfer(self._top, self._waveform_data, self._waveform_view_file, overwrite)
 
     def _check_dependencies(self) -> tuple[bool, list[str]]:
         logger.info("Checking dependencies...")
@@ -191,6 +185,8 @@ class Nvc:
     def _run(self) -> None:
         logger.info("Running sim...")
         env: dict[str, str] = dict()
+        command = ["nvc", "-L", f"{str(Path.cwd())}"]
+
         if self._cocotb_module:
             major, minor, patch = utils.get_cocotb_version()
             libpython_loc = subprocess.run(
@@ -214,11 +210,10 @@ class Nvc:
             else:
                 env["MODULE"] = self._cocotb_module
 
+            command += ["--load", cocotb_vhpi]
             logger.info(f"Cocotb environment variables: {' '.join(f'{key}={val}' for key, val in env.items())}")
 
         env = os.environ.copy() | env
-
-        command = ["nvc", "-L", f"{str(Path.cwd())}"]
 
         if self._extra_args:
             for arg in self._extra_args:
@@ -227,16 +222,13 @@ class Nvc:
         if self._work:
             command += [f"--work={self._work}"]
 
-        command += ["-r", "--dump-arrays"]
+        command += ["-r"]
 
         if self._run_args:
             for arg in self._run_args:
                 command += arg.split(" ")
 
         command += [f"{self._top}"]
-
-        if self._cocotb_module:
-            command += ["--load", cocotb_vhpi]
 
         for plusarg in self._plusargs:
             command += [f"+{plusarg}"]
@@ -245,14 +237,12 @@ class Nvc:
             command.append(f"--stop-time={self._stop_time}")
 
         if self._waveform_viewer:
-            waveform_options = ["--format", "fst", f"--wave={self._waveform_data}"]
+            waveform_options = ["--dump-arrays", "--format", "fst", f"--wave={self._waveform_data}"]
             command += waveform_options
 
-        if self._waveform_save_file:
             if self._waveform_viewer == "gtkwave":
-                if not self._waveform_view_file:
-                    waveform_view_file_option = [f"--gtkw={self._waveform_save_file}"]
-                    command += waveform_view_file_option
+                if not Path(self._waveform_view_file).is_file():
+                    command.append(f"--gtkw={self._waveform_view_file}")
 
         if self._cocotb_module:
             results_xml = Path.cwd() / "results.xml"

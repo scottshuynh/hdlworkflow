@@ -34,6 +34,7 @@ class HdlWorkflow:
         work: str = "",
         gui: bool = False,
         wave: str = "gtkwave",
+        waveform_dump_file: str = "",
         waveform_view_file: str = "",
         part: str = "",
         board: str = "",
@@ -95,6 +96,8 @@ class HdlWorkflow:
         :type wave: str, optional
         :param waveform_view_file: Waveform view configuration file, defaults to ""
         :type waveform_view_file: str, optional
+        :param waveform_dump_file: Waveform dump file, defaults to ""
+        :type waveform_dump_file: str, optional
         :param part: Vivado part number to set up Vivado project, defaults to ""
         :type part: str, optional
         :param board: Vivado board part to set up Vivado project, defaults to ""
@@ -164,11 +167,15 @@ class HdlWorkflow:
             if not wfm_view_file_path.is_absolute():
                 wfm_view_file_path = (Path(path_to_working_directory) / wfm_view_file_path).resolve()
 
-            if not wfm_view_file_path.is_file():
-                logger.error(f"No such waveform view file. ({wfm_view_file_path})")
-                sys.exit(1)
-
             self.waveform_view_file = str(wfm_view_file_path)
+
+        self.waveform_dump_file = ""
+        if waveform_dump_file:
+            wfm_dump_file_path = Path(waveform_dump_file)
+            if not wfm_dump_file_path.is_absolute():
+                wfm_dump_file_path = (Path(path_to_working_directory) / wfm_dump_file_path).resolve()
+
+            self.waveform_dump_file = str(wfm_dump_file_path)
 
         self.stop_time = ""
         if stop_time:
@@ -328,6 +335,7 @@ class HdlWorkflow:
                     plusargs=self.plusargs,
                     waveform_viewer=wave,
                     waveform_view_file=self.waveform_view_file,
+                    waveform_dump_file=self.waveform_dump_file,
                     path_to_working_directory=self.path_to_working_directory,
                     pythonpaths=self.pythonpaths,
                     work=self.work,

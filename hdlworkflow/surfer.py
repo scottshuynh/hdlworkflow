@@ -38,7 +38,7 @@ class Surfer:
     def _generate_command_file(self) -> None:
         with open("commands.txt", "w", encoding="utf=8") as f:
             f.write(f"scope_add_as_group_recursive {self._top}\n")
-            f.write(f"save_state_as {self._top}.ron\n")
+            f.write(f"save_state_as {self._waveform_save}\n")
 
     def run(self):
         logger.info("Running surfer...")
