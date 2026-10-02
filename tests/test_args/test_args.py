@@ -308,7 +308,7 @@ def test_vivado_analyse_args(data_w, depth, worker_id):
         path_to_working_directory=pwd,
         generics=[f"{data_w=}", f"{depth=}"],
         pythonpaths=[str(pwd.parent)],
-        analyse_args=["-relax"],
+        analyse_args=["-nolog"],
     )
     flow.run()
 
@@ -350,7 +350,7 @@ def test_vivado_run_args(data_w, depth, worker_id):
         compile_order="../compile_order.json",
         path_to_working_directory=pwd,
         generics=[f"{data_w=}", f"{depth=}"],
-        run_args=["-log fifo_sync_tb.log"],
+        run_args=["-ieeewarnings"],
     )
     flow.run()
 
@@ -374,7 +374,7 @@ def test_vivado_analyse_args_cli(data_w, depth, worker_id):
         f"{data_w=}",
         "-g",
         f"{depth=}",
-        "--analyse_args=-relax",
+        "--analyse_args=-nolog",
     ]
 
     hdlworkflow.cli.main(argv)
@@ -424,7 +424,7 @@ def test_vivado_run_args_cli(data_w, depth, worker_id):
         f"{data_w=}",
         "-g",
         f"{depth=}",
-        "--run_args=-log fifo_sync_tb.log",
+        "--run_args=-ieeewarnings",
     ]
 
     hdlworkflow.cli.main(argv)
