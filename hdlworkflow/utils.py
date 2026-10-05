@@ -4,19 +4,32 @@ import re
 import sys
 from importlib.metadata import version
 from pathlib import Path
+from collections.abc import Sequence
 import xml.etree.ElementTree as ElementTree
 
 logger = logging.getLogger(__name__)
 
 
-def relative_to_absolute_paths(paths: list[str], pwd: str | Path) -> list[str]:
-    result: list[str] = []
-    for path in paths:
-        if Path(path).is_absolute():
-            result.append(path)
+def relative_to_absolute_path(path: Path | str, pwd: Path) -> Path:
+    if isinstance(path, Path):
+        if path.is_absolute():
+            return path
         else:
-            result.append(str(Path(Path(pwd) / path).resolve(False)))
-    return result
+            return (pwd / path).resolve(False)
+    elif isinstance(path, str):
+        return relative_to_absolute_path(Path(path), pwd)
+    else:
+        raise TypeError(f"Expecting path of types: Path | str. Got: {type(paths)}")
+
+
+def relative_to_absolute_paths(paths: Sequence[str | Path], pwd: Path) -> list[Path]:
+    if isinstance(paths, list):
+        result = []
+        for path in paths:
+            result.append(relative_to_absolute_path(path, pwd))
+        return result
+    else:
+        raise TypeError(f"Expecting paths of type: list[str | Path]. Got {type(paths)}")
 
 
 _ILLEGAL = re.compile(r'[<>:"/\\|?*\x00-\x1f]')

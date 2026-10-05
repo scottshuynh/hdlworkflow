@@ -39,5 +39,9 @@ filterwarnings = [
 ]
 addopts = "-m 'not gui'"
 markers = [
-    "gui: Tests that open EDA tool GUI or waveform viewers"
+    "gui: Tests that open EDA tool GUI or waveform viewers",
+    "nvc: Tests that use nvc",
+    "riviera: Tests that use Rivera-PRO",
+    "vivado: Tests that use Vivado",
+
 ]

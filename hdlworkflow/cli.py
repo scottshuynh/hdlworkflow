@@ -1,8 +1,10 @@
+import argparse
+import logging
+import sys
+from pathlib import Path
+
 from .core import HdlWorkflow, supported_eda_tools, supported_waveform_viewers
 from .logging import set_log_level, LoggingLevel
-
-import argparse, logging, sys
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -205,9 +207,9 @@ def main(argv=None):
         + "CLK_PORT=PERIOD_NS",
     )
     args = parser.parse_args(argv)
-    path_to_working_directory = str(Path.cwd())
+    path_to_working_directory = Path.cwd()
 
-    pythonpaths: list[str] = [path_to_working_directory]
+    pythonpaths: list[str] = [str(path_to_working_directory)]
     if args.pythonpath:
         pythonpaths += args.pythonpath
 
@@ -218,7 +220,7 @@ def main(argv=None):
             logger.error(f"Invalid verbose level. Got: {args.verbose}. Expecting: 0, 1, 2")
             sys.exit(1)
 
-    stop_time: tuple[int, str] = ()
+    stop_time = None
     if args.stop_time:
         if args.stop_time[0].isdigit():
             stop_time = (int(args.stop_time[0]), args.stop_time[1])

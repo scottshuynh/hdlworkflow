@@ -1,7 +1,11 @@
-from re import L
-import json, logging, os, subprocess, sys
+import logging
+import os
+import subprocess
+import sys
 from pathlib import Path
 from shutil import which
+
+from . import utils
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +20,7 @@ class Vivado:
         work: str,
         generics: list[str],
         stop_time: str,
-        path_to_working_directory: str,
+        path_to_working_directory: Path,
         analyse_args: list[str],
         elaborate_args: list[str],
         run_args: list[str],
@@ -25,7 +29,8 @@ class Vivado:
         part_number: str,
         board_part: str,
         gui: bool,
-        waveform_view_file: str,
+        waveform_view_file: Path | None,
+        waveform_dump_file: Path | None,
         synth: bool,
         impl: bool,
         bitstream: bool,
@@ -37,7 +42,7 @@ class Vivado:
         self._top = top
         self._compile_order = compile_order
         self._work = ""
-        self._pwd = Path(path_to_working_directory)
+        self._pwd = path_to_working_directory
         self._generics = generics
         self._stop_time = stop_time
         self._analyse_args = analyse_args
@@ -49,6 +54,7 @@ class Vivado:
         self._board_part = board_part
         self._gui = gui
         self._waveform_view_file = waveform_view_file
+        self._waveform_dump_file = waveform_dump_file
         self._synth = synth
         self._impl = impl
         self._bitstream = bitstream
@@ -61,28 +67,45 @@ class Vivado:
         else:
             self._work = "xil_defaultlib"
 
-        self._waveform_file: str = ""
-        if gui:
-            if waveform_view_file:
-                if Path(waveform_view_file).suffix == ".wcfg":
-                    self._waveform_file = waveform_view_file
-                else:
-                    logger.error(f"Expecting waveform view file with .wcfg extension. Got: {waveform_view_file}")
-                    sys.exit(1)
-            else:
-                self._waveform_file = self._top
-                if generics:
-                    self._waveform_file += "".join(generic for generic in self._generics) + ".wcfg"
-                else:
-                    self._waveform_file += ".wcfg"
-
         if not self._check_dependencies():
             logger.error("Missing dependencies: vivado")
             logger.error("All dependencies must be found on PATH.")
             sys.exit(1)
 
+        if gui:
+            self._initialise_waveform_variables()
+
         os.makedirs(f"{self._pwd / 'vivado'}", exist_ok=True)
         os.chdir(f"{self._pwd / 'vivado'}")
+
+    def _initialise_waveform_variables(self) -> None:
+        """Initialises view/dump files"""
+        if self._waveform_view_file:
+            if not Path(self._waveform_view_file).suffix == ".wcfg":
+                logger.error(f"Expecting waveform view file with .wcfg extension. Got: {self._waveform_view_file}")
+                sys.exit(1)
+
+        if self._waveform_dump_file:
+            if not Path(self._waveform_dump_file).suffix == ".wdb":
+                logger.error(f"Expecting waveform dump file with .wdb extension. Got: {self._waveform_dump_file}")
+                sys.exit(1)
+
+        waveform_stem = ""
+        if not self._waveform_view_file or not self._waveform_dump_file:
+            waveform_stem: str = self._top
+            if self._generics:
+                waveform_stem += "".join(generic for generic in self._generics)
+
+        waveform_stem = utils.truncate_filestem(utils.sanitise_filename(waveform_stem), "")
+        if not self._waveform_dump_file:
+            self._waveform_dump_file = utils.relative_to_absolute_path(waveform_stem + ".wdb", self._pwd / "vivado")
+        else:
+            self._waveform_dump_file = utils.relative_to_absolute_path(self._waveform_dump_file, self._pwd)
+
+        if not self._waveform_view_file:
+            self._waveform_view_file = utils.relative_to_absolute_path(waveform_stem + ".wcfg", self._pwd / "vivado")
+        else:
+            self._waveform_view_file = utils.relative_to_absolute_path(self._waveform_view_file, self._pwd)
 
     def _check_dependencies(self) -> bool:
         logger.info("Checking dependencies...")
@@ -122,7 +145,7 @@ class Vivado:
 
                     f.write(f"create_clock -period {clk_period} -name {clk_port} [get_ports {clk_port}]\n")
 
-    def _generate_setup_viv_prj(self, target: str = "") -> None:
+    def _generate_setup_viv_prj(self) -> None:
         logger.info("Generating setup script...")
         if not self._part_number:
             part = "xc7a35ticsg324-1L"
@@ -270,18 +293,25 @@ class Vivado:
                 )
 
             if self._gui:
-                if self._waveform_view_file:
+                assert self._waveform_view_file
+                if Path(self._waveform_view_file).is_file():
                     tcl_lines.extend(
                         [
-                            f"add_files -fileset sim_1 -norecurse {self._waveform_file}",
-                            f"set_property xsim.view {self._waveform_file} [get_filesets sim_1]",
+                            f"add_files -fileset sim_1 -norecurse {self._waveform_view_file}",
+                            f"set_property xsim.view {self._waveform_view_file} [get_filesets sim_1]",
                         ]
                     )
+                else:
+                    logger.warning(
+                        f"Ignoring waveform configuration file. File does not exist: {self._waveform_view_file}"
+                    )
+                if self._waveform_dump_file:
+                    tcl_lines.append(f"set_property xsim.simulate.wdb {self._waveform_dump_file} [get_filesets sim_1]")
 
             tcl_lines.append("launch_simulation")
             if self._gui:
-                if not self._waveform_view_file:
-                    wave_filename = str(Path.cwd() / self._waveform_file)
+                assert self._waveform_view_file
+                if not Path(self._waveform_view_file).is_file():
                     tcl_lines.extend(
                         [
                             "foreach wave [get_waves *] {",
@@ -298,9 +328,9 @@ class Vivado:
                             "        }",
                             "    }",
                             "}",
-                            f"save_wave_config {{{wave_filename}}}",
-                            f"add_files -fileset sim_1 -norecurse {wave_filename}",
-                            f"set_property xsim.view {wave_filename} [get_filesets sim_1]",
+                            f"save_wave_config {{{self._waveform_view_file}}}",
+                            f"add_files -fileset sim_1 -norecurse {self._waveform_view_file}",
+                            f"set_property xsim.view {self._waveform_view_file} [get_filesets sim_1]",
                         ]
                     )
 

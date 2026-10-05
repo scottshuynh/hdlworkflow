@@ -1,4 +1,7 @@
-import json, logging, os, subprocess, sys
+import logging
+import os
+import subprocess
+import sys
 from importlib.util import find_spec
 from pathlib import Path
 from shutil import which
@@ -27,8 +30,8 @@ class Nvc:
         extra_args: list[str],
         plusargs: list[str],
         waveform_viewer: str,
-        waveform_dump_file: str,
-        waveform_view_file: str,
+        waveform_dump_file: Path | None,
+        waveform_view_file: Path | None,
         path_to_working_directory: Path,
         pythonpaths: list[str],
         work: str,
@@ -45,60 +48,79 @@ class Nvc:
         self._run_args = run_args
         self._extra_args = extra_args
         self._plusargs = plusargs
+        self._waveform_viewer = waveform_viewer
+        self._waveform_dump_file = waveform_dump_file
+        self._waveform_view_file = waveform_view_file
         self._pwd = path_to_working_directory
         self._pythonpaths = utils.relative_to_absolute_paths(pythonpaths, path_to_working_directory)
         self._work = work
-        self._valid_file_suffix = set([".vhd", ".vhdl", ".v", ".sv"])
+        self._valid_file_suffix = [".vhd", ".vhdl", ".v", ".sv"]
 
-        self._waveform_viewer: str = ""
-        if waveform_viewer:
-            if waveform_viewer in supported_waveform_viewers:
-                self._waveform_viewer: str = waveform_viewer
-            else:
-                logger.error(
-                    f"Unsupported waveform viewer: {waveform_viewer}. Expecting: {' '.join(viewer for viewer in supported_waveform_viewers)}"
-                )
-                sys.exit(1)
-
-        self._waveform_view_file: str = waveform_view_file
-        self._waveform_data: str = waveform_dump_file
+        self._waveform_viewer_obj = None
+        if self._waveform_viewer:
+            self._initialise_waveform_variables()
 
         dependencies_met, missing = self._check_dependencies()
         if not dependencies_met:
+            assert missing
             logger.error(f"Missing dependencies: {' '.join(str(dependency) for dependency in missing)}.")
             logger.error("All dependencies must be found on PATH.")
             sys.exit(1)
 
-        self._waveform_viewer_obj: object = None
-
-        if self._waveform_viewer:
-            self._iniialise_waveform_variables(self._waveform_viewer, self._waveform_view_file, self._waveform_data)
-
         os.makedirs(f"{self._pwd / 'nvc'}", exist_ok=True)
         os.chdir(f"{self._pwd / 'nvc'}")
 
-    def _iniialise_waveform_variables(self, waveform_viewer, view_file, dump_file) -> None:
-        waveform_data_stem = ""
-        if not view_file or not dump_file:
-            waveform_data_stem: str = self._top
+    def _initialise_waveform_variables(self) -> None:
+        """Initialises view/dump files and waveform object"""
+        if self._waveform_viewer not in supported_waveform_viewers:
+            logger.error(
+                f"Unsupported waveform viewer: {self._waveform_viewer}. Expecting: {' '.join(viewer for viewer in supported_waveform_viewers)}"
+            )
+            sys.exit(1)
+
+        if self._waveform_dump_file:
+            if self._waveform_dump_file.suffix != ".fst":
+                logger.error(f"Expecting waveform dump file with .fst extension. Got: {self._waveform_dump_file}")
+                sys.exit(1)
+        if self._waveform_viewer == "gtkwave":
+            if self._waveform_view_file:
+                if self._waveform_view_file.suffix != ".gtkw":
+                    logger.error(f"Expecting waveform view file with .gtkw extension. Got: {self._waveform_view_file}")
+                    sys.exit(1)
+        elif self._waveform_viewer == "surfer":
+            if self._waveform_view_file:
+                if self._waveform_view_file.suffix != ".ron":
+                    logger.error(f"Expecting waveform view file with .ron extension. Got: {self._waveform_view_file}")
+                    sys.exit(1)
+
+        waveform_stem = ""
+        if not self._waveform_view_file or not self._waveform_dump_file:
+            waveform_stem: str = self._top
             if self._generics:
-                waveform_data_stem += "".join(generic for generic in self._generics)
+                waveform_stem += "".join(generic for generic in self._generics)
 
-        waveform_data_stem = utils.truncate_filestem(utils.sanitise_filename(waveform_data_stem), "")
-        if not dump_file:
-            self._waveform_data = waveform_data_stem + ".fst"
+        waveform_stem = utils.truncate_filestem(utils.sanitise_filename(waveform_stem), "")
+        if not self._waveform_dump_file:
+            self._waveform_dump_file = utils.relative_to_absolute_path(waveform_stem + ".fst", self._pwd / "nvc")
 
-        if waveform_viewer == "gtkwave":
-            if not view_file:
-                self._waveform_view_file = waveform_data_stem + ".gtkw"
-            self._waveform_viewer_obj = Gtkwave(self._waveform_data, self._waveform_view_file)
-        elif waveform_viewer == "surfer":
-            overwrite = not Path(self._waveform_view_file).is_file()
-            if not view_file:
-                self._waveform_view_file = waveform_data_stem + ".ron"
-            self._waveform_viewer_obj = Surfer(self._top, self._waveform_data, self._waveform_view_file, overwrite)
+        if self._waveform_viewer == "gtkwave":
+            if not self._waveform_view_file:
+                self._waveform_view_file = utils.relative_to_absolute_path(waveform_stem + ".gtkw", self._pwd / "nvc")
+            self._waveform_viewer_obj = Gtkwave(self._waveform_dump_file, self._waveform_view_file)
 
-    def _check_dependencies(self) -> tuple[bool, list[str]]:
+        elif self._waveform_viewer == "surfer":
+            overwrite = False
+            if self._waveform_view_file:
+                if not self._waveform_view_file.is_file():
+                    overwrite = True
+
+            elif not self._waveform_view_file:
+                self._waveform_view_file = utils.relative_to_absolute_path(waveform_stem + ".ron", self._pwd / "nvc")
+                overwrite = True
+
+            self._waveform_viewer_obj = Surfer(self._top, self._waveform_dump_file, self._waveform_view_file, overwrite)
+
+    def _check_dependencies(self) -> tuple[bool, list[str] | None]:
         logger.info("Checking dependencies...")
         missing: list[str] = []
         if not which("nvc"):
@@ -110,9 +132,9 @@ class Nvc:
             if not which(self._waveform_viewer):
                 missing.append(self._waveform_viewer)
         if missing:
-            return tuple([False, missing])
+            return False, missing
         else:
-            return tuple([True, None])
+            return True, None
 
     def simulate(self) -> None:
         self._analyse()
@@ -237,7 +259,7 @@ class Nvc:
             command.append(f"--stop-time={self._stop_time}")
 
         if self._waveform_viewer:
-            waveform_options = ["--dump-arrays", "--format", "fst", f"--wave={self._waveform_data}"]
+            waveform_options = ["--dump-arrays", "--format", "fst", f"--wave={self._waveform_dump_file}"]
             command += waveform_options
 
             if self._waveform_viewer == "gtkwave":

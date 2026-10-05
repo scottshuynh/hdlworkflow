@@ -1,10 +1,12 @@
-import json, logging, sys
+import json
+import logging
+import sys
+import warnings
 from pathlib import Path
 
-from hdlworkflow.nvc import Nvc
-from hdlworkflow.vivado import Vivado
-from hdlworkflow.riviera import Riviera
-import warnings
+from .nvc import Nvc
+from .vivado import Vivado
+from .riviera import Riviera
 
 logger = logging.getLogger(__name__)
 supported_eda_tools: list[str] = ["nvc", "vivado", "riviera"]
@@ -21,7 +23,7 @@ class HdlWorkflow:
         compile_order: str | Path | list[dict] = "",
         generics: list[str] = [],
         libraries: list[str] = [],
-        stop_time: tuple[int, str] = (),
+        stop_time: tuple[int, str] | None = None,
         cocotb: str = "",
         pythonpaths: list[str] = [],
         analyse_args: list[str] = [],
@@ -34,8 +36,8 @@ class HdlWorkflow:
         work: str = "",
         gui: bool = False,
         wave: str = "gtkwave",
-        waveform_dump_file: str = "",
-        waveform_view_file: str = "",
+        waveform_dump_file: str | Path = "",
+        waveform_view_file: str | Path = "",
         part: str = "",
         board: str = "",
         synth: bool = False,
@@ -69,7 +71,7 @@ class HdlWorkflow:
         :param libraries: Libraries searched during top level design instantiation in simulation, defaults to []
         :type libraries: list[str], optional
         :param stop_time: Simulation stops after the specified period, defaults to ()
-        :type stop_time: tuple[int, str], optional
+        :type stop_time: tuple[int, str] | None, optional
         :param cocotb: Name of cocotb test module, defaults to ""
         :type cocotb: str, optional
         :param pythonpaths: PYTHONPATH environment variables, defaults to []
@@ -161,21 +163,8 @@ class HdlWorkflow:
         else:
             self.clk_period_constraints = clk_period_constraints
 
-        self.waveform_view_file = ""
-        if waveform_view_file:
-            wfm_view_file_path = Path(waveform_view_file)
-            if not wfm_view_file_path.is_absolute():
-                wfm_view_file_path = (Path(path_to_working_directory) / wfm_view_file_path).resolve()
-
-            self.waveform_view_file = str(wfm_view_file_path)
-
-        self.waveform_dump_file = ""
-        if waveform_dump_file:
-            wfm_dump_file_path = Path(waveform_dump_file)
-            if not wfm_dump_file_path.is_absolute():
-                wfm_dump_file_path = (Path(path_to_working_directory) / wfm_dump_file_path).resolve()
-
-            self.waveform_dump_file = str(wfm_dump_file_path)
+        self.waveform_view_file = Path(waveform_view_file) if waveform_view_file else None
+        self.waveform_dump_file = Path(waveform_dump_file) if waveform_dump_file else None
 
         self.stop_time = ""
         if stop_time:
@@ -366,6 +355,7 @@ class HdlWorkflow:
                     board_part=self.board,
                     gui=self.gui,
                     waveform_view_file=self.waveform_view_file,
+                    waveform_dump_file=self.waveform_dump_file,
                     synth=self.synth,
                     impl=self.impl,
                     bitstream=self.bitstream,
