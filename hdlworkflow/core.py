@@ -387,6 +387,7 @@ class HdlWorkflow:
                     plusargs=self.plusargs,
                     gui=self.gui,
                     waveform_view_file=self.waveform_view_file,
+                    waveform_dump_file=self.waveform_dump_file,
                     path_to_working_directory=self.path_to_working_directory,
                     pythonpaths=self.pythonpaths,
                     path_to_libstdcpp=self.path_to_libstdcpp,

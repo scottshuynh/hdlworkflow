@@ -29,8 +29,9 @@ class Riviera:
         extra_args: list[str],
         plusargs: list[str],
         gui: bool,
-        waveform_view_file: str,
-        path_to_working_directory: str,
+        waveform_view_file: Path | None,
+        waveform_dump_file: Path | None,
+        path_to_working_directory: Path,
         pythonpaths: list[str],
         path_to_libstdcpp: str,
         path_to_glbl: str,
@@ -69,20 +70,11 @@ class Riviera:
 
         self._gui = gui
         self._waveform_view_file = waveform_view_file
-        self._waveform_file = ""
-        if gui:
-            if waveform_view_file:
-                if Path(waveform_view_file).suffix == ".awc":
-                    self._waveform_file = waveform_view_file
-                else:
-                    logger.error(f"Expecting waveform view file with .awc extension. Got: {waveform_view_file}")
-                    sys.exit(1)
-            else:
-                self._waveform_file = self._top
-                if generics:
-                    self._waveform_file += "".join(generic for generic in self._generics) + ".awc"
-                else:
-                    self._waveform_file += ".awc"
+        self._waveform_dump_file = waveform_dump_file
+        self._default_asdb = True
+
+        if self._gui:
+            self._initialise_waveform_variables()
 
         dependencies_met, missing = self._check_dependencies()
         if not dependencies_met:
@@ -93,7 +85,35 @@ class Riviera:
         os.makedirs(f"{self._pwd / 'riviera'}", exist_ok=True)
         os.chdir(f"{self._pwd / 'riviera'}")
 
-    def _check_dependencies(self) -> tuple[bool, list[str]]:
+    def _initialise_waveform_variables(self) -> None:
+        """Initialises view/dump files"""
+        if self._waveform_view_file:
+            if not Path(self._waveform_view_file).suffix == ".awc":
+                logger.error(f"Expecting waveform view file with .wcfg extension. Got: {self._waveform_view_file}")
+                sys.exit(1)
+
+        if self._waveform_dump_file:
+            self._default_asdb = False
+            if not Path(self._waveform_dump_file).suffix == ".asdb":
+                logger.error(f"Expecting waveform dump file with .wdb extension. Got: {self._waveform_dump_file}")
+                sys.exit(1)
+
+        waveform_stem = ""
+        if not self._waveform_view_file or not self._waveform_dump_file:
+            waveform_stem: str = self._top
+            if self._generics:
+                waveform_stem += "".join(generic for generic in self._generics)
+
+        waveform_stem = utils.truncate_filestem(utils.sanitise_filename(waveform_stem), "")
+        if self._waveform_dump_file:
+            self._waveform_dump_file = utils.relative_to_absolute_path(self._waveform_dump_file, self._pwd)
+
+        if not self._waveform_view_file:
+            self._waveform_view_file = utils.relative_to_absolute_path(waveform_stem + ".awc", self._pwd / "riviera")
+        else:
+            self._waveform_view_file = utils.relative_to_absolute_path(self._waveform_view_file, self._pwd)
+
+    def _check_dependencies(self) -> tuple[bool, list[str] | None]:
         logger.info("Checking dependencies...")
         dependencies = ["vsim", "vsimsa"]
         missing: list[str] = []
@@ -104,9 +124,9 @@ class Riviera:
             if not find_spec("cocotb"):
                 missing.append("cocotb")
         if missing:
-            return tuple([False, missing])
+            return False, missing
         else:
-            return tuple([True, None])
+            return True, None
 
     def _get_top_type(self) -> str:
         top_type = ""
@@ -281,6 +301,11 @@ class Riviera:
         sim_cmd += "-ieee_nowarn "
         if self._elaborate_args:
             sim_cmd += f"{' '.join(arg for arg in self._elaborate_args)} "
+
+        if self._gui:
+            if not self._default_asdb:
+                sim_cmd += f"-asdb {self._waveform_dump_file} "
+
         sim_cmd += f"{' '.join(arg for arg in self._extra_args)} {self._work}.{self._top} "
 
         if self._path_to_glbl:
@@ -299,18 +324,19 @@ class Riviera:
 
         if self._gui:
             if self._waveform_view_file:
-                tcl_lines.append(f"system.open -wave {self._waveform_file}")
-            else:
-                tcl_lines.extend(
-                    [
-                        "add wave -expand -vgroup [env] *",
-                        "set instances [find hierarchy -list -component -rec *]",
-                        "foreach inst $instances {",
-                        "    add wave -expand -vgroup $inst $inst/*",
-                        "}",
-                        f"write awc {self._waveform_file}",
-                    ]
-                )
+                if self._waveform_view_file.is_file():
+                    tcl_lines.append(f"system.open -wave {str(self._waveform_view_file)}")
+                else:
+                    tcl_lines.extend(
+                        [
+                            "add wave -expand -vgroup [env] *",
+                            "set instances [find hierarchy -list -component -rec *]",
+                            "foreach inst $instances {",
+                            "    add wave -expand -vgroup $inst $inst/*",
+                            "}",
+                            f"write awc {str(self._waveform_view_file)}",
+                        ]
+                    )
 
         if self._stop_time:
             tcl_lines.append(f"run {self._stop_time}")
