@@ -214,11 +214,18 @@ class Nvc:
             libpython_loc = subprocess.run(
                 ["cocotb-config", "--libpython"], capture_output=True, text=True
             ).stdout.strip()
-            cocotb_vhpi = subprocess.run(
-                ["cocotb-config", "--lib-name-path", "vhpi", "nvc"],
-                capture_output=True,
-                text=True,
-            ).stdout.strip()
+            if major == 2 and minor == 1:
+                cocotb_vhpi = subprocess.run(
+                    ["cocotb-config", "--lib-entry", "vhpi", "nvc"],
+                    capture_output=True,
+                    text=True,
+                ).stdout.strip()
+            else:
+                cocotb_vhpi = subprocess.run(
+                    ["cocotb-config", "--lib-name-path", "vhpi", "nvc"],
+                    capture_output=True,
+                    text=True,
+                ).stdout.strip()
 
             pathsep = os.pathsep
             env["PYTHONPATH"] = f"{pathsep.join(str(path) for path in self._pythonpaths)}"
@@ -229,6 +236,12 @@ class Nvc:
                 ).stdout.strip()
                 env["PYGPI_PYTHON_BIN"] = pygpi_python_bin
                 env["COCOTB_TEST_MODULES"] = self._cocotb_module
+                if minor == 1:
+                    pygpi_entry_point = subprocess.run(
+                        ["cocotb-config", "--pygpi-entry-point"], capture_output=True, text=True
+                    ).stdout.strip()
+                    env["GPI_USERS"] = libpython_loc + ";" + pygpi_entry_point
+                    del env["LIBPYTHON_LOC"]
             else:
                 env["MODULE"] = self._cocotb_module
 

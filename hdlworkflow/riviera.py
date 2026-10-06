@@ -82,6 +82,10 @@ class Riviera:
             logger.error("All dependencies must be found on PATH.")
             sys.exit(1)
 
+        self.cocotb_semver = None
+        if self._cocotb_module:
+            self.cocotb_semver = utils.get_cocotb_version()
+
         os.makedirs(f"{self._pwd / 'riviera'}", exist_ok=True)
         os.chdir(f"{self._pwd / 'riviera'}")
 
@@ -142,14 +146,11 @@ class Riviera:
         return top_type
 
     def simulate(self) -> None:
-        major = 0
-        if self._cocotb_module:
-            major, minor, patch = utils.get_cocotb_version()
-
         self._create_runsim()
-        self._batch_mode_run(major)
+        self._batch_mode_run()
 
-    def _setup_cocotb_env(self, major_ver: int) -> dict[str, str]:
+    def _setup_cocotb_env(self) -> dict[str, str]:
+        assert self.cocotb_semver
         libpython_loc = subprocess.run(["cocotb-config", "--libpython"], capture_output=True, text=True).stdout.strip()
         gpi_extra = self._setup_procedural_interface(True)
         env: dict[str, str] = dict()
@@ -160,13 +161,20 @@ class Riviera:
 
         if not self._gui:
             env["COCOTB_ANSI_OUTPUT"] = "1"
-        if major_ver >= 2:
+        if self.cocotb_semver[0] >= 2:
             pygpi_python_bin = subprocess.run(
                 ["cocotb-config", "--python-bin"], capture_output=True, text=True
             ).stdout.strip()
+            if self.cocotb_semver[1] == 1:
+                pygpi_entry_point = subprocess.run(
+                    ["cocotb-config", "--pygpi-entry-point"], capture_output=True, text=True
+                ).stdout.strip()
+                env["GPI_USERS"] = libpython_loc + ";" + pygpi_entry_point
+                del env["LIBPYTHON_LOC"]
             env["PYGPI_PYTHON_BIN"] = pygpi_python_bin
             env["COCOTB_TEST_MODULES"] = self._cocotb_module
             env["COCOTB_TOPLEVEL"] = self._top
+
         else:
             env["MODULE"] = self._cocotb_module
             env["TOPLEVEL"] = self._top
@@ -197,21 +205,36 @@ class Riviera:
                     + ":cocotbvhpi_entry_point"
                 )
         else:
+            assert self.cocotb_semver
             if self._top_type == "vhdl":
-                result = (
-                    subprocess.run(
-                        ["cocotb-config", "--lib-name-path", "vhpi", "riviera"],
+                if self.cocotb_semver[0] == 2 and self.cocotb_semver[1] == 1:
+                    result = subprocess.run(
+                        ["cocotb-config", "--lib-entry", "vhpi", "riviera"],
                         capture_output=True,
                         text=True,
                     ).stdout.strip()
-                    + ":vhpi_startup_routines_bootstrap"
-                )
+                else:
+                    result = (
+                        subprocess.run(
+                            ["cocotb-config", "--lib-name-path", "vhpi", "riviera"],
+                            capture_output=True,
+                            text=True,
+                        ).stdout.strip()
+                        + ":vhpi_startup_routines_bootstrap"
+                    )
             elif self._top_type == "verilog":
-                result = subprocess.run(
-                    ["cocotb-config", "--lib-name-path", "vpi", "riviera"],
-                    capture_output=True,
-                    text=True,
-                ).stdout.strip()
+                if self.cocotb_semver[0] == 2 and self.cocotb_semver[1] == 1:
+                    result = subprocess.run(
+                        ["cocotb-config", "--lib-entry", "vpi", "riviera"],
+                        capture_output=True,
+                        text=True,
+                    ).stdout.strip()
+                else:
+                    result = subprocess.run(
+                        ["cocotb-config", "--lib-name-path", "vpi", "riviera"],
+                        capture_output=True,
+                        text=True,
+                    ).stdout.strip()
 
         return result
 
@@ -355,10 +378,10 @@ class Riviera:
             for tcl_line in tcl_lines:
                 f.write(f"{tcl_line}\n")
 
-    def _batch_mode_run(self, cocotb_major_ver: int = 0) -> None:
+    def _batch_mode_run(self) -> None:
         if self._cocotb_module:
             logger.info("Setting up cocotb environment variables...")
-            env = self._setup_cocotb_env(cocotb_major_ver)
+            env = self._setup_cocotb_env()
         else:
             env = env = os.environ.copy()
 
