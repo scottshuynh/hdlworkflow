@@ -12,6 +12,7 @@ set_log_level(LoggingLevel(2))
 
 @pytest.mark.parametrize("data_w", [72])
 @pytest.mark.parametrize("depth", [2**19])
+@pytest.mark.nvc
 def test_nvc_extra_args_cocotb(data_w, depth, worker_id):
     eda_tool = "nvc"
     if not which(eda_tool):
@@ -35,6 +36,7 @@ def test_nvc_extra_args_cocotb(data_w, depth, worker_id):
 
 @pytest.mark.parametrize("data_w", [72])
 @pytest.mark.parametrize("depth", [2**19])
+@pytest.mark.nvc
 def test_nvc_extra_args_cocotb_cli(data_w, depth, worker_id):
     eda_tool = "nvc"
     if not which(eda_tool):
@@ -64,6 +66,7 @@ def test_nvc_extra_args_cocotb_cli(data_w, depth, worker_id):
 
 @pytest.mark.parametrize("data_w", [16])
 @pytest.mark.parametrize("depth", [8])
+@pytest.mark.riviera
 def test_riviera_extra_args_cocotb(data_w, depth, worker_id):
     eda_tool = "riviera"
     if not which(eda_tool):
@@ -87,6 +90,7 @@ def test_riviera_extra_args_cocotb(data_w, depth, worker_id):
 
 @pytest.mark.parametrize("data_w", [16])
 @pytest.mark.parametrize("depth", [8])
+@pytest.mark.riviera
 def test_riviera_extra_args_cocotb_cli(data_w, depth, worker_id):
     eda_tool = "riviera"
     if not which(eda_tool):
@@ -116,6 +120,7 @@ def test_riviera_extra_args_cocotb_cli(data_w, depth, worker_id):
 
 @pytest.mark.parametrize("data_w", [16])
 @pytest.mark.parametrize("depth", [8])
+@pytest.mark.vivado
 def test_vivado_extra_args(data_w, depth, worker_id):
     eda_tool = "vivado"
     if not which(eda_tool):
@@ -137,6 +142,7 @@ def test_vivado_extra_args(data_w, depth, worker_id):
 
 @pytest.mark.parametrize("data_w", [16])
 @pytest.mark.parametrize("depth", [8])
+@pytest.mark.vivado
 def test_vivado_extra_args_cli(data_w, depth, worker_id):
     eda_tool = "vivado"
     if not which(eda_tool):

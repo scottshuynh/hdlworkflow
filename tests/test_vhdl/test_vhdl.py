@@ -38,6 +38,7 @@ def test_vhdl_sim(eda_tool, data_w, depth, stop_time, worker_id):
 )
 @pytest.mark.parametrize("board", ["", "xilinx.com:zcu106:part0:2.6"])
 @pytest.mark.parametrize("clk_period_constraints", ["clk_i=4"])
+@pytest.mark.vivado
 def test_vhdl_synth_vivado(data_w, depth, synth, impl, part, board, clk_period_constraints, worker_id):
     eda_tool = "vivado"
     if not which(eda_tool):
@@ -125,6 +126,7 @@ def test_vhdl_sim_cli(eda_tool, data_w, depth, stop_time, worker_id):
 )
 @pytest.mark.parametrize("board", ["", "xilinx.com:zcu106:part0:2.6"])
 @pytest.mark.parametrize("clk_period_constraints", ["clk_i=4"])
+@pytest.mark.vivado
 def test_vhdl_synth_vivado_cli(data_w, depth, synth, impl, part, board, clk_period_constraints, worker_id):
     eda_tool = "vivado"
     if not which(eda_tool):

@@ -7,6 +7,7 @@ import hdlworkflow
 from hdlworkflow import HdlWorkflow
 
 
+@pytest.mark.vivado
 def test_vhdl_bitstream_vivado_cli(worker_id):
     eda_tool = "vivado"
     if not which(eda_tool):
@@ -30,6 +31,7 @@ def test_vhdl_bitstream_vivado_cli(worker_id):
     hdlworkflow.cli.main(argv)
 
 
+@pytest.mark.vivado
 def test_vhdl_bitstream_vivado(worker_id):
     eda_tool = "vivado"
     if not which(eda_tool):
@@ -51,6 +53,7 @@ def test_vhdl_bitstream_vivado(worker_id):
     flow.run()
 
 
+@pytest.mark.vivado
 def test_verilog_bitstream_vivado_cli(worker_id):
     eda_tool = "vivado"
     if not which(eda_tool):
@@ -74,6 +77,7 @@ def test_verilog_bitstream_vivado_cli(worker_id):
     hdlworkflow.cli.main(argv)
 
 
+@pytest.mark.vivado
 def test_verilog_bitstream_vivado(worker_id):
     eda_tool = "vivado"
     if not which(eda_tool):
